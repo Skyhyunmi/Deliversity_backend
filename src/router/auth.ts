@@ -5,8 +5,8 @@ import jwt from "jsonwebtoken";
 import passport from "passport";
 // const db = require('../models/index');
 // const util = require('../config/util');
-
-require('dotenv').config();
+import dotenv, {config} from 'dotenv';
+dotenv.config();
 
 router.post('/signup', util.isLoggedin, util.isAdmin, function (req:Request, res:Response, next:NextFunction) {
   req.query=null;

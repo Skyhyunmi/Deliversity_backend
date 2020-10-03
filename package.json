@@ -32,7 +32,11 @@
     "@types/cors": "^2.8.7",
     "@types/morgan": "^1.9.1",
     "@types/passport": "^1.0.4",
+    "@typescript-eslint/eslint-plugin": "^4.3.0",
+    "@typescript-eslint/parser": "^4.3.0",
     "cookie-parser": "^1.4.5",
+    "eslint": "^7.10.0",
+    "eslint-plugin-react": "^7.21.3",
     "morgan": "^1.10.0",
     "passport": "^0.4.1"
   }
