@@ -1,14 +1,12 @@
 
-import {NextFunction, Request,Response,Router} from "express";
-const router = Router();
-import jwt from "jsonwebtoken";
-import passport from "passport";
-// const db = require('../models/index');
-// const util = require('../config/util');
-import dotenv, {config} from 'dotenv';
-dotenv.config();
+import express, {NextFunction, Request,Response,Router} from "express";
+const router = express.Router();
+const jwt = require('jsonwebtoken');
+const passport = require('passport');
+const db = require('../models/index');
+require('dotenv').config();
 
-router.post('/signup', util.isLoggedin, util.isAdmin, function (req:Request, res:Response, next:NextFunction) {
+router.post('/signup', function (req:Request, res:Response, next:NextFunction) {
   req.query=null;
   passport.authenticate('signup', function (err, user, info) {
     if (err) {
