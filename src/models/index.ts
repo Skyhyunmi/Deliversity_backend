@@ -1,10 +1,12 @@
-const Sequelize = require('sequelize');
-const fs = require('fs');
-const path = require('path');
-require('dotenv').config();
+import {Sequelize} from "sequelize-typescript";
+import User from "./user";
+// import {deliFactory} from "./deli";
 
-const db = {};
-const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASS, {
+import dotenv from "dotenv";
+import sequelize from "sequelize";
+dotenv.config();
+
+export const db = new Sequelize(process.env.DB_NAME as any, process.env.DB_USER as any, process.env.DB_PASS, {
   host: process.env.DB_HOST,
   dialect: 'mysql',
   dialectOptions: {
@@ -14,18 +16,7 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
   },
   timezone: '+09:00'
 });
-fs.readdirSync(__dirname)
-  .filter(function(file: string | string[]) {
-    return (file.indexOf('.') !== 0) && (file !== 'index.js');
-  })
-  .forEach(function(file) {
-    const model = sequelize.import(path.join(__dirname, file));
-    db[model.name] = model;
-  });
 
-db.Refugee.hasMany(db.VisitLog, { foreignKey: 'id' });
-db.VisitLog.belongsTo(db.Refugee, { foreignKey: 'refugee_id' });
+db.addModels([User]);
 
-db.Operator = Sequelize.Op;
-
-module.exports = db;
+//https://stackoverflow.com/questions/60014874/how-to-use-typescript-with-sequelize
