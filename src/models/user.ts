@@ -14,9 +14,22 @@
   createdAt?: Date;
   updatedAt?: Date;
 */
-import {Unique,Table, Column, Model, HasMany, PrimaryKey, AutoIncrement, DataType, Comment, CreatedAt, UpdatedAt, DeletedAt} from 'sequelize-typescript';
+import {
+  Unique,
+  Table,
+  Column,
+  Model,
+  HasMany,
+  PrimaryKey,
+  AutoIncrement,
+  DataType,
+  Comment,
+  CreatedAt,
+  UpdatedAt,
+  DeletedAt,
+} from "sequelize-typescript";
 
-@Table({timestamps:true,})
+@Table({ timestamps: true })
 export default class User extends Model<User> {
   @PrimaryKey
   @AutoIncrement
@@ -27,7 +40,7 @@ export default class User extends Model<User> {
   @Unique
   @Column(DataType.STRING)
   userId!: string;
-  
+
   @Comment("User password")
   @Column(DataType.STRING)
   password!: string;
