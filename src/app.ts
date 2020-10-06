@@ -49,6 +49,6 @@ app.use(function (req: any, res: Response, next: NextFunction) {
   next(createError(404));
 });
 
-app.listen(3000, () => {
+app.listen(process.env.WEB_PORT, () => {
   console.log("start");
 });
