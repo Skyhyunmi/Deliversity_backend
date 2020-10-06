@@ -18,6 +18,10 @@ interface UserHash extends User {
     salt:string;
 }
 
+function certify(){
+  return 1;
+}
+
 export function passportConfig(){
   passport.use(
     'signup',
@@ -50,15 +54,21 @@ export function passportConfig(){
             const salt = buffer.toString('base64');
             const key = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512');
             const hashedPw = key.toString('base64');
+            const certified = certify();
             userRep.create({
               userId: id,
               name: data.name,
               email: data.email,
               salt: salt,
+              nickName: data.nickName,
+              gender: data.gender,
+              age: Number.parseInt(data.age),
+              phone: data.phone,
               admin: data.is_admin,
-              hashed_password: hashedPw,
+              password: hashedPw,
               createdAt: new Date(),
-              updatedAt: null
+              updatedAt: null,
+              certified: certified
             }).then(function (result) {
               done(null, result);
             }).catch(function (err) {
