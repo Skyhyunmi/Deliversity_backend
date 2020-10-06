@@ -13,8 +13,12 @@ import { db } from "./models";
 
 import dotenv from "dotenv";
 dotenv.config();
+
+// authenticate -> Open connection
+// sync -> make table if not exist
 db
-  .authenticate()
+  // .sync() //make table if not exist
+  .authenticate() //Open connection
   .then(() => console.log("DB connected."))
   .catch(() => {
     throw "error";
