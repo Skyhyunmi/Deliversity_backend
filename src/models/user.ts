@@ -21,7 +21,6 @@ import {
   Table,
   Column,
   Model,
-  HasMany,
   PrimaryKey,
   AutoIncrement,
   DataType,
@@ -81,9 +80,14 @@ export default class User extends Model<User> {
   @Column(DataType.BIGINT)
   point!:number;
 
+  @Default(1)
   @AllowNull(false)
+  @Column(DataType.BIGINT)
+  grade!:number;
+
+  @Default("user")
   @Column(DataType.STRING)
-  grade!:string;
+  admin!:string;
 
   @AllowNull(false)
   @Column(DataType.STRING)
