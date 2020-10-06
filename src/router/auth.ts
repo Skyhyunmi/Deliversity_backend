@@ -59,26 +59,3 @@ auth.post("/login", function (req: any, res: Response, next: NextFunction) {
     });
   })(req, res, next);
 });
-
-auth.get("/refresh", util.isLoggedin, function (req: any, res: Response) {
-  userRep.findOne({ where: { userId: req.decoded.id } }).then(function (
-    user: any
-  ) {
-    if (!user) {
-      return res.status(400).json({
-        message: "Can't refresh the token",
-        user: user,
-      });
-    }
-    const payload = {
-      id: user.userId,
-      name: user.name,
-      admin: user.admin,
-      loggedAt: new Date(),
-    };
-    user.authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
-      expiresIn: 60 * 90,
-    });
-    res.json({ token: user.authToken });
-  });
-});

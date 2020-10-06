@@ -1,20 +1,3 @@
-/*
-  id:number;
-  userId:string;
-  name:string;
-  password:string;
-  salt:string;
-  nickName:string;
-  gender:string;
-  age:string;
-  email:string;
-  phone:string;
-  point:number;
-  grade:string;
-  certified:string;
-  createdAt?: Date;
-  updatedAt?: Date;
-*/
 import {
   AllowNull,
   Unique,
@@ -28,7 +11,7 @@ import {
   CreatedAt,
   UpdatedAt,
   DeletedAt,
-  Default
+  Default//, ForeignKey
 } from "sequelize-typescript";
 
 @Table({ timestamps: true })
@@ -92,6 +75,15 @@ export default class User extends Model<User> {
   @AllowNull(false)
   @Column(DataType.STRING)
   certified!:string;
+
+  @AllowNull(true)
+  // @ForeignKey(()=>{Address})
+  @Column(DataType.STRING)
+  addressCode!:string;
+
+  @AllowNull(true)
+  @Column(DataType.STRING)
+  detailAddress!:string;
 
   @CreatedAt
   createdAt!: Date;

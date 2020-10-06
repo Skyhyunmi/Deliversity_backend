@@ -13,10 +13,6 @@ const JwtStrategy = passportJwt.Strategy;
 const ExtractJwt = passportJwt.ExtractJwt;
 const userRep  = db.getRepository(User);
 
-interface UserHash extends User {
-    hashed_password:string;
-    salt:string;
-}
 
 function certify(){
   return 1;
@@ -96,14 +92,13 @@ export function passportConfig(){
           where: {
             userId: id
           }
-        }).then(function (userhhash) {
-          const user:UserHash = userhhash as UserHash;
+        }).then(function (user) {
           if (user) {
             crypto.pbkdf2(password, user.salt, 100000, 64, 'sha512', function (err:any, key:any) {
               if (err) {
                 done(null, false, { message: 'error' });
               }
-              if (user.hashed_password === key.toString('base64')) {
+              if (user.password === key.toString('base64')) {
                 return done(null, user);
               } else {
                 return done(null, false, { message: 'Password do not match.' });
