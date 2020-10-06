@@ -47,11 +47,11 @@ export function isAdmin(req: any, res: Response, next: NextFunction) {
   if (!req.decoded.admin)
     res.status(403).json(successFalse(null, "Not a Admin", null));
   else {
-    // db.User.findOne({ where: { user_id: req.decoded.id, admin: 1 } })
+    // db.User.findOne({ where: { userId: req.decoded.id, admin: 1 } })
     //   .then(function (user: any) {
     //     if (!user)
     //       res.status(403).json(successFalse(null, "Can't find admin", null));
-    //     else if (!req.decoded || user.user_id !== req.decoded.id) {
+    //     else if (!req.decoded || user.userId !== req.decoded.id) {
     //       res
     //         .status(403)
     //         .json(successFalse(null, "You don't have permission", null));

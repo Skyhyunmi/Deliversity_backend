@@ -47,7 +47,7 @@ auth.post("/login", function (req: any, res: Response, next: NextFunction) {
     req.logIn(user, { session: false }, function (err: any) {
       if (err) return res.status(403).json(util.successFalse(err, "", null));
       const payload = {
-        id: user.user_id,
+        id: user.userId,
         name: user.name,
         admin: user.admin,
         loggedAt: new Date(),
@@ -61,7 +61,7 @@ auth.post("/login", function (req: any, res: Response, next: NextFunction) {
 });
 
 auth.get("/refresh", util.isLoggedin, function (req: any, res: Response) {
-  userRep.findOne({ where: { user_id: req.decoded.id } }).then(function (
+  userRep.findOne({ where: { userId: req.decoded.id } }).then(function (
     user: any
   ) {
     if (!user) {
@@ -71,7 +71,7 @@ auth.get("/refresh", util.isLoggedin, function (req: any, res: Response) {
       });
     }
     const payload = {
-      id: user.user_id,
+      id: user.userId,
       name: user.name,
       admin: user.admin,
       loggedAt: new Date(),

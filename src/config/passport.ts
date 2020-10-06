@@ -31,7 +31,7 @@ export function passportConfig(){
       try {
         userRep.findOne({
           where: {
-            user_id: id
+            userId: id
           }
         }).then(function (user) {
           const data = req.body;
@@ -51,7 +51,7 @@ export function passportConfig(){
             const key = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512');
             const hashedPw = key.toString('base64');
             userRep.create({
-              user_id: id,
+              userId: id,
               name: data.name,
               email: data.email,
               salt: salt,
@@ -84,7 +84,7 @@ export function passportConfig(){
       try {
         userRep.findOne({
           where: {
-            user_id: id
+            userId: id
           }
         }).then(function (userhhash) {
           const user:UserHash = userhhash as UserHash;

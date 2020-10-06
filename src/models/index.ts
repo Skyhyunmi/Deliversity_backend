@@ -1,9 +1,6 @@
 import { Sequelize } from "sequelize-typescript";
 import User from "./user";
-// import {deliFactory} from "./deli";
-
 import dotenv from "dotenv";
-import sequelize from "sequelize";
 dotenv.config();
 
 export const db = new Sequelize(
@@ -12,6 +9,7 @@ export const db = new Sequelize(
   process.env.DB_PASS,
   {
     host: process.env.DB_HOST,
+    port: Number.parseInt(process.env.DB_PORT as string),
     dialect: "mysql",
     dialectOptions: {
       charset: "utf8mb4",
@@ -23,5 +21,4 @@ export const db = new Sequelize(
 );
 
 db.addModels([User]);
-
 //https://stackoverflow.com/questions/60014874/how-to-use-typescript-with-sequelize

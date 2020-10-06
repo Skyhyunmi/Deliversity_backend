@@ -9,8 +9,16 @@ import { auth } from "./router/auth";
 import { test } from "./router/test";
 import {passportConfig} from './config/passport';
 
+import { db } from "./models";
+
 import dotenv from "dotenv";
 dotenv.config();
+db
+  .authenticate()
+  .then(() => console.log("DB connected."))
+  .catch(() => {
+    throw "error";
+  });
 
 const app = express();
 app.use(logger("dev"));
