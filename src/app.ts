@@ -4,14 +4,15 @@ import logger from "morgan";
 import * as bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import path from "path";
 import passport from "passport";
 import { auth } from "./router/auth";
 import { test } from "./router/test";
-// import passportConfig from './config/passport';
+import {passportConfig} from './config/passport';
+
+import dotenv from "dotenv";
+dotenv.config();
 
 const app = express();
-
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -19,7 +20,7 @@ app.use(cookieParser());
 app.use(bodyParser.json());
 // app.use(express.static(path.join(__dirname, 'public')));
 app.use(passport.initialize()); // passport 구동
-// passportConfig();
+passportConfig();
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");

@@ -4,8 +4,11 @@ import jwt from "jsonwebtoken";
 import passport from "passport";
 // const db = require("../models/index");
 import { db } from "../models/index";
+import User from "../models/user";
 import dotenv from "dotenv";
 dotenv.config();
+
+const userRep  = db.getRepository(User);
 
 export const auth = Router();
 auth.post("/signup", function (req: any, res: Response, next: NextFunction) {
@@ -13,7 +16,7 @@ auth.post("/signup", function (req: any, res: Response, next: NextFunction) {
   passport.authenticate("signup", function (
     err: any,
     user: any,
-    info: { message: any }
+    info: { message: string }
   ) {
     if (err) {
       return res.status(403).json(util.successFalse(err, "", null));
@@ -58,24 +61,24 @@ auth.post("/login", function (req: any, res: Response, next: NextFunction) {
 });
 
 auth.get("/refresh", util.isLoggedin, function (req: any, res: Response) {
-  // db.User.findOne({ where: { user_id: req.decoded.id } }).then(function (
-  //   user: any
-  // ) {
-  //   if (!user) {
-  //     return res.status(400).json({
-  //       message: "Can't refresh the token",
-  //       user: user,
-  //     });
-  //   }
-  //   const payload = {
-  //     id: user.user_id,
-  //     name: user.name,
-  //     admin: user.admin,
-  //     loggedAt: new Date(),
-  //   };
-  //   user.authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
-  //     expiresIn: 60 * 90,
-  //   });
-  //   res.json({ token: user.authToken });
-  // });
+  userRep.findOne({ where: { user_id: req.decoded.id } }).then(function (
+    user: any
+  ) {
+    if (!user) {
+      return res.status(400).json({
+        message: "Can't refresh the token",
+        user: user,
+      });
+    }
+    const payload = {
+      id: user.user_id,
+      name: user.name,
+      admin: user.admin,
+      loggedAt: new Date(),
+    };
+    user.authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
+      expiresIn: 60 * 90,
+    });
+    res.json({ token: user.authToken });
+  });
 });

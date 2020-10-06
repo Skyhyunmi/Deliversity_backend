@@ -1,43 +1,126 @@
-// import passport from "passport";
-// import passportLocal from "passport-local";
-// import passportJwt from "passport-jwt";
-// import {db} from "../models/index";
-// import User from "../models/user";
+import passport from "passport";
+import passportLocal from "passport-local";
+import passportJwt from "passport-jwt";
+import {db} from "../models/index";
+import User from "../models/user";
+import * as crypto from "crypto";
 
-// // import {crypto} from "crypto";
+import dotenv from "dotenv";
+dotenv.config();
 
-// const LocalStrategy = passportLocal.Strategy;
-// const JwtStrategy = passportJwt.Strategy;
-// const ExtractJwt = passportJwt.ExtractJwt;
-// const user  = db.getRepository(User);
+const LocalStrategy = passportLocal.Strategy;
+const JwtStrategy = passportJwt.Strategy;
+const ExtractJwt = passportJwt.ExtractJwt;
+const userRep  = db.getRepository(User);
 
-// passport.use(new LocalStrategy({ usernameField: "username" }, (username, password, done) => {
-//   db.User.findOne({ username: username.toLowerCase() }, (err: any, user: any) => {
-//     if (err) { return done(err); }
-//     if (!user) {
-//       return done(undefined, false, { message: `username ${username} not found.` });
-//     }
-//     user.comparePassword(password, (err: Error, isMatch: boolean) => {
-//       if (err) { return done(err); }
-//       if (isMatch) {
-//         return done(undefined, user);
-//       }
-//       return done(undefined, false, { message: "Invalid username or password." });
-//     });
-//   });
-// }));
+interface UserHash extends User {
+    hashed_password:string;
+    salt:string;
+}
 
-// passport.use(new JwtStrategy(
-//   {
-//     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-//     secretOrKey: process.env.JWT_SECRET
-//   }, function (jwtToken, done) {
-//     db.User.findOne({ username: jwtToken.username }, function (err: any, user: any) {
-//       if (err) { return done(err, false); }
-//       if (user) {
-//         return done(undefined, user , jwtToken);
-//       } else {
-//         return done(undefined, false);
-//       }
-//     });
-//   }));
+export function passportConfig(){
+  passport.use(
+    'signup',
+    new LocalStrategy({
+      usernameField: 'id',
+      passwordField: 'pw',
+      session: false,
+      passReqToCallback: true
+    },
+    function (req, id, password, done) {
+      try {
+        userRep.findOne({
+          where: {
+            user_id: id
+          }
+        }).then(function (user) {
+          const data = req.body;
+          if (user) {
+            return done(null, false, { message: 'User already exist.' });
+          }
+          userRep.findOne({
+            where: {
+              email: data.email
+            }
+          }).then(function (user) {
+            if (user) {
+              return done(null, false, { message: 'E-mail duplicated.' });
+            }
+            const buffer = crypto.randomBytes(64);
+            const salt = buffer.toString('base64');
+            const key = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512');
+            const hashedPw = key.toString('base64');
+            userRep.create({
+              user_id: id,
+              name: data.name,
+              email: data.email,
+              salt: salt,
+              admin: data.is_admin,
+              hashed_password: hashedPw,
+              createdAt: new Date(),
+              updatedAt: null
+            }).then(function (result) {
+              done(null, result);
+            }).catch(function (err) {
+              done(err);
+            });
+          });
+        });
+      } catch (err) {
+        done(err);
+      }
+    }
+    )
+  );
+
+  passport.use(
+    'login',
+    new LocalStrategy({
+      usernameField: 'id',
+      passwordField: 'pw',
+      session: false
+    },
+    function (id, password, done) {
+      try {
+        userRep.findOne({
+          where: {
+            user_id: id
+          }
+        }).then(function (userhhash) {
+          const user:UserHash = userhhash as UserHash;
+          if (user) {
+            crypto.pbkdf2(password, user.salt, 100000, 64, 'sha512', function (err:any, key:any) {
+              if (err) {
+                done(null, false, { message: 'error' });
+              }
+              if (user.hashed_password === key.toString('base64')) {
+                return done(null, user);
+              } else {
+                return done(null, false, { message: 'Password do not match.' });
+              }
+            });
+          } else {
+            return done(null, false, { message: 'ID do not match' });
+          }
+        });
+      } catch (err) {
+        done(err);
+      }
+    }
+    )
+  );
+
+  passport.use(new JwtStrategy(
+    {
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      secretOrKey: process.env.JWT_SECRET
+    }, function (jwtToken, done) {
+      userRep.findOne({where:{ userId: jwtToken.userId }}).then((user: any) =>{
+        if (user) {
+          return done(undefined, user , jwtToken);
+        } else {
+          return done(undefined, false);
+        }
+      });
+    }));
+};
