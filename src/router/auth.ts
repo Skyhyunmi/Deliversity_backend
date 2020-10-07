@@ -6,6 +6,7 @@ import passport from "passport";
 import { db } from "../models/index";
 import User from "../models/user";
 import dotenv from "dotenv";
+import axios from "axios";
 dotenv.config();
 
 const userRep  = db.getRepository(User);
@@ -58,4 +59,32 @@ auth.post("/login", function (req: any, res: Response, next: NextFunction) {
       res.json({ token: user.authToken, admin: user.admin });
     });
   })(req, res, next);
+});
+
+auth.post("/certifications", async (request, response) => {
+  const { imp_uid } = request.body; // request의 body에서 imp_uid 추출
+  try {
+    // 인증 토큰 발급 받기
+    const getToken = await axios({
+      url: "https://api.iamport.kr/users/getToken",
+      method: "post", // POST method
+      headers: { "Content-Type": "application/json" }, // "Content-Type": "application/json"
+      data: {
+        imp_key: process.env.IMP_KEY, // REST API키
+        imp_secret: process.env.IMP_SECRET // REST API Secret
+      }
+    });
+    const { access_token } = getToken.data.response; // 인증 토큰
+    
+    // imp_uid로 인증 정보 조회
+    const getCertifications = await axios({
+      url: 'https://api.iamport.kr/certifications/'+imp_uid, // imp_uid 전달
+      method: "get", // GET method
+      headers: { "Authorization": access_token } // 인증 토큰 Authorization header에 추가
+    });
+    const certificationsInfo = getCertifications.data.response; // 조회한 인증 정보
+    console.log(certificationsInfo);
+  } catch(e) {
+    console.error(e);
+  }
 });
