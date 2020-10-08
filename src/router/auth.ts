@@ -199,5 +199,5 @@ auth.get('/google/callback', function(req: any, res: Response, next: NextFunctio
       res.json({ token: user.authToken, admin: user.admin });
     });
   })(req,res,next);
-  }
+}
 );
