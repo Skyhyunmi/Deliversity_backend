@@ -17,22 +17,22 @@ const veriRep  = db.getRepository(Veri);
 
 
 async function certify(phone:string){
-  var ret=0;
+  let ret=0;
   try{
     await veriRep.findOne({where:{phone:phone}})
-    .then((veri)=>{
-      if(veri){
-        if(veri.verified==true){
-          const now = Number.parseInt(Date.now().toString());
-          const created = Date.parse(veri.createdAt);
-          const remainingTime = (now-created)/60000;
-          if(remainingTime>30){ //30분
-            veri.destroy();
+      .then((veri)=>{
+        if(veri){
+          if(veri.verified==true){
+            const now = Number.parseInt(Date.now().toString());
+            const created = Date.parse(veri.createdAt);
+            const remainingTime = (now-created)/60000;
+            if(remainingTime>30){ //30분
+              veri.destroy();
+            }
+            else ret=1;
           }
-          else ret=1;
         }
-      }
-    })
+      });
   }
   catch(e){
     console.error(e);
@@ -72,7 +72,7 @@ export function passportConfig(){
             const salt = buffer.toString('base64');
             const key = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512');
             const hashedPw = key.toString('base64');
-            var certified=await certify(data.phone);
+            const certified=await certify(data.phone);
             if(certified==0) return done(null, false, { message: 'SMS Verification is required.' });
             userRep.create({
               userId: id,
