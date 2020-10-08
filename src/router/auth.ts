@@ -18,8 +18,8 @@ function makeSignature(urlsub:string,timestamp:string){
   const newLine = "\n";           // new line
   const method = "POST";          // method
   // const timestamp = Date.now().toString();
-  let hmac=crypto.createHmac('sha256',process.env.NAVER_SECRET as string);
-  let mes = [];
+  const hmac=crypto.createHmac('sha256',process.env.NAVER_SECRET as string);
+  const mes = [];
   mes.push(method);
   mes.push(space);
   mes.push(urlsub);
@@ -102,13 +102,13 @@ auth.post("/sms",/*util.isLoggedin,*/async function (req: any, res: Response, ne
         "to":phone
       }
     ]
-  }
+  };
   try {
     veriRep.destroy({
       where: {
         phone: phone
       }
-    })
+    });
     const getToken = await axios({
       url: `https://sens.apigw.ntruss.com/sms/v2/services/${serviceID}/messages`,
       method: "post", // POST method
@@ -117,7 +117,7 @@ auth.post("/sms",/*util.isLoggedin,*/async function (req: any, res: Response, ne
         "x-ncp-apigw-timestamp": timestamp,
         "x-ncp-iam-access-key": process.env.NAVER_KEY,
         "x-ncp-apigw-signature-v2": signature
-       }, // "Content-Type": "application/json"
+      }, // "Content-Type": "application/json"
       data: data
     });
     // console.log(getToken);
@@ -126,7 +126,7 @@ auth.post("/sms",/*util.isLoggedin,*/async function (req: any, res: Response, ne
       phone:phone,
       sendId:tokenData.requestId,
       number:randomNumber
-    })
+    });
     if(tokenData.statusCode == "202")
       return res.json(util.successTrue(tokenData.statusName));
     else return res.status(403).json(util.successFalse(null, tokenData.statusName, null));
@@ -137,7 +137,7 @@ auth.post("/sms",/*util.isLoggedin,*/async function (req: any, res: Response, ne
       where: {
         phone: phone
       }
-    })
+    });
   }
 });
 
@@ -154,14 +154,14 @@ auth.post("/sms/verification",async function (req: any, res: Response, next: Nex
       if(veri){
         if(veri.number == verify){
           const now = Number.parseInt(Date.now().toString());
-          const created = Date.parse(veri.createdAt)
+          const created = Date.parse(veri.createdAt);
           const remainingTime = (now-created)/60000;
           if(remainingTime>3){ //3분
             veriRep.destroy({
               where: {
                 phone: phone
               }
-            })
+            });
             return res.status(403).json(util.successFalse(null, "time expired.", null));
           }
           // console.log(Date.now().toString() - veri.createdAt);
@@ -172,7 +172,7 @@ auth.post("/sms/verification",async function (req: any, res: Response, next: Nex
           }).then((veri)=>{
             if(veri) veri.update({age:25},{where:{id:2}});
             else return res.status(403).json(util.successFalse(null, "error.", null));
-          })
+          });
           return res.json(util.successTrue("matched."));
         }
         else return res.status(403).json(util.successFalse(null, "not matched.", null));
@@ -180,7 +180,7 @@ auth.post("/sms/verification",async function (req: any, res: Response, next: Nex
       else {
         return res.status(403).json(util.successFalse(null, "not matched.", null));
       }
-    })
+    });
   } catch(e){
     console.error(e);
   }

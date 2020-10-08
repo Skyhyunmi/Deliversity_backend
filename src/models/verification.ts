@@ -1,18 +1,18 @@
 import {
-    AllowNull,
-    Unique,
-    Table,
-    Column,
-    Model,
-    PrimaryKey,
-    AutoIncrement,
-    DataType,
-    Comment,
-    Default
-  } from "sequelize-typescript";
+  AllowNull,
+  Unique,
+  Table,
+  Column,
+  Model,
+  PrimaryKey,
+  AutoIncrement,
+  DataType,
+  Comment,
+  Default
+} from "sequelize-typescript";
   
   @Table({ timestamps: true })
-  export default class Verify extends Model<Verify> {
+export default class Verify extends Model<Verify> {
     @PrimaryKey
     @AutoIncrement
     @Column(DataType.BIGINT)
@@ -39,5 +39,5 @@ import {
     @Default(false)
     @Column(DataType.BOOLEAN)
     verified!: boolean;
-  }
+}
   
