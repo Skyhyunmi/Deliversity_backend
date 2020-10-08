@@ -3,10 +3,16 @@ import * as util from "../config/util";
 import jwt from "jsonwebtoken";
 import passport from "passport";
 import { veriRep } from "../models/index";
+// const db = require("../models/index");
+import { db } from "../models/index";
+import Verify from "../models/verification";
+import Email_Verify from "../models/email-verification";
 import * as crypto from "crypto";
 import axios from "axios";
 import urlencode from "urlencode";
 import dotenv from "dotenv";
+import * as nodemailer from "nodemailer";
+import { mainModule } from "process";
 dotenv.config();
 
 function makeSignature(urlsub:string,timestamp:string){
@@ -226,3 +232,38 @@ auth.get('/kakao/callback', function (req, res, next) {
     });
   })(req, res);
 });
+auth.post("/email",async function (req: any, res: Response, next: NextFunction) {
+    const body = req.body;
+    const email = body.email;
+
+    var key_one = crypto.randomBytes(256).toString('hex').substr(100,5);
+    var key_two = crypto.randomBytes(256).toString('base64').substr(50,5);
+    var email_number = key_one + key_two;
+
+    // Use SMTP transport
+    var transporter = nodemailer.createTransport(
+     {
+      service: 'Gmail',
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.MAIL_ID,
+        pass: process.env.MAIL_PW
+      }
+    }
+    );
+
+    var info = await transporter.sendMail({
+      from : '"Deliversity" <${process.env.MAIL_ID}>',
+      to: email,
+      subject:"Deliversity 인증 메일입니다.",
+      html: "<p>아래의 링크를 클릭해주세요><</p>" + "<a href='http://localhost/auth/?email='+email+'&token=abcdefg'>인증하기</a>"
+    });
+    
+    res.status(200).json({
+      status:'Success',
+      code:200,
+      message:'Sent Auth Email',
+    });
+  });
