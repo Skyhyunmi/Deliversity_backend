@@ -157,22 +157,16 @@ auth.post("/sms/verification",async function (req: any, res: Response, next: Nex
           const created = Date.parse(veri.createdAt);
           const remainingTime = (now-created)/60000;
           if(remainingTime>3){ //3분
-            veriRep.destroy({
-              where: {
-                phone: phone
-              }
-            });
+            veri.destroy();
+            // veriRep.destroy({
+            //   where: {
+            //     phone: phone
+            //   }
+            // });
             return res.status(403).json(util.successFalse(null, "time expired.", null));
           }
           // console.log(Date.now().toString() - veri.createdAt);
-          veriRep.findOne({
-            where: {
-              phone: phone
-            }
-          }).then((veri)=>{
-            if(veri) veri.update({age:25},{where:{id:2}});
-            else return res.status(403).json(util.successFalse(null, "error.", null));
-          });
+          veriRep.update({verified:true},{where:{phone:phone}});
           return res.json(util.successTrue("matched."));
         }
         else return res.status(403).json(util.successFalse(null, "not matched.", null));

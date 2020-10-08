@@ -3,6 +3,7 @@ import passportLocal from "passport-local";
 import passportJwt from "passport-jwt";
 import {db} from "../models/index";
 import User from "../models/user";
+import Veri from "../models/verification";
 import * as crypto from "crypto";
 
 import dotenv from "dotenv";
@@ -12,11 +13,33 @@ const LocalStrategy = passportLocal.Strategy;
 const JwtStrategy = passportJwt.Strategy;
 const ExtractJwt = passportJwt.ExtractJwt;
 const userRep  = db.getRepository(User);
+const veriRep  = db.getRepository(Veri);
 
 
-function certify(){
-  return 1;
-}
+async function certify(phone:string){
+  var ret=0;
+  try{
+    await veriRep.findOne({where:{phone:phone}})
+    .then((veri)=>{
+      // console.log(veri);
+      if(veri){
+        if(veri.verified==true){
+          const now = Number.parseInt(Date.now().toString());
+          const created = Date.parse(veri.createdAt);
+          const remainingTime = (now-created)/60000;
+          if(remainingTime>30){ //30분
+            veri.destroy();
+          }
+          else ret=1;
+        }
+      }
+    })
+  }
+  catch(e){
+    console.error(e);
+  }
+  return ret;
+};
 
 export function passportConfig(){
   passport.use(
@@ -42,7 +65,7 @@ export function passportConfig(){
             where: {
               email: data.email
             }
-          }).then(function (user) {
+          }).then(async function (user) {
             if (user) {
               return done(null, false, { message: 'E-mail duplicated.' });
             }
@@ -50,7 +73,23 @@ export function passportConfig(){
             const salt = buffer.toString('base64');
             const key = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512');
             const hashedPw = key.toString('base64');
-            const certified = certify();
+            var certified=await certify(data.phone);
+            // await veriRep.findOne({where:{
+            //   phone:data.phone
+            // }}).then((veri)=>{
+            //   if(veri){
+            //     if(veri.verified) {
+            //       try{
+            //         veri.destroy();
+            //         certified=1;
+            //       }
+            //       catch (e){
+            //         console.error(e);
+            //       }
+            //     }
+            //   }
+            // })
+            if(certified==0) return done(null, false, { message: 'SMS Verification is required.' });
             userRep.create({
               userId: id,
               name: data.name,
