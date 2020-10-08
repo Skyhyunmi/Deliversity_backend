@@ -85,6 +85,14 @@ export default class User extends Model<User> {
   @Column(DataType.STRING)
   detailAddress!:string;
 
+  @AllowNull(true)
+  @Column(DataType.STRING)
+  googleOAuth!:string;
+
+  @AllowNull(true)
+  @Column(DataType.STRING)
+  kakaoOAuth!:string;
+
   @CreatedAt
   createdAt!: Date;
 

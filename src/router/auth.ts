@@ -4,14 +4,33 @@ import jwt from "jsonwebtoken";
 import passport from "passport";
 // const db = require("../models/index");
 import { db } from "../models/index";
-import User from "../models/user";
-import dotenv from "dotenv";
-import axios from "axios";
+import Verify from "../models/verification";
 import * as crypto from "crypto";
-import * as urlencode from "urlencode";
+import axios from "axios";
+import dotenv from "dotenv";
+import urlencode from "urlencode";
 dotenv.config();
 
-const userRep  = db.getRepository(User);
+const veriRep  = db.getRepository(Verify);
+
+function makeSignature(urlsub:string,timestamp:string){
+  const space = " ";          	 // one space
+  const newLine = "\n";           // new line
+  const method = "POST";          // method
+  // const timestamp = Date.now().toString();
+  let hmac=crypto.createHmac('sha256',process.env.NAVER_SECRET as string);
+  let mes = [];
+  mes.push(method);
+  mes.push(space);
+  mes.push(urlsub);
+  mes.push(newLine);
+  mes.push(timestamp);
+  mes.push(newLine);
+  mes.push(process.env.NAVER_KEY);
+  const signature = hmac.update(mes.join('')).digest('base64');
+  return signature;
+}
+
 
 export const auth = Router();
 auth.post("/signup", function (req: any, res: Response, next: NextFunction) {
@@ -63,32 +82,21 @@ auth.post("/login", function (req: any, res: Response, next: NextFunction) {
   })(req, res, next);
 });
 
-auth.post("/sms",async function (req: any, res: Response, next: NextFunction) {
+auth.post("/sms",/*util.isLoggedin,*/async function (req: any, res: Response, next: NextFunction) {
   const body = req.body;
   const phone = body.phone;
   const sendFrom = process.env.SEND_FROM;
-  const space = " ";          	 // one space
-  const newLine = "\n";           // new line
-  const method = "POST";          // method
   const serviceID=urlencode.encode(process.env.NAVER_SMS_SERVICE_ID as string);
-  const urlsub = `/sms/v2/services/${serviceID}/messages`;
   const timestamp = Date.now().toString();
-  let hmac=crypto.createHmac('sha256',process.env.NAVER_SECRET as string);
-  let mes = [];
-  mes.push(method);
-  mes.push(space);
-  mes.push(urlsub);
-  mes.push(newLine);
-  mes.push(timestamp);
-  mes.push(newLine);
-  mes.push(process.env.NAVER_KEY);
-  const signature = hmac.update(mes.join('')).digest('base64');
+  const urlsub = `/sms/v2/services/${serviceID}/messages`;
+  const signature=makeSignature(urlsub,timestamp);
+  const randomNumber = Math.floor(Math.random() * (999999 - 100000)) + 100000;
   const data={
     "type":"SMS",
     "contentType":"COMM",
     "countryCode":"82",
     "from":sendFrom,
-    "content":body.comment,
+    "content":`Deliversity 인증번호 ${randomNumber} 입니다.`,
     "messages":[
       {
         "to":phone
@@ -96,6 +104,11 @@ auth.post("/sms",async function (req: any, res: Response, next: NextFunction) {
     ]
   }
   try {
+    veriRep.destroy({
+      where: {
+        phone: phone
+      }
+    })
     const getToken = await axios({
       url: `https://sens.apigw.ntruss.com/sms/v2/services/${serviceID}/messages`,
       method: "post", // POST method
@@ -107,13 +120,68 @@ auth.post("/sms",async function (req: any, res: Response, next: NextFunction) {
        }, // "Content-Type": "application/json"
       data: data
     });
-    console.log(getToken);
+    // console.log(getToken);
     const tokenData = getToken.data;
+    veriRep.create({
+      phone:phone,
+      sendId:tokenData.requestId,
+      number:randomNumber
+    })
     if(tokenData.statusCode == "202")
       return res.json(util.successTrue(tokenData.statusName));
     else return res.status(403).json(util.successFalse(null, tokenData.statusName, null));
   }
   catch(e){
+    console.error(e);
+    veriRep.destroy({
+      where: {
+        phone: phone
+      }
+    })
+  }
+});
+
+auth.post("/sms/verification",async function (req: any, res: Response, next: NextFunction) {
+  const body =req.body;
+  const verify=body.verify;
+  const phone=body.phone;
+  try {
+    veriRep.findOne({
+      where: {
+        phone: phone
+      }
+    }).then(function (veri) {
+      if(veri){
+        if(veri.number == verify){
+          const now = Number.parseInt(Date.now().toString());
+          const created = Date.parse(veri.createdAt)
+          const remainingTime = (now-created)/60000;
+          if(remainingTime>3){ //3분
+            veriRep.destroy({
+              where: {
+                phone: phone
+              }
+            })
+            return res.status(403).json(util.successFalse(null, "time expired.", null));
+          }
+          // console.log(Date.now().toString() - veri.createdAt);
+          veriRep.findOne({
+            where: {
+              phone: phone
+            }
+          }).then((veri)=>{
+            if(veri) veri.update({age:25},{where:{id:2}});
+            else return res.status(403).json(util.successFalse(null, "error.", null));
+          })
+          return res.json(util.successTrue("matched."));
+        }
+        else return res.status(403).json(util.successFalse(null, "not matched.", null));
+      }
+      else {
+        return res.status(403).json(util.successFalse(null, "not matched.", null));
+      }
+    })
+  } catch(e){
     console.error(e);
   }
 });

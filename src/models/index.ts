@@ -1,5 +1,6 @@
 import { Sequelize } from "sequelize-typescript";
 import User from "./user";
+import Verify from "./verification";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -21,4 +22,5 @@ export const db = new Sequelize(
 );
 
 db.addModels([User]);
+db.addModels([Verify]);
 //https://stackoverflow.com/questions/60014874/how-to-use-typescript-with-sequelize
