@@ -11,8 +11,8 @@ notifications:
     recipients:
       - codikh@ajou.ac.kr
       - psb9663@ajou.ac.kr
-      on_success: change
-      on_failure: always
+    on_success: change
+    on_failure: always
 
   slack:
     on_success: always
