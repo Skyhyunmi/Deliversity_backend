@@ -32,7 +32,7 @@ auth.post("/signup", function (req: any, res: Response, next: NextFunction) {
   passport.authenticate("signup", function (
     err: any,
     user: any,
-    info: { message: string }
+    info: any
   ) {
     if (err) {
       return res.status(403).json(util.successFalse(err, "", null));
@@ -51,9 +51,9 @@ auth.post("/login", function (req: any, res: Response, next: NextFunction) {
   passport.authenticate("login", { session: false }, function (
     err: any,
     user: any,
-    info: { message: string }
+    info: any
   ) {
-    if (info)
+    if (info==={})
       return res.status(403).json(util.successFalse(null, info.message, null));
     if (err || !user) {
       return res
@@ -166,3 +166,38 @@ auth.post("/sms/verification",async function (req: any, res: Response, next: Nex
     console.error(e);
   }
 });
+
+auth.get('/google', passport.authenticate('google', {
+  scope: ["profile", "email"]
+}));
+
+auth.get('/google/callback', function(req: any, res: Response, next: NextFunction) {
+  passport.authenticate('google',function (
+    err: any,
+    user: any,
+    info: any
+  ){
+    if (info==={}){
+      return res.status(403).json(util.successFalse(null, info.message, null));
+    }
+    if (err || !user) {
+      return res
+        .status(403)
+        .json(util.successFalse(null, "ID or PW is not valid", user));
+    }
+    req.logIn(user, { session: false }, function (err: any) {
+      if (err) return res.status(403).json(util.successFalse(err, "", null));
+      const payload = {
+        id: user.userId,
+        name: user.name,
+        admin: user.admin,
+        loggedAt: new Date(),
+      };
+      user.authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
+        expiresIn: 60 * 90,
+      });
+      res.json({ token: user.authToken, admin: user.admin });
+    });
+  })(req,res,next);
+  }
+);

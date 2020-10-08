@@ -1,11 +1,13 @@
 import passport from "passport";
 import passportLocal from "passport-local";
 import passportJwt from "passport-jwt";
+import * as google from "passport-google-oauth20";
 import {userRep,veriRep} from "../models/index";
 import * as crypto from "crypto";
 import dotenv from "dotenv";
+import { doesNotMatch } from "assert";
 dotenv.config();
-
+const GoogleStrategy = google.Strategy;
 const LocalStrategy = passportLocal.Strategy;
 const JwtStrategy = passportJwt.Strategy;
 const ExtractJwt = passportJwt.ExtractJwt;
@@ -131,6 +133,35 @@ export function passportConfig(){
       }
     }
     )
+  );
+
+  passport.serializeUser(function(user, done) {
+    done(null, user);
+  });
+  
+  passport.deserializeUser(function(obj, done) {
+    done(null, obj);
+  });
+
+  passport.use(
+    new GoogleStrategy({
+      clientID:process.env.GOOGLE_KEY as string,
+      clientSecret:process.env.GOOGLE_SECRET as string,
+      callbackURL:"/api/v1/auth/google/callback"
+    },
+    function(accessToken,refreshToken,profile,done){
+      userRep.findOne({
+        where:{
+          googleOAuth:profile.id
+        }
+      }).then((user)=>{
+        if(user){
+          console.log("!");
+          done("",user);
+        }
+        else done("", false, { message: '일치하는 회원 없음.' });
+      });
+    })
   );
 
   passport.use(new JwtStrategy(
