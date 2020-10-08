@@ -24,3 +24,5 @@ export const db = new Sequelize(
 db.addModels([User]);
 db.addModels([Verify]);
 //https://stackoverflow.com/questions/60014874/how-to-use-typescript-with-sequelize
+export const userRep  = db.getRepository(User);
+export const veriRep  = db.getRepository(Verify);

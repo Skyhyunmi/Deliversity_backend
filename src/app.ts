@@ -50,5 +50,5 @@ app.use(function (req: any, res: Response, next: NextFunction) {
 });
 
 app.listen(process.env.WEB_PORT, () => {
-  console.log("start");
+  console.log("Server Started");
 });

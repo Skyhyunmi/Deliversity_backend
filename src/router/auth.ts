@@ -2,22 +2,17 @@ import { NextFunction, Response, Router } from "express";
 import * as util from "../config/util";
 import jwt from "jsonwebtoken";
 import passport from "passport";
-// const db = require("../models/index");
-import { db } from "../models/index";
-import Verify from "../models/verification";
+import { veriRep } from "../models/index";
 import * as crypto from "crypto";
 import axios from "axios";
-import dotenv from "dotenv";
 import urlencode from "urlencode";
+import dotenv from "dotenv";
 dotenv.config();
 
-const veriRep  = db.getRepository(Verify);
-
 function makeSignature(urlsub:string,timestamp:string){
-  const space = " ";          	 // one space
-  const newLine = "\n";           // new line
-  const method = "POST";          // method
-  // const timestamp = Date.now().toString();
+  const space = " ";
+  const newLine = "\n";
+  const method = "POST";
   const hmac=crypto.createHmac('sha256',process.env.NAVER_SECRET as string);
   const mes = [];
   mes.push(method);
@@ -30,7 +25,6 @@ function makeSignature(urlsub:string,timestamp:string){
   const signature = hmac.update(mes.join('')).digest('base64');
   return signature;
 }
-
 
 export const auth = Router();
 auth.post("/signup", function (req: any, res: Response, next: NextFunction) {
@@ -157,15 +151,8 @@ auth.post("/sms/verification",async function (req: any, res: Response, next: Nex
           const created = Date.parse(veri.createdAt);
           const remainingTime = (now-created)/60000;
           if(remainingTime>3){ //3분
-            veri.destroy();
-            // veriRep.destroy({
-            //   where: {
-            //     phone: phone
-            //   }
-            // });
             return res.status(403).json(util.successFalse(null, "time expired.", null));
           }
-          // console.log(Date.now().toString() - veri.createdAt);
           veriRep.update({verified:true},{where:{phone:phone}});
           return res.json(util.successTrue("matched."));
         }

@@ -1,19 +1,14 @@
 import passport from "passport";
 import passportLocal from "passport-local";
 import passportJwt from "passport-jwt";
-import {db} from "../models/index";
-import User from "../models/user";
-import Veri from "../models/verification";
+import {userRep,veriRep} from "../models/index";
 import * as crypto from "crypto";
-
 import dotenv from "dotenv";
 dotenv.config();
 
 const LocalStrategy = passportLocal.Strategy;
 const JwtStrategy = passportJwt.Strategy;
 const ExtractJwt = passportJwt.ExtractJwt;
-const userRep  = db.getRepository(User);
-const veriRep  = db.getRepository(Veri);
 
 
 async function certify(phone:string){
