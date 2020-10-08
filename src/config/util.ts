@@ -1,7 +1,5 @@
 import { Response, Request, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-// const db = require("../models/index");
-// import { db } from "../models/index";
 import dotenv from "dotenv";
 dotenv.config();
 
