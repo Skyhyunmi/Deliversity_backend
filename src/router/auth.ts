@@ -7,6 +7,8 @@ import { db } from "../models/index";
 import User from "../models/user";
 import dotenv from "dotenv";
 import axios from "axios";
+import * as crypto from "crypto";
+import * as urlencode from "urlencode";
 dotenv.config();
 
 const userRep  = db.getRepository(User);
@@ -61,30 +63,57 @@ auth.post("/login", function (req: any, res: Response, next: NextFunction) {
   })(req, res, next);
 });
 
-auth.post("/certifications", async (request, response) => {
-  const { imp_uid } = request.body; // request의 body에서 imp_uid 추출
-  try {
-    // 인증 토큰 발급 받기
-    const getToken = await axios({
-      url: "https://api.iamport.kr/users/getToken",
-      method: "post", // POST method
-      headers: { "Content-Type": "application/json" }, // "Content-Type": "application/json"
-      data: {
-        imp_key: process.env.IMP_KEY, // REST API키
-        imp_secret: process.env.IMP_SECRET // REST API Secret
+auth.post("/sms",async function (req: any, res: Response, next: NextFunction) {
+  const body = req.body;
+  const phone = body.phone;
+  const sendFrom = process.env.SEND_FROM;
+  const space = " ";          	 // one space
+  const newLine = "\n";           // new line
+  const method = "POST";          // method
+  const serviceID=urlencode.encode(process.env.NAVER_SMS_SERVICE_ID as string);
+  const urlsub = `/sms/v2/services/${serviceID}/messages`;
+  const timestamp = Date.now().toString();
+  let hmac=crypto.createHmac('sha256',process.env.NAVER_SECRET as string);
+  let mes = [];
+  mes.push(method);
+  mes.push(space);
+  mes.push(urlsub);
+  mes.push(newLine);
+  mes.push(timestamp);
+  mes.push(newLine);
+  mes.push(process.env.NAVER_KEY);
+  const signature = hmac.update(mes.join('')).digest('base64');
+  const data={
+    "type":"SMS",
+    "contentType":"COMM",
+    "countryCode":"82",
+    "from":sendFrom,
+    "content":body.comment,
+    "messages":[
+      {
+        "to":phone
       }
+    ]
+  }
+  try {
+    const getToken = await axios({
+      url: `https://sens.apigw.ntruss.com/sms/v2/services/${serviceID}/messages`,
+      method: "post", // POST method
+      headers: { 
+        "Content-Type": "application/json; charset=utf-8",
+        "x-ncp-apigw-timestamp": timestamp,
+        "x-ncp-iam-access-key": process.env.NAVER_KEY,
+        "x-ncp-apigw-signature-v2": signature
+       }, // "Content-Type": "application/json"
+      data: data
     });
-    const { access_token } = getToken.data.response; // 인증 토큰
-    
-    // imp_uid로 인증 정보 조회
-    const getCertifications = await axios({
-      url: 'https://api.iamport.kr/certifications/'+imp_uid, // imp_uid 전달
-      method: "get", // GET method
-      headers: { "Authorization": access_token } // 인증 토큰 Authorization header에 추가
-    });
-    const certificationsInfo = getCertifications.data.response; // 조회한 인증 정보
-    console.log(certificationsInfo);
-  } catch(e) {
+    console.log(getToken);
+    const tokenData = getToken.data;
+    if(tokenData.statusCode == "202")
+      return res.json(util.successTrue(tokenData.statusName));
+    else return res.status(403).json(util.successFalse(null, tokenData.statusName, null));
+  }
+  catch(e){
     console.error(e);
   }
 });
