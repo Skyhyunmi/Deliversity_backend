@@ -17,7 +17,7 @@ dotenv.config();
 // authenticate -> Open connection
 // sync -> make table if not exist
 db
-  // .sync() //make table if not exist
+  //.sync() //make table if not exist
   .authenticate() //Open connection
   .then(() => console.log("DB connected."))
   .catch(() => {

@@ -27,6 +27,7 @@ import {
       @Comment("Email Verified Code")
       @AllowNull(false)
       @Column(DataType.STRING)
+      // 이메일 인증 번호(발급)
       email_number!: string;
 
       @Comment("Email Verified Check")
