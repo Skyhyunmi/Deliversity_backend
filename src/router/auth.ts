@@ -69,7 +69,7 @@ auth.post("/login", function (req: any, res: Response, next: NextFunction) {
         loggedAt: new Date(),
       };
       user.authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
-        expiresIn: 60 * 90,
+        expiresIn: '7d',
       });
       res.json({ token: user.authToken, admin: user.admin });
     });
@@ -177,13 +177,14 @@ auth.get('/google/callback', function(req: any, res: Response, next: NextFunctio
     user: any,
     info: any
   ){
-    if (info==={}){
-      return res.status(403).json(util.successFalse(null, info.message, null));
+    if (info){
+      if(info.message)
+        return res.status(403).json(util.successFalse(null, info.message, info.auth));
     }
     if (err || !user) {
       return res
         .status(403)
-        .json(util.successFalse(null, "ID or PW is not valid", user));
+        .json(util.successFalse(null, "ID or PW is not valid", info.message));
     }
     req.logIn(user, { session: false }, function (err: any) {
       if (err) return res.status(403).json(util.successFalse(err, "", null));

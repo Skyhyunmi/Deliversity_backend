@@ -5,7 +5,7 @@ import * as google from "passport-google-oauth20";
 import {userRep,veriRep} from "../models/index";
 import * as crypto from "crypto";
 import dotenv from "dotenv";
-import { doesNotMatch } from "assert";
+import axios from "axios";
 dotenv.config();
 const GoogleStrategy = google.Strategy;
 const LocalStrategy = passportLocal.Strategy;
@@ -17,19 +17,19 @@ async function certify(phone:string){
   let ret=0;
   try{
     await veriRep.findOne({where:{phone:phone}})
-      .then((veri)=>{
-        if(veri){
-          if(veri.verified==true){
-            const now = Number.parseInt(Date.now().toString());
-            const created = Date.parse(veri.createdAt);
-            const remainingTime = (now-created)/60000;
-            if(remainingTime>30){ //30분
-              veri.destroy();
-            }
-            else ret=1;
+    .then((veri)=>{
+      if(veri){
+        if(veri.verified==true){
+          const now = Number.parseInt(Date.now().toString());
+          const created = Date.parse(veri.createdAt);
+          const remainingTime = (now-created)/60000;
+          if(remainingTime>30){ //30분
+            veri.destroy();
           }
+          else ret=1;
         }
-      });
+      }
+    });
   }
   catch(e){
     console.error(e);
@@ -84,7 +84,9 @@ export function passportConfig(){
               password: hashedPw,
               createdAt: new Date(),
               updatedAt: null,
-              certified: certified
+              certified: certified,
+              googleOAuth:data.googleOAuth?data.googleOAuth:null,
+              kakaoOAuth:data.kakaoOAuth?data.kakaoOAuth:null,
             }).then(function (result) {
               done(null, result);
             }).catch(function (err) {
@@ -149,17 +151,22 @@ export function passportConfig(){
       clientSecret:process.env.GOOGLE_SECRET as string,
       callbackURL:"/api/v1/auth/google/callback"
     },
-    function(accessToken,refreshToken,profile,done){
+    async function(accessToken,refreshToken,profile,done){
+      const token = await axios({
+        url: "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token="+accessToken,
+        method: "get"
+      });
+      // if(token) console.log(token);
+      // console.log(profile);
       userRep.findOne({
         where:{
           googleOAuth:profile.id
         }
       }).then((user)=>{
         if(user){
-          console.log("!");
           done("",user);
         }
-        else done("", false, { message: '일치하는 회원 없음.' });
+        else done("", false, {message: '일치하는 회원 없음.', auth:profile.id});
       });
     })
   );
