@@ -134,7 +134,7 @@ auth.post("/sms",/*util.isLoggedin,*/async function (req: any, res: Response, ne
     else return res.status(403).json(util.successFalse(null, tokenData.statusName, null));
   }
   catch (e) {
-    console.error(e);
+    //console.error(e);
     veriRep.destroy({
       where: {
         phone: phone
@@ -171,7 +171,7 @@ auth.post("/sms/verification", async function (req: any, res: Response, next: Ne
       }
     });
   } catch (e) {
-    console.error(e);
+    //console.error(e);
   }
 });
 
@@ -216,7 +216,7 @@ auth.get('/kakao', passport.authenticate('kakao'));
 
 auth.get('/kakao/callback', function (req, res, next) {
   passport.authenticate('kakao', function (err, user) {
-    console.log('passport.authenticate(kakao)실행');
+    //console.log('passport.authenticate(kakao)실행');
     // if (!user) { return res.redirect('http://localhost:3000/login'); }
     req.logIn(user, function (err) {
 
@@ -283,7 +283,7 @@ auth.post("/email",/*util.isLoggedin,*/async function (req: any, res: Response, 
     });
   }
   catch (e) {
-    console.error(e);
+    //console.error(e);
     email_veriRep.destroy({
       where: {
         email: email
@@ -295,12 +295,10 @@ auth.post("/email",/*util.isLoggedin,*/async function (req: any, res: Response, 
 
 auth.get('/email/verification', async (req, res, next: NextFunction) => {
   const email_number = req.query.email_number as string;
-  console.log("1");
   email_veriRep.findOne({
     where: { email_number: email_number }
   }).then((email_veri) => {
     if (email_veri) {
-      console.log("2");
       email_veriRep.update({
         email_verified: true
       }, {
@@ -313,7 +311,6 @@ auth.get('/email/verification', async (req, res, next: NextFunction) => {
       });
     }
     else {
-      console.log("3");
       res.status(403).json({
         status: 'Fail',
         code: 403,
