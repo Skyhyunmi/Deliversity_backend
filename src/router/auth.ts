@@ -180,6 +180,7 @@ auth.get('/google/callback', function(req: any, res: Response, next: NextFunctio
     if (info){
       if(info.message)
         return res.status(403).json(util.successFalse(null, info.message, info.auth));
+        //회원가입 redirect -> auth 값은 googleOAuth에 넣는다.(프론트에서)
     }
     if (err || !user) {
       return res
@@ -202,3 +203,26 @@ auth.get('/google/callback', function(req: any, res: Response, next: NextFunctio
   })(req,res,next);
 }
 );
+
+auth.get('/kakao', passport.authenticate('kakao'));
+
+auth.get('/kakao/callback', function (req, res, next) {
+  passport.authenticate('kakao', function (err, user) {
+    console.log('passport.authenticate(kakao)실행');
+    // if (!user) { return res.redirect('http://localhost:3000/login'); }
+    req.logIn(user, function (err) { 
+       
+      if (err) return res.status(403).json(util.successFalse(err, "", null));
+      const payload = {
+        id: user.userId,
+        name: user.name,
+        admin: user.admin,
+        loggedAt: new Date(),
+      };
+      user.authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
+        expiresIn: 60 * 90,
+      });
+      res.json({ token: user.authToken, admin: user.admin });      
+    });
+  })(req, res);
+});
