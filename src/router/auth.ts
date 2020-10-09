@@ -15,6 +15,7 @@ import { mainModule } from "process";
 dotenv.config();
 
 const veriRep  = db.getRepository(Verify);
+const email_veriRep = db.getRepository(Email_Verify);
 
 function makeSignature(urlsub:string,timestamp:string){
   const space = " ";          	 // one space
@@ -189,7 +190,7 @@ auth.post("/sms/verification",async function (req: any, res: Response, next: Nex
   }
 });
 
-auth.post("/email",async function (req: any, res: Response, next: NextFunction) {
+auth.post("/email",/*util.isLoggedin,*/async function (req: any, res: Response, next: NextFunction) {
     const body = req.body;
     const email = body.email;
 
@@ -199,7 +200,7 @@ auth.post("/email",async function (req: any, res: Response, next: NextFunction) 
 
     // Use SMTP transport
     var transporter = nodemailer.createTransport(
-     {
+      {
       service: 'Gmail',
       host: 'smtp.gmail.com',
       port: 587,
@@ -211,16 +212,70 @@ auth.post("/email",async function (req: any, res: Response, next: NextFunction) 
     }
     );
 
+     try {
+       email_veriRep.destroy({
+         where: {
+           email : email
+         }
+       });
+      
+    var url = 'http://'+req.get('host')+'/api/v1/auth/email/verification'+'?email_number='+email_number;
     var info = await transporter.sendMail({
       from : '"Deliversity" <${process.env.MAIL_ID}>',
       to: email,
       subject:"Deliversity 인증 메일입니다.",
-      html: "<p>아래의 링크를 클릭해주세요><</p>" + "<a href='http://localhost/auth/?email='+email+'&token=abcdefg'>인증하기</a>"
+      html: "<h3>이메일 인증을 위해 URL을 클릭해주세요.</h3><br>"+url
     });
-    
+
+    email_veriRep.create({
+      email:email,
+      email_number:email_number
+    });
+
     res.status(200).json({
       status:'Success',
       code:200,
       message:'Sent Auth Email',
     });
-  });
+  }
+  catch(e){
+    console.error(e);
+    email_veriRep.destroy({
+      where: {
+        email : email
+      }
+    });
+  }
+}
+);
+
+auth.get('/email/verification',async (req, res, next: NextFunction) => {  
+  const email_number = req.query.email_number as string;
+  console.log("1");
+    email_veriRep.findOne({
+      where:{email_number:email_number}
+    }).then((email_veri) => {
+        if (email_veri) {
+          console.log("2");
+          email_veriRep.update({
+            email_verified: true
+          }, {
+            where: { email:email_veri.email }
+          });
+          res.status(204).json({
+            status: 'Success',
+            code: 204,
+            message: 'Matched',
+          });
+        }
+        else { console.log("3");
+          res.status(403).json({
+            status: 'Fail',
+            code: 403,
+            message: 'Not Matched',
+          });
+        }
+      }
+    )
+    }
+)
