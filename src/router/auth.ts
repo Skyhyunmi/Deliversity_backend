@@ -299,6 +299,13 @@ auth.get('/email/verification', async (req, res, next: NextFunction) => {
     where: { email_number: email_number }
   }).then((email_veri) => {
     if (email_veri) {
+      const now = Number.parseInt(Date.now().toString());
+      const created = Date.parse(email_veri.createdAt);
+      const remainingTime = (now - created) / 60000;
+      if (remainingTime > 3) {
+        res.json({ string: "time expired" });
+        email_veri.destroy();
+      }
       email_veriRep.update({
         email_verified: true
       }, {
