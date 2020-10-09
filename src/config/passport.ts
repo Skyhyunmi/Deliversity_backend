@@ -19,19 +19,20 @@ async function certify(phone:string){
   let ret=0;
   try{
     await veriRep.findOne({where:{phone:phone}})
-    .then((veri)=>{
-      if(veri){
-        if(veri.verified==true){
-          const now = Number.parseInt(Date.now().toString());
-          const created = Date.parse(veri.createdAt);
-          const remainingTime = (now-created)/60000;
-          if(remainingTime>30){ //30분
-            veri.destroy();
+      .then((veri)=>{
+        if(veri){
+          if(veri.verified==true){
+            const now = Number.parseInt(Date.now().toString());
+            const created = Date.parse(veri.createdAt);
+            const remainingTime = (now-created)/60000;
+            if(remainingTime>30){ //30분
+              veri.destroy();
+            }
+            else ret=1;
           }
-          else ret=1;
         }
       }
-    });
+    );
   }
   catch(e){
     console.error(e);
