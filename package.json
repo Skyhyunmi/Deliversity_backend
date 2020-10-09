@@ -20,11 +20,15 @@
     "@types/http-errors": "^1.8.0",
     "@types/jsonwebtoken": "^8.5.0",
 <<<<<<< HEAD
+<<<<<<< HEAD
     "@types/node": "^14.11.2",
     "@types/passport-google-oauth20": "^2.0.4",
 =======
     "@types/node": "^14.11.5",
 >>>>>>> 메일 보내는 함수 완성 - 인증 기능 구현중
+=======
+    "@types/node": "^14.11.5",
+>>>>>>> 3830183c52fda42d9ba33393cb16ff906282f976
     "@types/passport-jwt": "^3.0.3",
     "@types/passport-kakao": "^0.2.0",
     "@types/passport-local": "^1.0.33",
