@@ -1,11 +1,15 @@
 import passport from "passport";
 import passportLocal from "passport-local";
 import passportJwt from "passport-jwt";
+import * as google from "passport-google-oauth20";
+import * as kakao from "passport-kakao";
 import {userRep,veriRep} from "../models/index";
 import * as crypto from "crypto";
 import dotenv from "dotenv";
+import axios from "axios";
 dotenv.config();
-
+const GoogleStrategy = google.Strategy;
+const KakaoStrategy = kakao.Strategy;
 const LocalStrategy = passportLocal.Strategy;
 const JwtStrategy = passportJwt.Strategy;
 const ExtractJwt = passportJwt.ExtractJwt;
@@ -82,7 +86,9 @@ export function passportConfig(){
               password: hashedPw,
               createdAt: new Date(),
               updatedAt: null,
-              certified: certified
+              certified: certified,
+              googleOAuth:data.googleOAuth || null,
+              kakaoOAuth:data.kakaoOAuth || null,
             }).then(function (result) {
               done(null, result);
             }).catch(function (err) {
@@ -131,6 +137,67 @@ export function passportConfig(){
       }
     }
     )
+  );
+
+  passport.serializeUser(function(user, done) {
+    done(null, user);
+  });
+  
+  passport.deserializeUser(function(obj, done) {
+    done(null, obj);
+  });
+
+  passport.use(
+    new GoogleStrategy({
+      clientID:process.env.GOOGLE_KEY as string,
+      clientSecret:process.env.GOOGLE_SECRET as string,
+      callbackURL:"/api/v1/auth/google/callback"
+    },
+    async function(accessToken,refreshToken,profile,done){
+      const token = await axios({
+        url: "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token="+accessToken,
+        method: "get"
+      });
+      // if(token) console.log(token);
+      // console.log(profile);
+      userRep.findOne({
+        where:{
+          googleOAuth:profile.id
+        }
+      }).then((user)=>{
+        if(user){
+          done("",user);
+        }
+        else done("", false, {message: '일치하는 회원 없음.', auth:profile.id});
+      });
+    })
+  );
+
+  passport.use(
+    new KakaoStrategy({
+      clientID:process.env.KAKAO_KEY as string,
+      clientSecret:process.env.KAKAO_SECRET as string,
+      callbackURL:"/api/v1/auth/kakao/callback"
+    },
+    async function(accessToken,refreshToken,profile,done){
+      console.log(profile);
+      // const token = await axios({
+      //   url: "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token="+accessToken,
+      //   method: "get"
+      // });
+      // if(token) console.log(token);
+      // console.log(profile);
+      userRep.findOne({
+        where:{
+          kakaoOAuth:profile.id
+        }
+      }).then((user)=>{
+        if(user){
+          done("",user);
+        }
+        else done("", false, {message: '일치하는 회원 없음.', auth:profile.id});
+      });
+    })
   );
 
   passport.use(new JwtStrategy(
