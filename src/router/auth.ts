@@ -196,7 +196,7 @@ auth.get('/google/callback', function(req: any, res: Response, next: NextFunctio
         loggedAt: new Date(),
       };
       user.authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
-        expiresIn: 60 * 90,
+        expiresIn: '7d',
       });
       res.json({ token: user.authToken, admin: user.admin });
     });
@@ -220,7 +220,7 @@ auth.get('/kakao/callback', function (req, res, next) {
         loggedAt: new Date(),
       };
       user.authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
-        expiresIn: 60 * 90,
+        expiresIn: '7d',
       });
       res.json({ token: user.authToken, admin: user.admin });      
     });

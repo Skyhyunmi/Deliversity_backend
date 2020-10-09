@@ -87,8 +87,8 @@ export function passportConfig(){
               createdAt: new Date(),
               updatedAt: null,
               certified: certified,
-              googleOAuth:data.googleOAuth?data.googleOAuth:null,
-              kakaoOAuth:data.kakaoOAuth?data.kakaoOAuth:null,
+              googleOAuth:data.googleOAuth || null,
+              kakaoOAuth:data.kakaoOAuth || null,
             }).then(function (result) {
               done(null, result);
             }).catch(function (err) {
