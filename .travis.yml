@@ -6,6 +6,9 @@ install:
 script:
 - npm run lint
 - npm test
+cache:
+directories:
+  - node_modules
 notifications:
   email: 
     recipients:

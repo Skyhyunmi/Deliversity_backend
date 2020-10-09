@@ -31,8 +31,7 @@ async function certify(phone:string){
             else ret=1;
           }
         }
-      }
-    );
+      });
   }
   catch(e){
     console.error(e);
