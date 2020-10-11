@@ -25,7 +25,9 @@ echo "현재 구동 중인 애플리케이션 pid: $CURRENT_PID"
 
 if [ -z "$CURRENT_PID" ]; then
    echo "> 현재 구동 중인 애플리케이션이 없으므로 종료하지 않습니다."
-   pm2 start dist/app.js
+   pm2 start dist/app.js --name "server"
+else
+   pm2 reload server
 fi
 
 echo "> 새 어플리케이션 배포"
