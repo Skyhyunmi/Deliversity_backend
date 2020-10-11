@@ -12,10 +12,9 @@ directories:
 before_deploy:
   - rm -rf node_modules
   - mkdir -p ../deploy
-  - mkdir -p deploy
   - cp -r * ../deploy
-  - ls ../deploy
-  - mv ../deploy deploy
+  - mkdir deploy
+  - cp -r ../deploy/ deploy
 
 deploy:
   - provider: s3
