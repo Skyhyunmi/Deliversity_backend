@@ -9,9 +9,6 @@ script:
 cache:
 directories:
   - node_modules
-branches: 
-  only:
-    docker
 before_deploy:
   - rm -rf node_modules
   - mkdir -p ../deploy
