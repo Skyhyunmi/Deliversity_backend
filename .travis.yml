@@ -11,10 +11,15 @@ directories:
   - node_modules
 before_deploy:
   - rm -rf node_modules
-  - mkdir -p ../deploy
-  - cp -r * ../deploy
-  - mkdir deploy
-  - cp -r ../deploy/ deploy
+  - mkdir -p before_deploy
+  - cp deploy.sh before_deploy
+  - cp appspec.yml before_deploy
+  - cp package.json before_deploy
+  - cp tsconfig.json before_deploy
+  - cp -r src/ before_deploy/src
+  - cd before_deploy
+  - mv . ../deploy/
+
 
 deploy:
   - provider: s3
