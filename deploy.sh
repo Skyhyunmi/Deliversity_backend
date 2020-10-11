@@ -7,6 +7,8 @@ echo "> Build 파일 복사"
 
 cp -r $REPOSITORY/zip/* $REPOSITORY/
 
+rm -rf zip
+
 cd $REPOSITORY/
 
 npm i
