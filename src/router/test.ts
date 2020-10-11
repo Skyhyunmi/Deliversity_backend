@@ -5,5 +5,5 @@ dotenv.config();
 export const test = Router();
 
 test.get("/hello", (req: Request, res: Response) => {
-  res.json({ string: "hello" });
+  res.json({ string: "hello pm2!" });
 });
