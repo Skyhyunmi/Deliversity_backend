@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node dist/app.js",
     "dev": "nodemon src/app.ts",
-    "build": "tsc -rootDir . -p .",
+    "build": "tsc -p .",
     "lint": "eslint src/**/*.ts"
   },
   "keywords": [],

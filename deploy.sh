@@ -1,15 +1,13 @@
 #!/bin/bash
 
 REPOSITORY=/home/ubuntu/app/step2
-PROJECT_NAME=pm2
+PROJECT_NAME=app.js
 
 echo "> Build 파일 복사"
 
-cp $REPOSITORY/zip/* $REPOSITORY/
+cp -r $REPOSITORY/zip/* $REPOSITORY/
 
 cd $REPOSITORY/
-
-npm prune
 
 npm i
 
