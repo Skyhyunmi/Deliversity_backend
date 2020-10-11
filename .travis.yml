@@ -22,7 +22,7 @@ before_deploy:
   - cd before_deploy
   - ls -al
   - cp -r * ../deploy/
-
+  - cd ..
 
 deploy:
   - provider: s3
