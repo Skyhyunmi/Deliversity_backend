@@ -20,9 +20,9 @@ before_deploy:
   - cp -r src/ before_deploy/src
   - mkdir -p deploy
   - cd before_deploy
-  - ls -al
-  - cp -r * ../deploy/
+  - zip -r before_deploy *
   - cd ..
+  - mv before_deploy/before_deploy.zip deploy/server.zip
 
 deploy:
   - provider: s3

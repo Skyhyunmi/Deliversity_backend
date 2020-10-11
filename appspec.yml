@@ -1,17 +1,17 @@
 version: 0.0
 os : linux
 files :
- - source : /
-   destination: /home/ubuntu/app/step2/zip/
-   overwrite : yes
+  - source : /
+    destination: /home/ubuntu/app/step2/zip/
+    overwrite : yes
 permissions:
-- object: /
+  - object: /
     pattern: "**"
     owner: ubuntu
     group: ubuntu
 
 hooks:
-AfterInstall:
+  AfterInstall:
     - location : deploy.sh
-    timeout: 60
-    runas: ubuntu
+      timeout: 60
+      runas: ubuntu
