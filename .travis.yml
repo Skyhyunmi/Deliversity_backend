@@ -9,6 +9,35 @@ script:
 cache:
 directories:
   - node_modules
+before_deploy:
+  - zip -r server ./*
+  - mkdir -p deploy
+  - mv server.zip deploy/server.zip
+deploy:
+  - provider: s3
+    access_key_id: $AWS_ACCESS_KEY
+    secret_access_key: $AWS_SECRET_KEY
+  
+    bucket: $AWS_BUCKET
+    region: ap-northeast-2
+    skip_cleanup: true
+    acl: private
+    local_dir: deploy
+    wait_until_deployed : true
+
+  - provider: codedeploy
+    access_key_id: $AWS_ACCESS_KEY
+    secret_access_key: $AWS_SECRET_KEY
+
+    bucket: $AWS_BUCKET
+    key : server.zip
+
+    bundle_type : zip
+    application : deliversity_backend
+
+    deployment_group : deliversity_backend_group
+    region: ap-northeast-2
+    wait-until-deployed : true
 notifications:
   email: 
     recipients:
