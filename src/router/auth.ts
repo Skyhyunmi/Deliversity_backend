@@ -246,8 +246,8 @@ auth.post("/email",/*util.isLoggedin,*/async function (req: any, res: Response, 
     {
       service: 'Gmail',
       host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
+      port: 465,
+      secure: true,
       auth: {
         user: process.env.MAIL_ID,
         pass: process.env.MAIL_PW
