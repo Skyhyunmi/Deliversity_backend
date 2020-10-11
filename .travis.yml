@@ -10,6 +10,7 @@ cache:
 directories:
   - node_modules
 before_deploy:
+  - ls -al
   - rm -rf node_modules
   - mkdir -p before_deploy
   - cp deploy.sh before_deploy
@@ -17,8 +18,10 @@ before_deploy:
   - cp package.json before_deploy
   - cp tsconfig.json before_deploy
   - cp -r src/ before_deploy/src
+  - mkdir -p deploy
   - cd before_deploy
-  - mv * ../deploy/
+  - ls -al
+  - cp -r * ../deploy/
 
 
 deploy:
