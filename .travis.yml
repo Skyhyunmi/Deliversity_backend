@@ -9,10 +9,14 @@ script:
 cache:
 directories:
   - node_modules
+branches: 
+  only:
+    docker
 before_deploy:
   - rm -rf node_modules
-  - mkdir -p deploy
-  - cp -r * deploy
+  - mkdir -p ../deploy
+  - cp -r * ../deploy
+  - mv ../deploy deploy
 
 deploy:
   - provider: s3
