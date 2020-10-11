@@ -18,7 +18,7 @@ before_deploy:
   - cp tsconfig.json before_deploy
   - cp -r src/ before_deploy/src
   - cd before_deploy
-  - mv . ../deploy/
+  - mv * ../deploy/
 
 
 deploy:
