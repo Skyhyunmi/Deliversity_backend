@@ -12,7 +12,6 @@ import axios from "axios";
 import urlencode from "urlencode";
 import dotenv from "dotenv";
 import * as nodemailer from "nodemailer";
-import { mainModule } from "process";
 dotenv.config();
 
 const email_veriRep = db.getRepository(Email_Verify);
@@ -83,7 +82,7 @@ auth.post("/login", function (req: any, res: Response, next: NextFunction) {
     });
   })(req, res, next);
 });
-
+// 이미 있는 휴대폰번호인지에 대한 확인과정이 필요할듯.
 auth.post("/sms",/*util.isLoggedin,*/async function (req: any, res: Response, next: NextFunction) {
   const body = req.body;
   const phone = body.phone;
