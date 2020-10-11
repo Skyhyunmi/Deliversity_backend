@@ -10,9 +10,10 @@ cache:
 directories:
   - node_modules
 before_deploy:
-  - zip -r server ./*
+  - rm -rf node_modules
   - mkdir -p deploy
-  - mv server.zip deploy/server.zip
+  - cp -r * deploy
+
 deploy:
   - provider: s3
     access_key_id: $AWS_ACCESS_KEY
