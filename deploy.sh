@@ -21,11 +21,11 @@ CURRENT_PID=$(pgrep -fl $PROJECT_NAME | awk '{print $1}')
 
 echo "현재 구동 중인 애플리케이션 pid: $CURRENT_PID"
 
-
+cd dist
 
 if [ -z "$CURRENT_PID" ]; then
    echo "> 현재 구동 중인 애플리케이션이 없으므로 종료하지 않습니다."
-   pm2 start dist/app.js --name "server"
+   pm2 start app.js --name "server"
 else
    pm2 reload server
 fi
