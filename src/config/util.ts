@@ -1,5 +1,6 @@
 import { Response, Request, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -43,7 +44,7 @@ export function isLoggedin(req: any, res: Response, next: NextFunction) {
 
 export function isAdmin(req: any, res: Response, next: NextFunction) {
   if (!req.decoded.admin)
-    res.status(403).json(successFalse(null, "Not a Admin", null));
+    res.status(404);
   else {
     // db.User.findOne({ where: { userId: req.decoded.id, admin: 1 } })
     //   .then(function (user: any) {

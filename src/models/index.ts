@@ -1,8 +1,9 @@
 import { Sequelize } from "sequelize-typescript";
 import User from "./user";
 import Verify from "./verification";
-import dotenv from "dotenv";
 import Email_Verify from "./email-verification";
+
+import dotenv from "dotenv";
 dotenv.config();
 
 export const db = new Sequelize(
@@ -28,3 +29,4 @@ db.addModels([Email_Verify]);
 //https://stackoverflow.com/questions/60014874/how-to-use-typescript-with-sequelize
 export const userRep  = db.getRepository(User);
 export const veriRep  = db.getRepository(Verify);
+export const emailVeriRep  = db.getRepository(Email_Verify);
