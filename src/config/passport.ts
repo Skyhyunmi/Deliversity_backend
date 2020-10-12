@@ -5,9 +5,11 @@ import * as google from "passport-google-oauth20";
 import * as kakao from "passport-kakao";
 import {userRep,veriRep} from "../models/index";
 import * as crypto from "crypto";
-import dotenv from "dotenv";
 import axios from "axios";
+
+import dotenv from "dotenv";
 dotenv.config();
+
 const GoogleStrategy = google.Strategy;
 const KakaoStrategy = kakao.Strategy;
 const LocalStrategy = passportLocal.Strategy;
@@ -154,19 +156,13 @@ export function passportConfig(){
       callbackURL:"/api/v1/auth/google/callback"
     },
     async function(accessToken,refreshToken,profile,done){
-      const token = await axios({
-        url: "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token="+accessToken,
-        method: "get"
-      });
-      // if(token) console.log(token);
-      // console.log(profile);
       userRep.findOne({
         where:{
           googleOAuth:profile.id
         }
       }).then((user)=>{
         if(user){
-          done("",user);
+          done("",user,refreshToken);
         }
         else done("", false, {message: '일치하는 회원 없음.', auth:profile.id});
       });
@@ -180,20 +176,13 @@ export function passportConfig(){
       callbackURL:"/api/v1/auth/kakao/callback"
     },
     async function(accessToken,refreshToken,profile,done){
-      console.log(profile);
-      // const token = await axios({
-      //   url: "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token="+accessToken,
-      //   method: "get"
-      // });
-      // if(token) console.log(token);
-      // console.log(profile);
       userRep.findOne({
         where:{
           kakaoOAuth:profile.id
         }
       }).then((user)=>{
         if(user){
-          done("",user);
+          done("",user,refreshToken);
         }
         else done("", false, {message: '일치하는 회원 없음.', auth:profile.id});
       });

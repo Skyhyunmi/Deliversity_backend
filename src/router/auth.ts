@@ -2,19 +2,16 @@ import { NextFunction, Response, Router } from "express";
 import * as util from "../config/util";
 import jwt from "jsonwebtoken";
 import passport from "passport";
-import { veriRep } from "../models/index";
-// const db = require("../models/index");
-import { db } from "../models/index";
-import Verify from "../models/verification";
-import Email_Verify from "../models/email-verification";
+import { veriRep,emailVeriRep } from "../models/index";
 import * as crypto from "crypto";
 import axios from "axios";
 import urlencode from "urlencode";
+import { transporter } from "../config/mail";
+
 import dotenv from "dotenv";
-import * as nodemailer from "nodemailer";
 dotenv.config();
 
-const email_veriRep = db.getRepository(Email_Verify);
+
 
 function makeSignature(urlsub: string, timestamp: string) {
   const space = " ";
@@ -48,7 +45,7 @@ auth.post("/signup", function (req: any, res: Response, next: NextFunction) {
       return res.status(403).json(util.successFalse(null, info.message, null));
     }
     if (user) {
-      return res.json(user);
+      return res.json(util.successTrue(user));
     }
   })(req, res, next);
 });
@@ -78,7 +75,7 @@ auth.post("/login", function (req: any, res: Response, next: NextFunction) {
       user.authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
         expiresIn: '7d',
       });
-      res.json({ token: user.authToken, admin: user.admin });
+      return res.json(util.successTrue({ token: user.authToken, admin: user.admin }));
     });
   })(req, res, next);
 });
@@ -130,7 +127,7 @@ auth.post("/sms",/*util.isLoggedin,*/async function (req: any, res: Response, ne
     });
     if (tokenData.statusCode == "202")
       return res.json(util.successTrue(tokenData.statusName));
-    else return res.status(403).json(util.successFalse(null, tokenData.statusName, null));
+    return res.status(403).json(util.successFalse(null, tokenData.statusName, null));
   }
   catch (e) {
     //console.error(e);
@@ -158,16 +155,13 @@ auth.post("/sms/verification", async function (req: any, res: Response, next: Ne
           const created = Date.parse(veri.createdAt);
           const remainingTime = (now - created) / 60000;
           if (remainingTime > 3) { //3분
-            return res.status(403).json(util.successFalse(null, "time expired.", null));
+            return res.status(403).json(util.successFalse(null, "Time Expired.", null));
           }
           veriRep.update({ verified: true }, { where: { phone: phone } });
-          return res.json(util.successTrue("matched."));
+          return res.json(util.successTrue("Matched."));
         }
-        else return res.status(403).json(util.successFalse(null, "not matched.", null));
       }
-      else {
-        return res.status(403).json(util.successFalse(null, "not matched.", null));
-      }
+      return res.status(403).json(util.successFalse(null, "Not Matched.", null));
     });
   } catch (e) {
     //console.error(e);
@@ -184,15 +178,10 @@ auth.get('/google/callback', function (req: any, res: Response, next: NextFuncti
     user: any,
     info: any
   ) {
-    if (info) {
-      if (info.message)
-        return res.status(403).json(util.successFalse(null, info.message, info.auth));
-      //회원가입 redirect -> auth 값은 googleOAuth에 넣는다.(프론트에서)
-    }
-    if (err || !user) {
+    if (!user && info) {
       return res
         .status(403)
-        .json(util.successFalse(null, "ID or PW is not valid", info.message));
+        .json(util.successFalse(null, "ID or PW is not valid", info.auth));
     }
     req.logIn(user, { session: false }, function (err: any) {
       if (err) return res.status(403).json(util.successFalse(err, "", null));
@@ -205,7 +194,7 @@ auth.get('/google/callback', function (req: any, res: Response, next: NextFuncti
       user.authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
         expiresIn: '7d',
       });
-      res.json({ token: user.authToken, admin: user.admin });
+      return res.json(util.successTrue({ token: user.authToken, admin: user.admin }));
     });
   })(req, res, next);
 }
@@ -214,11 +203,13 @@ auth.get('/google/callback', function (req: any, res: Response, next: NextFuncti
 auth.get('/kakao', passport.authenticate('kakao'));
 
 auth.get('/kakao/callback', function (req, res, next) {
-  passport.authenticate('kakao', function (err, user) {
-    //console.log('passport.authenticate(kakao)실행');
-    // if (!user) { return res.redirect('http://localhost:3000/login'); }
+  passport.authenticate('kakao', function (err, user, info) {
+    if (!user && info) {
+      return res
+        .status(403)
+        .json(util.successFalse(null, "ID or PW is not valid", info.auth));
+    }
     req.logIn(user, function (err) {
-
       if (err) return res.status(403).json(util.successFalse(err, "", null));
       const payload = {
         id: user.userId,
@@ -229,10 +220,11 @@ auth.get('/kakao/callback', function (req, res, next) {
       user.authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
         expiresIn: '7d',
       });
-      res.json({ token: user.authToken, admin: user.admin });
+      return res.json(util.successTrue({ token: user.authToken, admin: user.admin }));
     });
   })(req, res);
 });
+
 auth.post("/email",/*util.isLoggedin,*/async function (req: any, res: Response, next: NextFunction) {
   const body = req.body;
   const email = body.email;
@@ -241,26 +233,13 @@ auth.post("/email",/*util.isLoggedin,*/async function (req: any, res: Response, 
   const key_two = crypto.randomBytes(256).toString('base64').substr(50, 5);
   const email_number = key_one + key_two;
 
-  // Use SMTP transport
-  const transporter = nodemailer.createTransport(
-    {
-      host: 'smtp.daum.net',
-      port: 465,
-      secure: true,
-      auth: {
-        user: process.env.MAIL_ID,
-        pass: process.env.MAIL_PW
-      }
-    }
-  );
-
   try {
-    email_veriRep.destroy({
+    emailVeriRep.destroy({
       where: {
         email: email
       }
     });
-
+    console.log(req);
     const url = 'http://' + req.get('host') + '/api/v1/auth/email/verification' + '?email_number=' + email_number;
     const info = await transporter.sendMail({
       from: '"발신전용" <noreply@deliversity.co.kr>',
@@ -269,31 +248,27 @@ auth.post("/email",/*util.isLoggedin,*/async function (req: any, res: Response, 
       html: "<h3>이메일 인증을 위해 URL을 클릭해주세요.</h3><br>" + url
     });
 
-    email_veriRep.create({
+    emailVeriRep.create({
       email: email,
       email_number: email_number
     });
-
-    res.status(200).json({
-      status: 'Success',
-      code: 200,
-      message: 'Sent Auth Email',
-    });
+    return res.status(200).json(util.successTrue('Sent Auth Email'));
   }
   catch (e) {
     //console.error(e);
-    email_veriRep.destroy({
+    emailVeriRep.destroy({
       where: {
         email: email
       }
     });
+    return res.status(403).json(util.successFalse(null,'Sent Auth Email Failed',null));
   }
 }
 );
 
 auth.get('/email/verification', async (req, res, next: NextFunction) => {
   const email_number = req.query.email_number as string;
-  email_veriRep.findOne({
+  emailVeriRep.findOne({
     where: { email_number: email_number }
   }).then((email_veri) => {
     if (email_veri) {
@@ -301,27 +276,17 @@ auth.get('/email/verification', async (req, res, next: NextFunction) => {
       const created = Date.parse(email_veri.createdAt);
       const remainingTime = (now - created) / 60000;
       if (remainingTime > 3) {
-        res.json({ string: "time expired" });
         email_veri.destroy();
+        return res.status(403).json(util.successFalse(null,"Time Expired",null));
       }
-      email_veriRep.update({
+      emailVeriRep.update({
         email_verified: true
       }, {
         where: { email: email_veri.email }
       });
-      res.status(204).json({
-        status: 'Success',
-        code: 204,
-        message: 'Matched',
-      });
+      return res.status(204).json(util.successTrue("Matched"));
     }
-    else {
-      res.status(403).json({
-        status: 'Fail',
-        code: 403,
-        message: 'Not Matched',
-      });
-    }
+    return res.status(403).json(util.successFalse(null,"Not Matched",null));
   }
   );
 });
