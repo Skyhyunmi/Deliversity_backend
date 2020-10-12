@@ -244,8 +244,7 @@ auth.post("/email",/*util.isLoggedin,*/async function (req: any, res: Response, 
   // Use SMTP transport
   const transporter = nodemailer.createTransport(
     {
-      service: 'Gmail',
-      host: 'smtp.gmail.com',
+      host: 'smtp.daum.net',
       port: 465,
       secure: true,
       auth: {
@@ -264,7 +263,7 @@ auth.post("/email",/*util.isLoggedin,*/async function (req: any, res: Response, 
 
     const url = 'http://' + req.get('host') + '/api/v1/auth/email/verification' + '?email_number=' + email_number;
     const info = await transporter.sendMail({
-      from: '"Deliversity" <${process.env.MAIL_ID}>',
+      from: '"발신전용" <noreply@deliversity.co.kr>',
       to: email,
       subject: "Deliversity 인증 메일입니다.",
       html: "<h3>이메일 인증을 위해 URL을 클릭해주세요.</h3><br>" + url
