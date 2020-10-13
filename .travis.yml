@@ -1,14 +1,14 @@
 language: node_js
 node_js:
-- '12'
+- '14'
 install:
 - npm install
 script:
 - npm run lint
 - npm test
 cache:
-directories:
-  - node_modules
+  directories:
+    - node_modules
 before_deploy:
   - ls -al
   - rm -rf node_modules
@@ -25,18 +25,14 @@ before_deploy:
   - mv before_deploy/before_deploy.zip server.zip
 
 deploy:
-  - provider: elasticbeanstalk
-    zip_file : server.zip
-    skip_cleanup: true
-    access_key_id: $AWS_ACCESS_KEY
-    secret_access_key: 
-      secure: $AWS_SECRET_KEY
-    region: ap-northeast-2
-    app: "deliversity"
-    env: "Deliversity-env"
-    bucket: $AWS_BUCKET
-    on:
-      branch: master
+  provider: elasticbeanstalk
+  zip_file : server.zip
+  access_key_id: $AWS_ACCESS_KEY
+  secret_access_key: $AWS_SECRET_KEY
+  region: ap-northeast-2
+  app: "deliversity"
+  env: "Deliversity-env"
+  bucket: $AWS_BUCKET
     
 notifications:
   email: 
