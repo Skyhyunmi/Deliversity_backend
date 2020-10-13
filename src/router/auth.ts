@@ -65,7 +65,7 @@ auth.post("/login", function (req: any, res: Response, next: NextFunction) {
         .json(util.successFalse(null, "ID or PW is not valid", user));
     }
     req.logIn(user, { session: false }, function (err: any) {
-      if (err) return res.status(403).json(util.successFalse(err, "Can\'t login", null));
+      if (err) return res.status(403).json(util.successFalse(err, "Can't login", null));
       const payload = {
         id: user.userId,
         name: user.name,
@@ -83,7 +83,7 @@ auth.post("/login", function (req: any, res: Response, next: NextFunction) {
 auth.get('/refresh', util.isLoggedin, function (req:any, res) {
   userRep.findOne({ where: { userId: req.decoded.id } }).then(function (user) {
     if (!user) {
-      return res.status(403).json(util.successFalse(null,'Can\'t refresh the token',{user:user}));
+      return res.status(403).json(util.successFalse(null,"Can't refresh the token",{user:user}));
     }
     const payload = {
       id: user.userId,
@@ -93,7 +93,7 @@ auth.get('/refresh', util.isLoggedin, function (req:any, res) {
     };
     const authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, { 
       expiresIn: '7d',
-     });
+    });
     return res.json(util.successTrue({ token: authToken, admin: user.admin }));
   });
 });
