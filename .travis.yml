@@ -33,6 +33,7 @@ deploy:
   app: "deliversity"
   env: "Deliversity-env"
   bucket: $AWS_BUCKET
+  skip_cleanup: true
     
 notifications:
   email: 
