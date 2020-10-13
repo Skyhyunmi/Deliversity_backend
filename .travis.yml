@@ -22,33 +22,22 @@ before_deploy:
   - cd before_deploy
   - zip -r before_deploy *
   - cd ..
-  - mv before_deploy/before_deploy.zip deploy/server.zip
+  - mv before_deploy/before_deploy.zip server.zip
 
 deploy:
-  - provider: s3
-    access_key_id: $AWS_ACCESS_KEY
-    secret_access_key: $AWS_SECRET_KEY
-  
-    bucket: $AWS_BUCKET
-    region: ap-northeast-2
+  - provider: elasticbeanstalk
+    zip_file : server.zip
     skip_cleanup: true
-    acl: private
-    local_dir: deploy
-    wait_until_deployed : true
-
-  - provider: codedeploy
     access_key_id: $AWS_ACCESS_KEY
-    secret_access_key: $AWS_SECRET_KEY
-
-    bucket: $AWS_BUCKET
-    key : server.zip
-
-    bundle_type : zip
-    application : deliversity_backend
-
-    deployment_group : deliversity_backend_group
+    secret_access_key: 
+      secure: $AWS_SECRET_KEY
     region: ap-northeast-2
-    wait-until-deployed : true
+    app: "deliversity"
+    env: "Deliversity-env"
+    bucket: $AWS_BUCKET
+    on:
+      branch: error_fix
+    
 notifications:
   email: 
     recipients:
