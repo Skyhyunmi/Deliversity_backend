@@ -36,6 +36,10 @@ export default class User extends Model<User> {
   @Column(DataType.STRING)
   salt!: string;
 
+  @AllowNull(false)
+  @Column(DataType.STRING)
+  name!: string;
+
   @Unique
   @AllowNull(false)
   @Column(DataType.STRING)

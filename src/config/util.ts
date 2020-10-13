@@ -27,13 +27,13 @@ export function successFalse(err: any, message: string, data: any) {
 export function isLoggedin(req: any, res: Response, next: NextFunction) {
   const token = req.headers["x-access-token"] as string;
   if (!token)
-    return res.status(403).json(successFalse(null, "token is required!", null));
+    return res.status(401).json(successFalse(null, "token is required!", null));
   else {
     jwt.verify(token, process.env.JWT_SECRET as string, function (
       err,
       decoded
     ) {
-      if (err) return res.status(403).json(successFalse(err, "", null));
+      if (err) return res.status(401).json(successFalse(err, "", null));
       else {
         req["decoded"] = decoded;
         next();

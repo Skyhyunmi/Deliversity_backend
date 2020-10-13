@@ -162,7 +162,7 @@ export function passportConfig(){
         }
       }).then((user)=>{
         if(user){
-          done("",user,refreshToken);
+          done("",user,null);
         }
         else done("", false, {message: '일치하는 회원 없음.', auth:profile.id});
       });
@@ -182,7 +182,7 @@ export function passportConfig(){
         }
       }).then((user)=>{
         if(user){
-          done("",user,refreshToken);
+          done("",user,null);
         }
         else done("", false, {message: '일치하는 회원 없음.', auth:profile.id});
       });

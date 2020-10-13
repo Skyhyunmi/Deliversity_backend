@@ -2,7 +2,7 @@ import { NextFunction, Response, Router } from "express";
 import * as util from "../config/util";
 import jwt from "jsonwebtoken";
 import passport from "passport";
-import { veriRep,emailVeriRep } from "../models/index";
+import { veriRep,emailVeriRep, userRep } from "../models/index";
 import * as crypto from "crypto";
 import axios from "axios";
 import urlencode from "urlencode";
@@ -65,20 +65,39 @@ auth.post("/login", function (req: any, res: Response, next: NextFunction) {
         .json(util.successFalse(null, "ID or PW is not valid", user));
     }
     req.logIn(user, { session: false }, function (err: any) {
-      if (err) return res.status(403).json(util.successFalse(err, "", null));
+      if (err) return res.status(403).json(util.successFalse(err, "Can't login", null));
       const payload = {
         id: user.userId,
         name: user.name,
         admin: user.admin,
         loggedAt: new Date(),
       };
-      user.authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
+      const authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
         expiresIn: '7d',
       });
-      return res.json(util.successTrue({ token: user.authToken, admin: user.admin }));
+      return res.json(util.successTrue({ token: authToken, admin: user.admin }));
     });
   })(req, res, next);
 });
+
+auth.get('/refresh', util.isLoggedin, function (req:any, res) {
+  userRep.findOne({ where: { userId: req.decoded.id } }).then(function (user) {
+    if (!user) {
+      return res.status(403).json(util.successFalse(null,"Can't refresh the token",{user:user}));
+    }
+    const payload = {
+      id: user.userId,
+      name: user.name,
+      admin: user.admin,
+      loggedAt: new Date()
+    };
+    const authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, { 
+      expiresIn: '7d',
+    });
+    return res.json(util.successTrue({ token: authToken, admin: user.admin }));
+  });
+});
+
 // 이미 있는 휴대폰번호인지에 대한 확인과정이 필요할듯.
 auth.post("/sms",/*util.isLoggedin,*/async function (req: any, res: Response, next: NextFunction) {
   const body = req.body;
@@ -239,7 +258,6 @@ auth.post("/email",/*util.isLoggedin,*/async function (req: any, res: Response, 
         email: email
       }
     });
-    console.log(req);
     const url = 'http://' + req.get('host') + '/api/v1/auth/email/verification' + '?email_number=' + email_number;
     const info = await transporter.sendMail({
       from: '"발신전용" <noreply@deliversity.co.kr>',
