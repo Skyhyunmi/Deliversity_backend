@@ -10,6 +10,8 @@ cache:
   directories:
     - node_modules
 before_deploy:
+  - npm i -g typescript
+  - npm run build
   - ls -al
   - rm -rf node_modules
   - mkdir -p before_deploy
@@ -19,6 +21,7 @@ before_deploy:
   - cp tsconfig.json before_deploy
   - cp -r .ebextensions before_deploy
   - cp -r src/ before_deploy/src
+  - cp -r dist/ before_deploy/dist
   - mkdir -p deploy
   - cd before_deploy
   - zip -r before_deploy *
