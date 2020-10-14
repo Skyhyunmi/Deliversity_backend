@@ -15,8 +15,11 @@ before_deploy:
   - ls -al
   - rm -rf node_modules
   - mkdir -p before_deploy
+  - cp deploy.sh before_deploy
   - cp package.json before_deploy
+  - cp package-lock.json before_deploy
   - cp tsconfig.json before_deploy
+  - cp appspec.yml before_deploy
   - cp -r .ebextensions before_deploy
   - cp -r src/ before_deploy/src
   - cp -r dist/ before_deploy/dist
@@ -27,16 +30,40 @@ before_deploy:
   - mv before_deploy/before_deploy.zip server.zip
 
 deploy:
-  provider: elasticbeanstalk
-  zip_file : server.zip
-  access_key_id: $AWS_ACCESS_KEY
-  secret_access_key: $AWS_SECRET_KEY
-  region: ap-northeast-2
-  app: "deliversity"
-  env: "Deliversity-env"
-  bucket: $AWS_BUCKET
-  skip_cleanup: true
+  - provider: elasticbeanstalk
+    zip_file : server.zip
+    access_key_id: $AWS_ACCESS_KEY
+    secret_access_key: $AWS_SECRET_KEY
+    region: ap-northeast-2
+    app: "deliversity"
+    env: "Deliversity-env"
+    bucket: $AWS_BUCKET
+    skip_cleanup: true
 
+  - provider: s3
+    access_key_id: $AWS_ACCESS_KEY
+    secret_access_key: $AWS_SECRET_KEY
+
+    bucket: $AWS_BUCKET
+    region: ap-northeast-2
+    skip_cleanup: true
+    acl: private
+    local_dir: deploy
+    wait_until_deployed : true
+
+  - provider: codedeploy
+    access_key_id: $AWS_ACCESS_KEY
+    secret_access_key: $AWS_SECRET_KEY
+
+    bucket: $AWS_BUCKET
+    key : server.zip
+
+    bundle_type : zip
+    application : deliversity_backend
+
+    deployment_group : deliversity_backend_group
+    region: ap-northeast-2
+    wait-until-deployed : true
 after_deploy:
   - ./deploy.sh
 notifications:
