@@ -17,7 +17,7 @@ before_deploy:
   - mkdir -p before_deploy
   - cp package.json before_deploy
   - cp tsconfig.json before_deploy
-  - cp -r .platform before_deploy
+  - cp -r .ebextensions before_deploy
   - cp -r src/ before_deploy/src
   - cp -r dist/ before_deploy/dist
   - mkdir -p deploy
