@@ -31,16 +31,6 @@ before_deploy:
   - mv before_deploy/before_deploy.zip server.zip
 
 deploy:
-  - provider: elasticbeanstalk
-    zip_file : server.zip
-    access_key_id: $AWS_ACCESS_KEY
-    secret_access_key: $AWS_SECRET_KEY
-    region: ap-northeast-2
-    app: "deliversity"
-    env: "Deliversity-env"
-    bucket: $AWS_BUCKET
-    skip_cleanup: true
-
   - provider: s3
     access_key_id: $AWS_ACCESS_KEY
     secret_access_key: $AWS_SECRET_KEY
