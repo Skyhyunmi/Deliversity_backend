@@ -10,9 +10,6 @@ cache:
   directories:
     - node_modules
 before_deploy:
-  - npm i
-  - npm i -g typescript
-  - npm run build
   - ls -al
   - rm -rf node_modules
   - mkdir -p before_deploy
@@ -65,8 +62,7 @@ deploy:
     deployment_group : deliversity_backend_group
     region: ap-northeast-2
     wait-until-deployed : true
-after_deploy:
-  - ./deploy.sh
+
 notifications:
   email: 
     recipients:
