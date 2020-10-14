@@ -17,6 +17,7 @@ before_deploy:
   - cp appspec.yml before_deploy
   - cp package.json before_deploy
   - cp tsconfig.json before_deploy
+  - cp -r .ebextensions before_deploy
   - cp -r src/ before_deploy/src
   - mkdir -p deploy
   - cd before_deploy
