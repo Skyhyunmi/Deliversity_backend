@@ -11,6 +11,7 @@ cache:
     - node_modules
 before_deploy:
   - ls -al
+  - npm run build
   - rm -rf node_modules
   - mkdir -p before_deploy
   - cp deploy.sh before_deploy
