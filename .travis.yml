@@ -11,7 +11,7 @@ cache:
     - node_modules
 before_deploy:
   - npm i -g typescript
-  - npm run build --rootDir .
+  - npm run build
   - ls -al
   - rm -rf node_modules
   - mkdir -p before_deploy
