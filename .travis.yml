@@ -18,8 +18,6 @@ before_deploy:
   - cp package.json before_deploy
   - cp tsconfig.json before_deploy
   - cp -r src/ before_deploy/src
-  - npm run build
-  - cp -r dist/ before_deploy/dist
   - mkdir -p deploy
   - cd before_deploy
   - zip -r before_deploy *
