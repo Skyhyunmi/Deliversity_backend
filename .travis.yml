@@ -10,6 +10,7 @@ cache:
   directories:
     - node_modules
 before_deploy:
+  - npm i
   - npm i -g typescript
   - npm run build
   - ls -al
