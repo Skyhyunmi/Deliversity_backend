@@ -7,10 +7,12 @@ import * as crypto from "crypto";
 import axios from "axios";
 import urlencode from "urlencode";
 import { transporter } from "../config/mail";
+import {OAuth2Client} from 'google-auth-library';
 
 import dotenv from "dotenv";
 dotenv.config();
 
+const client = new OAuth2Client(process.env.GOOGLE_KEY);
 
 
 function makeSignature(urlsub: string, timestamp: string) {
@@ -184,6 +186,18 @@ auth.post("/sms/verification", async function (req: any, res: Response, next: Ne
     });
   } catch (e) {
     //console.error(e);
+  }
+});
+
+auth.post('/google/test',async function (req: any, res: Response, next: NextFunction) {
+  const ticket = await client.verifyIdToken({
+    idToken: req.body.token as string,
+    audience: process.env.GOOGLE_KEY
+  });
+  const payload = ticket.getPayload();
+  if(payload){
+    var userid = payload['sub'];
+    console.log(userid);
   }
 });
 
