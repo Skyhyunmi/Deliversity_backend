@@ -47,7 +47,7 @@ auth.post("/signup", function (req: any, res: Response, next: NextFunction) {
       return res.status(403).json(util.successFalse(null, info.message, null));
     }
     if (user) {
-      return res.json(util.successTrue(user));
+      return res.json(util.successTrue("",user));
     }
   })(req, res, next);
 });
@@ -77,7 +77,7 @@ auth.post("/login", function (req: any, res: Response, next: NextFunction) {
       const authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
         expiresIn: '7d',
       });
-      return res.json(util.successTrue({ token: authToken, admin: user.admin }));
+      return res.json(util.successTrue("",{ token: authToken, admin: user.admin }));
     });
   })(req, res, next);
 });
@@ -96,7 +96,7 @@ auth.get('/refresh', util.isLoggedin, function (req:any, res) {
     const authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, { 
       expiresIn: '7d',
     });
-    return res.json(util.successTrue({ token: authToken, admin: user.admin }));
+    return res.json(util.successTrue("",{ token: authToken, admin: user.admin }));
   });
 });
 
@@ -147,7 +147,7 @@ auth.post("/sms",/*util.isLoggedin,*/async function (req: any, res: Response, ne
       number: randomNumber
     });
     if (tokenData.statusCode == "202")
-      return res.json(util.successTrue(tokenData.statusName));
+      return res.json(util.successTrue(tokenData.statusName,null));
     return res.status(403).json(util.successFalse(null, tokenData.statusName, null));
   }
   catch (e) {
@@ -179,7 +179,7 @@ auth.post("/sms/verification", async function (req: any, res: Response, next: Ne
             return res.status(403).json(util.successFalse(null, "Time Expired.", null));
           }
           veriRep.update({ verified: true }, { where: { phone: phone } });
-          return res.json(util.successTrue("Matched."));
+          return res.json(util.successTrue("Matched.",null));
         }
       }
       return res.status(403).json(util.successFalse(null, "Not Matched.", null));
@@ -227,7 +227,7 @@ auth.get('/google/callback', function (req: any, res: Response, next: NextFuncti
       user.authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
         expiresIn: '7d',
       });
-      return res.json(util.successTrue({ token: user.authToken, admin: user.admin }));
+      return res.json(util.successTrue("",{ token: user.authToken, admin: user.admin }));
     });
   })(req, res, next);
 }
@@ -253,7 +253,7 @@ auth.get('/kakao/callback', function (req, res, next) {
       user.authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
         expiresIn: '7d',
       });
-      return res.json(util.successTrue({ token: user.authToken, admin: user.admin }));
+      return res.json(util.successTrue("",{ token: user.authToken, admin: user.admin }));
     });
   })(req, res);
 });
@@ -284,7 +284,7 @@ auth.post("/email",/*util.isLoggedin,*/async function (req: any, res: Response, 
       email: email,
       email_number: email_number
     });
-    return res.status(200).json(util.successTrue('Sent Auth Email'));
+    return res.status(200).json(util.successTrue('Sent Auth Email',null));
   }
   catch (e) {
     //console.error(e);
@@ -316,7 +316,7 @@ auth.get('/email/verification', async (req, res, next: NextFunction) => {
       }, {
         where: { email: email_veri.email }
       });
-      return res.status(204).json(util.successTrue("Matched"));
+      return res.status(204).json(util.successTrue("Matched",null));
     }
     return res.status(403).json(util.successFalse(null,"Not Matched",null));
   }

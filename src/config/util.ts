@@ -4,12 +4,12 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
 
-export function successTrue(data: any) {
+export function successTrue(message: string, data: any) {
   return {
     success: true,
-    message: null,
+    message: message || null,
     errors: null,
-    data: data,
+    data: data || null,
   };
 }
 
