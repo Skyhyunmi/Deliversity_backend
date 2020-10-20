@@ -195,10 +195,6 @@ auth.post('/google/test',async function (req: any, res: Response, next: NextFunc
     audience: process.env.GOOGLE_KEY
   });
   const payload = ticket.getPayload();
-  if(payload){
-    var userid = payload['sub'];
-    console.log(userid);
-  }
 });
 
 auth.get('/google', passport.authenticate('google', {
