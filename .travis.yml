@@ -1,57 +1,28 @@
 language: node_js
+
 node_js:
-- '12'
-install:
-- npm install
-script:
-- npm run lint
-- npm test
-cache:
-  directories:
-    - node_modules
-before_deploy:
-  - npm i -g typescript
-  - npm run build
-  - mkdir -p before_deploy
-  - cp deploy.sh before_deploy
-  - cp package.json before_deploy
-  - cp package-lock.json before_deploy
-  - cp tsconfig.json before_deploy
-  - cp appspec.yml before_deploy
-  - cp -r .ebextensions before_deploy
-  - cp -r src/ before_deploy/src
-  - cp -r dist/ before_deploy/dist
-  - mkdir -p deploy
-  - cd before_deploy
-  - zip -r before_deploy *
-  - cd ..
-  - mv before_deploy/before_deploy.zip server.zip
+  - '12.19.0'
+
+sudo: required
+
+services:
+  - docker
+
+before_install:
+  - npm i -g eslint
+  - npm i @typescript-eslint/parser @typescript-eslint/eslint-plugin
+  - npm run lint
 
 deploy:
-  - provider: s3
-    access_key_id: $AWS_ACCESS_KEY
-    secret_access_key: $AWS_SECRET_KEY
-
-    bucket: $AWS_BUCKET
-    region: ap-northeast-2
-    skip_cleanup: true
-    acl: private
-    local_dir: deploy
-    wait_until_deployed : true
-
-  - provider: codedeploy
-    access_key_id: $AWS_ACCESS_KEY
-    secret_access_key: $AWS_SECRET_KEY
-
-    bucket: $AWS_BUCKET
-    key : server.zip
-
-    bundle_type : zip
-    application : deliversity_backend
-
-    deployment_group : deliversity_backend_group
-    region: ap-northeast-2
-    wait-until-deployed : true
+  provider: elasticbeanstalk
+  region: ap-northeast-2
+  app: deliversity
+  env: deliversity-env
+  bucket_name: $AWS_S3_BUCKET
+  access_key_id: $AWS_ACCESS_KEY
+  secret_access_key: $AWS_SECRET_KEY
+  on:
+    branch: master
 
 notifications:
   email: 
@@ -64,3 +35,4 @@ notifications:
   slack:
     on_success: always
     secure: HzK8TjqWSxM3OR4jqRD3bnjxbZL30LCp9uzbzcZSBntkDu6m7pDcYOP9hxVSzt19E0NtXA7snDvac8IdOeUYWFP7WihGPjEW4XuAuV5E5ojJ/YByK/9toH96e4H5TNVD1g0r12j8m243BPzbZiFYMG+nJUIeh6igoNjPJrciDNSx2bevJhJ0w1vTuZxRYDR9+GYvTcYZavC79XC5t/IJSJDtJQtOWGHVZV24M+WnHlLX513nZMdQDvGW7lSNOcAjoZDspHHzBWa5oP58XDfNeP7ILCe4+yFQtF+fiw6fi3+Ee44g2iT3D5cJheX1Gf2pakndawu2OxjVh+LcYchxrXmQmUF1DDEryiEdDPaCLkgxYhKYd0U7Oe6ncDnN5zfePt2DmSXeET0t6Vd03rUFwYtIl5OrNDSJCdpRPAbKYE3655rc7Mgt0dce+e5lNi7Kai/B4UCcN/TlRQxftGOi04Ri+oe2UoGKTm9RU22Uoex1oC/BWRn08RnkQLpgqx+NZSXUufj/FCNblfYjV/hEmF+f5MG0B6o9Vt9q562h1QV9G6bLYdmqfzqUIByGosfhYKwqaWIDGPOZEvRt6r4QfiveWq0swqAGp0Z9qAGi8lKF31+3IteJta6V5efNEdvNriF/gKVnOodAI4X7eA0nyGxip9RO25nbbWU1eE2n5ck=
+    
