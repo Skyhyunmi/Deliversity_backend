@@ -4,3 +4,4 @@ dist/
 img/
 *.traineddata
 *.jpeg
+.DS_Store
