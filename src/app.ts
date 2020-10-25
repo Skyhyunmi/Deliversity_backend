@@ -7,6 +7,9 @@ import cors from "cors";
 import passport from "passport";
 import { auth } from "./router/auth";
 import { test } from "./router/test";
+import { admin } from "./router/admin";
+import { myinfo } from "./router/myinfo";
+import { order } from "./router/order";
 import {passportConfig} from './config/passport';
 import * as util from "./config/util";
 import { db } from "./models";
@@ -43,6 +46,9 @@ app.use((req, res, next) => {
 
 app.use("/api/v1/auth", auth);
 app.use("/api/v1/test", test);
+app.use("/api/v1/admin", admin);
+app.use("/api/v1/myinfo", myinfo);
+app.use("/api/v1/order", order);
 app.use(cors());
 
 app.use(function (req: any, res: Response, next: NextFunction) {
