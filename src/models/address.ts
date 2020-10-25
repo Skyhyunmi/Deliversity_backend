@@ -1,23 +1,23 @@
 import {
-    AllowNull,
-    Unique,
-    Table,
-    Column,
-    Model,
-    PrimaryKey,
-    AutoIncrement,
-    DataType,
-    Comment,
-    CreatedAt,
-    UpdatedAt,
-    DeletedAt,
-    Default,//, ForeignKey
-    ForeignKey
-  } from "sequelize-typescript";
+  AllowNull,
+  Unique,
+  Table,
+  Column,
+  Model,
+  PrimaryKey,
+  AutoIncrement,
+  DataType,
+  Comment,
+  CreatedAt,
+  UpdatedAt,
+  DeletedAt,
+  Default,//, ForeignKey
+  ForeignKey
+} from "sequelize-typescript";
 import User from "./user";
   
   @Table({ timestamps: true })
-  export default class Address extends Model<Address> {
+export default class Address extends Model<Address> {
     @PrimaryKey
     @AutoIncrement
     @Column(DataType.BIGINT)
@@ -53,5 +53,5 @@ import User from "./user";
   
     @DeletedAt
     deletedAt!: Date;
-  }
+}
   

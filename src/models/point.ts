@@ -1,25 +1,25 @@
 import {
-    AllowNull,
-    Unique,
-    Table,
-    Column,
-    Model,
-    PrimaryKey,
-    AutoIncrement,
-    DataType,
-    Comment,
-    CreatedAt,
-    UpdatedAt,
-    DeletedAt,
-    Default,//, ForeignKey
-    ForeignKey
-  } from "sequelize-typescript";
+  AllowNull,
+  Unique,
+  Table,
+  Column,
+  Model,
+  PrimaryKey,
+  AutoIncrement,
+  DataType,
+  Comment,
+  CreatedAt,
+  UpdatedAt,
+  DeletedAt,
+  Default,//, ForeignKey
+  ForeignKey
+} from "sequelize-typescript";
   
-  import PointCategory from "./pointCategory";
+import PointCategory from "./pointCategory";
 import User from "./user";
 
   @Table({ timestamps: true })
-  export default class Point extends Model<Point> {
+export default class Point extends Model<Point> {
     @PrimaryKey
     @AutoIncrement
     @Column(DataType.BIGINT)
@@ -50,5 +50,5 @@ import User from "./user";
   
     @DeletedAt
     deletedAt!: Date;
-  }
+}
   

@@ -1,21 +1,21 @@
 import {
-    AllowNull,
-    Unique,
-    Table,
-    Column,
-    Model,
-    PrimaryKey,
-    AutoIncrement,
-    DataType,
-    Comment,
-    CreatedAt,
-    UpdatedAt,
-    DeletedAt,
-    Default//, ForeignKey
-  } from "sequelize-typescript";
+  AllowNull,
+  Unique,
+  Table,
+  Column,
+  Model,
+  PrimaryKey,
+  AutoIncrement,
+  DataType,
+  Comment,
+  CreatedAt,
+  UpdatedAt,
+  DeletedAt,
+  Default//, ForeignKey
+} from "sequelize-typescript";
   
   @Table({ timestamps: true })
-  export default class Report extends Model<Report> {
+export default class Report extends Model<Report> {
     @PrimaryKey
     @AutoIncrement
     @Column(DataType.BIGINT)
@@ -64,5 +64,5 @@ import {
   
     @DeletedAt
     deletedAt!: Date;
-  }
+}
   

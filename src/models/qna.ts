@@ -1,21 +1,21 @@
 import {
-    AllowNull,
-    Unique,
-    Table,
-    Column,
-    Model,
-    PrimaryKey,
-    AutoIncrement,
-    DataType,
-    Comment,
-    CreatedAt,
-    UpdatedAt,
-    DeletedAt,
-    Default//, ForeignKey
-  } from "sequelize-typescript";
+  AllowNull,
+  Unique,
+  Table,
+  Column,
+  Model,
+  PrimaryKey,
+  AutoIncrement,
+  DataType,
+  Comment,
+  CreatedAt,
+  UpdatedAt,
+  DeletedAt,
+  Default//, ForeignKey
+} from "sequelize-typescript";
   
   @Table({ timestamps: true })
-  export default class QnA extends Model<QnA> {
+export default class QnA extends Model<QnA> {
     @PrimaryKey
     @AutoIncrement
     @Column(DataType.BIGINT)
@@ -45,5 +45,5 @@ import {
   
     @DeletedAt
     deletedAt!: Date;
-  }
+}
   

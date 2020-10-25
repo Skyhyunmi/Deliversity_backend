@@ -1,22 +1,22 @@
 import { ALL } from "dns";
 import {
-    AllowNull,
-    Unique,
-    Table,
-    Column,
-    Model,
-    PrimaryKey,
-    AutoIncrement,
-    DataType,
-    Comment,
-    CreatedAt,
-    UpdatedAt,
-    DeletedAt,
-    Default//, ForeignKey
-  } from "sequelize-typescript";
+  AllowNull,
+  Unique,
+  Table,
+  Column,
+  Model,
+  PrimaryKey,
+  AutoIncrement,
+  DataType,
+  Comment,
+  CreatedAt,
+  UpdatedAt,
+  DeletedAt,
+  Default//, ForeignKey
+} from "sequelize-typescript";
   
   @Table({ timestamps: true })
-  export default class Order extends Model<Order> {
+export default class Order extends Model<Order> {
     @PrimaryKey
     @AutoIncrement
     @Column(DataType.BIGINT)
@@ -86,5 +86,5 @@ import {
   
     @DeletedAt
     deletedAt!: Date;
-  }
+}
   
