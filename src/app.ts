@@ -13,6 +13,7 @@ import { order } from "./router/order";
 import {passportConfig} from './config/passport';
 import * as util from "./config/util";
 import { db } from "./models";
+import * as fs from "fs";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -42,6 +43,11 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Headers", "content-type, x-access-token");
   res.header("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS");
   next();
+});
+const favicon = fs.readFileSync('favicon.ico');
+
+app.get('/favicon.ico',(req:any,res:Response)=>{
+  res.status(200).end(favicon);
 });
 
 app.use("/api/v1/auth", auth);
