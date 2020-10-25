@@ -45,7 +45,7 @@ export default class User extends Model<User> {
   @Column(DataType.STRING)
   nickName!:string;
 
-  @AllowNull(false)
+  @AllowNull(true)
   @Column(DataType.STRING)
   gender!:string;
 
@@ -63,9 +63,10 @@ export default class User extends Model<User> {
   @Column(DataType.STRING)
   phone!:string;
 
-  @Default(0)
-  @Column(DataType.BIGINT)
-  point!:number;
+  @AllowNull(true)
+  // @ForeignKey(()=>{Address})
+  @Column(DataType.STRING)
+  addressId!:string;
 
   @Default(1)
   @AllowNull(false)
@@ -76,19 +77,6 @@ export default class User extends Model<User> {
   @Column(DataType.STRING)
   admin!:string;
 
-  @AllowNull(false)
-  @Column(DataType.STRING)
-  certified!:string;
-
-  @AllowNull(true)
-  // @ForeignKey(()=>{Address})
-  @Column(DataType.STRING)
-  addressCode!:string;
-
-  @AllowNull(true)
-  @Column(DataType.STRING)
-  detailAddress!:string;
-
   @AllowNull(true)
   @Column(DataType.STRING)
   googleOAuth!:string;
@@ -96,6 +84,10 @@ export default class User extends Model<User> {
   @AllowNull(true)
   @Column(DataType.STRING)
   kakaoOAuth!:string;
+
+  @AllowNull(true)
+  @Column(DataType.STRING)
+  idCard!:string;
 
   @CreatedAt
   createdAt!: Date;
