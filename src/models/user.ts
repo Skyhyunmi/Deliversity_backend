@@ -68,14 +68,10 @@ export default class User extends Model<User> {
   @Column(DataType.STRING)
   addressId!:string;
 
-  @Default(1)
+  @Default(0)
   @AllowNull(false)
   @Column(DataType.BIGINT)
   grade!:number;
-
-  @Default("user")
-  @Column(DataType.STRING)
-  admin!:string;
 
   @AllowNull(true)
   @Column(DataType.STRING)

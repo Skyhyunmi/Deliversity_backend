@@ -1,17 +1,14 @@
 import {
   AllowNull,
-  Unique,
   Table,
   Column,
   Model,
   PrimaryKey,
   AutoIncrement,
   DataType,
-  Comment,
   CreatedAt,
   UpdatedAt,
   DeletedAt,
-  Default,//, ForeignKey
   ForeignKey
 } from "sequelize-typescript";
 import User from "./user";
@@ -30,7 +27,7 @@ export default class Address extends Model<Address> {
 
     // @AllowNull(true)
     @Column(DataType.STRING)
-    addressCode!:string;
+    address!:string;
   
     // @AllowNull(true)
     @Column(DataType.STRING)
