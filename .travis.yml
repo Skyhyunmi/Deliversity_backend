@@ -8,12 +8,14 @@ sudo: required
 services:
   - docker
 
-before_deploy:
-  - npm i -g eslint
-  - npm i @typescript-eslint/parser @typescript-eslint/eslint-plugin
+script:
   - npm run lint
+
+before_deploy:
+  - npm i -g typescript
+  - npm run build
   - rm -rf node_modules
-  
+
 deploy:
   skip_cleanup: true
   provider: elasticbeanstalk
