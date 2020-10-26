@@ -13,8 +13,10 @@ script:
 
 before_deploy:
   - npm i -g typescript
+  - npm i
   - npm run build
   - rm -rf node_modules
+  - ls -al
 
 deploy:
   skip_cleanup: true
