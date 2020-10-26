@@ -30,6 +30,9 @@ deploy:
   on:
     branch: master
 
+after_deploy:
+  - ls -al
+  
 notifications:
   email: 
     recipients:
