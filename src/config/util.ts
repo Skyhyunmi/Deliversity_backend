@@ -2,6 +2,7 @@ import { Response, Request, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
 import dotenv from "dotenv";
+import { userRep } from "../models";
 dotenv.config();
 
 export function successTrue(message: string, data: any) {
@@ -24,7 +25,7 @@ export function successFalse(err: any, message: string, data: any) {
 }
 
 // middlewares
-export function isLoggedin(req: any, res: Response, next: NextFunction) {
+export function isLoggedin(req: any, res: Response, next: NextFunction) { //최소 준회원임을 알 수 있음
   const token = req.headers["x-access-token"] as string;
   if (!token)
     return res.status(401).json(successFalse(null, "token is required!", null));
@@ -42,22 +43,62 @@ export function isLoggedin(req: any, res: Response, next: NextFunction) {
   }
 }
 
+export function isUser(req: any, res: Response, next: NextFunction) {
+  if (!req.decoded.grade)
+    return res.status(404);
+  else {
+    userRep.findOne({ where: { userId: req.decoded.userId, grade: 2 } }) //2 = 정회원
+      .then(function (user: any) {
+        if (!user)
+          res.status(403).json(successFalse(null, "정회원이 아닙니다.", null));
+        else if (!req.decoded || user.userId !== req.decoded.userId) {
+          res
+            .status(403)
+            .json(successFalse(null, "정회원이 아닙니다.", null));
+        } else next();
+      })
+      .catch(function (err: any) {
+        res.status(403).json(successFalse(err, "", null));
+      });
+  }
+}
+
+export function isRider(req: any, res: Response, next: NextFunction) {
+  if (!req.decoded.grade)
+    return res.status(404);
+  else {
+    userRep.findOne({ where: { userId: req.decoded.userId, grade: 3 } }) //3 = 정회원
+      .then(function (user: any) {
+        if (!user)
+          res.status(403).json(successFalse(null, "배달원이 아닙니다.", null));
+        else if (!req.decoded || user.userId !== req.decoded.userId) {
+          res
+            .status(403)
+            .json(successFalse(null, "배달원이 아닙니다.", null));
+        } else next();
+      })
+      .catch(function (err: any) {
+        res.status(403).json(successFalse(err, "", null));
+      });
+  }
+}
+
 export function isAdmin(req: any, res: Response, next: NextFunction) {
-  if (!req.decoded.admin)
+  if (!req.decoded.grade)
     res.status(404);
   else {
-    // db.User.findOne({ where: { userId: req.decoded.id, admin: 1 } })
-    //   .then(function (user: any) {
-    //     if (!user)
-    //       res.status(403).json(successFalse(null, "Can't find admin", null));
-    //     else if (!req.decoded || user.userId !== req.decoded.id) {
-    //       res
-    //         .status(403)
-    //         .json(successFalse(null, "You don't have permission", null));
-    //     } else next();
-    //   })
-    //   .catch(function (err: any) {
-    //     res.status(403).json(successFalse(err, "", null));
-    //   });
+    userRep.findOne({ where: { userId: req.decoded.userId, grade: 777 } }) //777 = admin
+      .then(function (user: any) {
+        if (!user)
+          res.status(403).json(successFalse(null, "권한이 없습니다.", null));
+        else if (!req.decoded || user.userId !== req.decoded.userId) {
+          res
+            .status(403)
+            .json(successFalse(null, "권한이 없습니다.", null));
+        } else next();
+      })
+      .catch(function (err: any) {
+        res.status(403).json(successFalse(err, "", null));
+      });
   }
 }

@@ -66,34 +66,36 @@ auth.post("/login", function (req: any, res: Response, next: NextFunction) {
     req.logIn(user, { session: false }, function (err: any) {
       if (err) return res.status(403).json(util.successFalse(err, "Can't login", null));
       const payload = {
-        id: user.userId,
+        id:user.id,
+        userId: user.userId,
         name: user.name,
-        admin: user.admin,
+        grade: user.grade,
         loggedAt: new Date(),
       };
       const authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
         expiresIn: '7d',
       });
-      return res.json(util.successTrue("",{ token: authToken, admin: user.admin }));
+      return res.json(util.successTrue("",{ token: authToken, grade: user.grade }));
     });
   })(req, res, next);
 });
 
 auth.get('/refresh', util.isLoggedin, function (req:any, res) {
-  userRep.findOne({ where: { userId: req.decoded.id } }).then(function (user) {
+  userRep.findOne({ where: { userId: req.decoded.userId } }).then(function (user) {
     if (!user) {
       return res.status(403).json(util.successFalse(null,"Can't refresh the token",{user:user}));
     }
     const payload = {
-      id: user.userId,
+      id:user.id,
+      userId: user.userId,
       name: user.name,
-      admin: user.admin,
-      loggedAt: new Date()
+      grade: user.grade,
+      loggedAt: new Date(),
     };
     const authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, { 
       expiresIn: '7d',
     });
-    return res.json(util.successTrue("",{ token: authToken, admin: user.admin }));
+    return res.json(util.successTrue("",{ token: authToken, grade: user.grade }));
   });
 });
 
