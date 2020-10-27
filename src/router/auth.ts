@@ -117,7 +117,7 @@ auth.get('/refresh', util.isLoggedin, function (req:any, res) {
 auth.post("/sms",/*util.isLoggedin,*/async function (req: any, res: Response, next: NextFunction) {
   const body = req.body;
   const phone = body.phone;
-  const user = await userRep.findOne({where:{phone:phone}})
+  const user = await userRep.findOne({where:{phone:phone}});
   if(user) res.status(403).json(util.successFalse(null, "phone number duplicated.", null));
   const sendFrom = process.env.SEND_FROM;
   const serviceID = urlencode.encode(process.env.NAVER_SMS_SERVICE_ID as string);

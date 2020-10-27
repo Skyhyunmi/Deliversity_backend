@@ -117,7 +117,7 @@ export function passportConfig(){
         done(null,user);
       }catch(err){
         done(err);
-      }
+      };
     }
     ));
 
