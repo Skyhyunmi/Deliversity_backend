@@ -35,7 +35,7 @@ auth.post("/signup", function (req: any, res: Response, next: NextFunction) {
   req.query = null;
   passport.authenticate("signup", function (
     err: any,
-    user: any,
+    _user: any,
     info: any
   ) {
     if (err) {
@@ -44,8 +44,22 @@ auth.post("/signup", function (req: any, res: Response, next: NextFunction) {
     if (info) {
       return res.status(403).json(util.successFalse(null, info.message, null));
     }
-    if (user) {
-      return res.json(util.successTrue("", user));
+    if (_user) {
+      const user = {
+        id:_user.id,
+        userId:_user.userId,
+        name:_user.name,
+        nickName:_user.nickName,
+        gender:_user.gender,
+        age:_user.age,
+        email:_user.email,
+        phone:_user.phone,
+        addressId:_user.addressId,
+        grade:_user.grade,
+        createdAt:_user.createdAt,
+        updatedAt:_user.updatedAt
+      };
+      return res.json(util.successTrue("",user));
     }
   })(req, res, next);
 });
@@ -104,6 +118,8 @@ auth.get('/refresh', util.isLoggedin, function (req: any, res) {
 auth.post("/sms",/*util.isLoggedin,*/async function (req: any, res: Response, next: NextFunction) {
   const body = req.body;
   const phone = body.phone;
+  const user = await userRep.findOne({where:{phone:phone}});
+  if(user) res.status(403).json(util.successFalse(null, "phone number duplicated.", null));
   const sendFrom = process.env.SEND_FROM;
   const serviceID = urlencode.encode(process.env.NAVER_SMS_SERVICE_ID as string);
   const timestamp = Date.now().toString();
@@ -175,7 +191,8 @@ auth.post("/sms/verification", async function (req: any, res: Response, next: Ne
           const now = Number.parseInt(Date.now().toString());
           const created = Date.parse(veri.createdAt);
           const remainingTime = (now - created) / 60000;
-          if (remainingTime > 3) { //3분
+          if (remainingTime > 15) { //3분
+            veri.destroy();
             return res.status(403).json(util.successFalse(null, "Time Expired.", null));
           }
           veriRep.update({ verified: true }, { where: { phone: phone } });
