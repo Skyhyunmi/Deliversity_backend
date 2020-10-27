@@ -304,10 +304,8 @@ auth.get('/email/verification', async (req, res, next: NextFunction) => {
         email_veri.destroy();
         return res.status(403).json(util.successFalse(null, "Time Expired", null));
       }
-      emailVeriRep.update({
+      email_veri.update({
         email_verified: true
-      }, {
-        where: { email: email_veri.email }
       });
       return res.status(204).json(util.successTrue("Matched", null));
     }
