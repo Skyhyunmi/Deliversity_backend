@@ -2,7 +2,7 @@ import { NextFunction, Response, Router } from "express";
 import * as util from "../config/util";
 import jwt from "jsonwebtoken";
 import passport from "passport";
-import { veriRep,emailVeriRep, userRep } from "../models/index";
+import { veriRep, emailVeriRep, userRep } from "../models/index";
 import * as crypto from "crypto";
 import axios from "axios";
 import urlencode from "urlencode";
@@ -44,7 +44,7 @@ auth.post("/signup", function (req: any, res: Response, next: NextFunction) {
       return res.status(403).json(util.successFalse(null, info.message, null));
     }
     if (user) {
-      return res.json(util.successTrue("",user));
+      return res.json(util.successTrue("", user));
     }
   })(req, res, next);
 });
@@ -66,7 +66,7 @@ auth.post("/login", function (req: any, res: Response, next: NextFunction) {
     req.logIn(user, { session: false }, function (err: any) {
       if (err) return res.status(403).json(util.successFalse(err, "Can't login", null));
       const payload = {
-        id:user.id,
+        id: user.id,
         userId: user.userId,
         name: user.name,
         grade: user.grade,
@@ -75,27 +75,27 @@ auth.post("/login", function (req: any, res: Response, next: NextFunction) {
       const authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
         expiresIn: '7d',
       });
-      return res.json(util.successTrue("",{ token: authToken, grade: user.grade }));
+      return res.json(util.successTrue("", { token: authToken, grade: user.grade }));
     });
   })(req, res, next);
 });
 
-auth.get('/refresh', util.isLoggedin, function (req:any, res) {
+auth.get('/refresh', util.isLoggedin, function (req: any, res) {
   userRep.findOne({ where: { userId: req.decoded.userId } }).then(function (user) {
     if (!user) {
-      return res.status(403).json(util.successFalse(null,"Can't refresh the token",{user:user}));
+      return res.status(403).json(util.successFalse(null, "Can't refresh the token", { user: user }));
     }
     const payload = {
-      id:user.id,
+      id: user.id,
       userId: user.userId,
       name: user.name,
       grade: user.grade,
       loggedAt: new Date(),
     };
-    const authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, { 
+    const authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
       expiresIn: '7d',
     });
-    return res.json(util.successTrue("",{ token: authToken, grade: user.grade }));
+    return res.json(util.successTrue("", { token: authToken, grade: user.grade }));
   });
 });
 
@@ -146,7 +146,7 @@ auth.post("/sms",/*util.isLoggedin,*/async function (req: any, res: Response, ne
       number: randomNumber
     });
     if (tokenData.statusCode == "202")
-      return res.json(util.successTrue(tokenData.statusName,null));
+      return res.json(util.successTrue(tokenData.statusName, null));
     return res.status(403).json(util.successFalse(null, tokenData.statusName, null));
   }
   catch (e) {
@@ -178,7 +178,7 @@ auth.post("/sms/verification", async function (req: any, res: Response, next: Ne
             return res.status(403).json(util.successFalse(null, "Time Expired.", null));
           }
           veriRep.update({ verified: true }, { where: { phone: phone } });
-          return res.json(util.successTrue("Matched.",null));
+          return res.json(util.successTrue("Matched.", null));
         }
       }
       return res.status(403).json(util.successFalse(null, "Not Matched.", null));
@@ -214,7 +214,7 @@ auth.get('/google/callback', function (req: any, res: Response, next: NextFuncti
       user.authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
         expiresIn: '7d',
       });
-      return res.json(util.successTrue("",{ token: user.authToken, admin: user.admin }));
+      return res.json(util.successTrue("", { token: user.authToken, admin: user.admin }));
     });
   })(req, res, next);
 }
@@ -240,7 +240,7 @@ auth.get('/kakao/callback', function (req, res, next) {
       user.authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
         expiresIn: '7d',
       });
-      return res.json(util.successTrue("",{ token: user.authToken, admin: user.admin }));
+      return res.json(util.successTrue("", { token: user.authToken, admin: user.admin }));
     });
   })(req, res);
 });
@@ -254,13 +254,23 @@ auth.post("/email",/*util.isLoggedin,*/async function (req: any, res: Response, 
   const email_number = key_one + key_two;
 
   try {
-    emailVeriRep.destroy({
-      where: {
-        email: email
+    emailVeriRep.findOne({
+      where: { email: email }
+    }).then((email_veri) => {
+      if (email_veri && email_veri.email_verified) {
+        return res.status(403).json(util.successTrue("Already Verified Email", null));
       }
-    });
+      else {
+        emailVeriRep.destroy({
+          where: {
+            email: email
+          }
+        });
+      }
+    }
+    );
     const url = 'http://' + req.get('host') + '/api/v1/auth/email/verification' + '?email_number=' + email_number;
-    const info = await transporter.sendMail({
+    await transporter.sendMail({
       from: '"발신전용" <noreply@deliversity.co.kr>',
       to: email,
       subject: "Deliversity 인증 메일입니다.",
@@ -271,16 +281,16 @@ auth.post("/email",/*util.isLoggedin,*/async function (req: any, res: Response, 
       email: email,
       email_number: email_number
     });
-    return res.status(200).json(util.successTrue('Sent Auth Email',null));
+    return res.status(200).json(util.successTrue('Sent Auth Email', null));
   }
   catch (e) {
-    //console.error(e);
+    console.error(e);
     emailVeriRep.destroy({
       where: {
         email: email
       }
     });
-    return res.status(403).json(util.successFalse(null,'Sent Auth Email Failed',null));
+    return res.status(403).json(util.successFalse(null, 'Sent Auth Email Failed', null));
   }
 }
 );
@@ -296,16 +306,16 @@ auth.get('/email/verification', async (req, res, next: NextFunction) => {
       const remainingTime = (now - created) / 60000;
       if (remainingTime > 3) {
         email_veri.destroy();
-        return res.status(403).json(util.successFalse(null,"Time Expired",null));
+        return res.status(403).json(util.successFalse(null, "Time Expired", null));
       }
       emailVeriRep.update({
         email_verified: true
       }, {
         where: { email: email_veri.email }
       });
-      return res.status(204).json(util.successTrue("Matched",null));
+      return res.status(204).json(util.successTrue("Matched", null));
     }
-    return res.status(403).json(util.successFalse(null,"Not Matched",null));
+    return res.status(403).json(util.successFalse(null, "Not Matched", null));
   }
   );
 });
