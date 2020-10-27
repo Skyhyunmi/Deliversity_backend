@@ -1,7 +1,7 @@
 import passport from "passport";
 import passportLocal from "passport-local";
 import passportJwt from "passport-jwt";
-import {userRep,veriRep} from "../models/index";
+import {userRep,veriRep,emailVeriRep} from "../models/index";
 import * as crypto from "crypto";
 import axios from "axios";
 
@@ -13,28 +13,46 @@ const JwtStrategy = passportJwt.Strategy;
 const ExtractJwt = passportJwt.ExtractJwt;
 
 
-async function certify(phone:string){
-  let ret=0;
+async function phoneVerify(phone:string){
   try{
-    await veriRep.findOne({where:{phone:phone}})
-      .then((veri)=>{
-        if(veri){
-          if(veri.verified==true){
-            const now = Number.parseInt(Date.now().toString());
-            const created = Date.parse(veri.createdAt);
-            const remainingTime = (now-created)/60000;
-            if(remainingTime>30){ //30분
-              veri.destroy();
-            }
-            else ret=1;
-          }
-        }
-      });
+    const veri = await veriRep.findOne({where:{phone:phone}});
+    if(!veri || !veri.verified) return 0;
+    const now = Number.parseInt(Date.now().toString());
+    const created = Date.parse(veri.createdAt);
+    const remainingTime = (now-created)/60000;
+    if(remainingTime>5){ //30분
+      veri.destroy();
+      return 0;
+    }
+    else {
+      veri.destroy();
+      return 1;
+    }
   }
   catch(e){
-    console.error(e);
+    return 0;
   }
-  return ret;
+};
+
+async function emailVerify(email:string){
+  try{
+    const veri = await emailVeriRep.findOne({where:{email:email}});
+    if(!veri || !veri.email_verified) return 0;
+    const now = Number.parseInt(Date.now().toString());
+    const created = Date.parse(veri.createdAt);
+    const remainingTime = (now-created)/60000;
+    if(remainingTime>5){ //30분
+      veri.destroy();
+      return 0;
+    }
+    else {
+      veri.destroy();
+      return 1;
+    }
+  }
+  catch(e){
+    return 0;
+  }
 };
 
 export function passportConfig(){
@@ -46,60 +64,62 @@ export function passportConfig(){
       session: false,
       passReqToCallback: true
     },
-    function (req, id, password, done) {
+    async function (req, userId, password, done) {
       try {
-        userRep.findOne({
+        const reqBody = req.body;
+        const userExist = await userRep.findOne({
           where: {
-            userId: id
+            userId: userId
           }
-        }).then(function (user) {
-          const data = req.body;
-          if (user) {
-            return done(null, false, { message: 'User already exist.' });
-          }
-          userRep.findOne({
-            where: {
-              email: data.email
-            }
-          }).then(async function (user) {
-            if (user) {
-              return done(null, false, { message: 'E-mail duplicated.' });
-            }
-            const buffer = crypto.randomBytes(64);
-            const salt = buffer.toString('base64');
-            const key = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512');
-            const hashedPw = key.toString('base64');
-            const certified=await certify(data.phone);
-            if(certified==0) return done(null, false, { message: 'SMS Verification is required.' });
-            userRep.create({
-              userId: id,
-              name: data.name,
-              email: data.email,
-              salt: salt,
-              nickName: data.nickName,
-              gender: data.gender,
-              age: Number.parseInt(data.age),
-              phone: data.phone,
-              admin: data.is_admin,
-              password: hashedPw,
-              createdAt: new Date(),
-              updatedAt: null,
-              certified: certified,
-              googleOAuth:data.googleOAuth || null,
-              kakaoOAuth:data.kakaoOAuth || null,
-            }).then(function (result) {
-              done(null, result);
-            }).catch(function (err) {
-              done(err);
-            });
-          });
         });
-      } catch (err) {
+        if(userExist) return done(null, false, { message: 'User already exist.' });
+        const emailExist = await userRep.findOne({
+          where: {
+            email: reqBody.email
+          }
+        });
+        if (emailExist) return done(null, false, { message: 'E-mail duplicated.' });
+        const phoneExist = await userRep.findOne({
+          where: {
+            phone: reqBody.phone
+          }
+        });
+        if(phoneExist) return done(null, false, { message: 'phone number duplicated.' });
+        const nickExist = await userRep.findOne({
+          where: {
+            nickName: reqBody.nickName
+          }
+        });
+        if(nickExist) return done(null, false, { message: 'nickName duplicated.' });
+        const buffer = crypto.randomBytes(64);
+        const salt = buffer.toString('base64');
+        const key = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512');
+        const hashedPw = key.toString('base64');
+        const phoneVeri=await phoneVerify(reqBody.phone);
+        if(phoneVeri==0) return done(null, false, { message: 'SMS Verification is required.' });
+        const emailVeri=await emailVerify(reqBody.email);
+        if(emailVeri==0) return done(null, false, { message: 'E-mail Verification is required.' });
+        const user = await userRep.create({
+          userId: userId,
+          password: hashedPw,
+          salt: salt,
+          name: reqBody.name,
+          nickName: reqBody.nickName,
+          gender: reqBody.gender,
+          age: Number.parseInt(reqBody.age),
+          email: reqBody.email,
+          phone: reqBody.phone,
+          createdAt: new Date(),
+          updatedAt: null,
+          googleOAuth:reqBody.googleOAuth || null,
+          kakaoOAuth:reqBody.kakaoOAuth || null
+        });
+        done(null,user);
+      }catch(err){
         done(err);
       }
     }
-    )
-  );
+    ));
 
   passport.use(
     'login',
@@ -108,33 +128,28 @@ export function passportConfig(){
       passwordField: 'pw',
       session: false
     },
-    function (id, password, done) {
+    async function (id, password, done) {
       try {
-        userRep.findOne({
+        const user = await userRep.findOne({
           where: {
             userId: id
           }
-        }).then(function (user) {
-          if (user) {
-            crypto.pbkdf2(password, user.salt, 100000, 64, 'sha512', function (err:any, key:any) {
-              if (err) {
-                done(null, false, { message: 'error' });
-              }
-              if (user.password === key.toString('base64')) {
-                return done(null, user);
-              } else {
-                return done(null, false, { message: 'Password do not match.' });
-              }
-            });
+        });
+        if (!user) return done(null, false, { message: 'ID do not match' });
+        crypto.pbkdf2(password, user.salt, 100000, 64, 'sha512', function (err:Error | null, key:Buffer) {
+          if (err) {
+            done(null, false, { message: 'error' });
+          }
+          if (user.password === key.toString('base64')) {
+            return done(null, user);
           } else {
-            return done(null, false, { message: 'ID do not match' });
+            return done(null, false, { message: 'Password do not match.' });
           }
         });
       } catch (err) {
         done(err);
       }
-    }
-    )
+    })
   );
 
   passport.use(new JwtStrategy(
