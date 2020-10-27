@@ -175,6 +175,7 @@ auth.post("/sms/verification", async function (req: any, res: Response, next: Ne
           const created = Date.parse(veri.createdAt);
           const remainingTime = (now - created) / 60000;
           if (remainingTime > 3) { //3분
+            veri.destroy();
             return res.status(403).json(util.successFalse(null, "Time Expired.", null));
           }
           veriRep.update({ verified: true }, { where: { phone: phone } });
