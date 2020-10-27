@@ -9,6 +9,7 @@ import urlencode from "urlencode";
 import { transporter } from "../config/mail";
 
 import dotenv from "dotenv";
+import Email_Verify from "../models/email-verification";
 dotenv.config();
 
 
@@ -254,21 +255,16 @@ auth.post("/email",/*util.isLoggedin,*/async function (req: any, res: Response, 
   const email_number = key_one + key_two;
 
   try {
-    emailVeriRep.findOne({
-      where: { email: email }
-    }).then((email_veri) => {
-      if (email_veri && email_veri.email_verified) {
-        return res.status(403).json(util.successTrue("Already Verified Email", null));
+    emailVeriRep.destroy({
+      where: {
+        email: email
       }
-      else {
-        emailVeriRep.destroy({
-          where: {
-            email: email
-          }
-        });
+    });
+    userRep.findOne({ where: { email: email } }).then(function (user) {
+      if (user) {
+        return res.status(200).json(util.successTrue('Already Existed Email', null));
       }
-    }
-    );
+    });
     const url = 'http://' + req.get('host') + '/api/v1/auth/email/verification' + '?email_number=' + email_number;
     await transporter.sendMail({
       from: '"발신전용" <noreply@deliversity.co.kr>',
@@ -277,7 +273,7 @@ auth.post("/email",/*util.isLoggedin,*/async function (req: any, res: Response, 
       html: "<h3>이메일 인증을 위해 URL을 클릭해주세요.</h3><br>" + url
     });
 
-    emailVeriRep.create({
+    await emailVeriRep.create({
       email: email,
       email_number: email_number
     });
@@ -304,7 +300,7 @@ auth.get('/email/verification', async (req, res, next: NextFunction) => {
       const now = Number.parseInt(Date.now().toString());
       const created = Date.parse(email_veri.createdAt);
       const remainingTime = (now - created) / 60000;
-      if (remainingTime > 3) {
+      if (remainingTime > 15) {
         email_veri.destroy();
         return res.status(403).json(util.successFalse(null, "Time Expired", null));
       }
