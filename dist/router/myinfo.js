@@ -35,9 +35,98 @@ exports.myinfo = void 0;
 const express_1 = require("express");
 const util = __importStar(require("../config/util"));
 const index_1 = require("../models/index");
+const crypto = __importStar(require("crypto"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 exports.myinfo = express_1.Router();
+exports.myinfo.get('/', util.isLoggedin, function (req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        //본인 정보 반환
+        const tokenData = req.decoded;
+        try {
+            const _user = yield index_1.userRep.findOne({
+                where: {
+                    id: tokenData.id
+                }
+            });
+            if (!_user)
+                return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
+            const user = {
+                id: _user.id,
+                userId: _user.userId,
+                name: _user.name,
+                nickName: _user.nickName,
+                gender: _user.gender,
+                age: _user.age,
+                email: _user.email,
+                phone: _user.phone,
+                addressId: _user.addressId,
+                grade: _user.grade,
+                createdAt: _user.createdAt,
+                updatedAt: _user.updatedAt
+            };
+            return res.json(util.successTrue("", user));
+        }
+        catch (err) {
+            return res.status(403).json(util.successFalse(err, "", null));
+        }
+    });
+});
+exports.myinfo.put('/', util.isLoggedin, function (req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        //본인 정보 수정
+        const tokenData = req.decoded;
+        const reqBody = req.body;
+        let salt = null, hashedPw = null;
+        try {
+            const _user = yield index_1.userRep.findOne({
+                where: {
+                    id: tokenData.id
+                }
+            });
+            if (!_user)
+                return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
+            if (reqBody.pw) {
+                const buffer = crypto.randomBytes(64);
+                salt = buffer.toString('base64');
+                const key = crypto.pbkdf2Sync(reqBody.pw, salt, 100000, 64, 'sha512');
+                hashedPw = key.toString('base64');
+            }
+            if (reqBody.nickName) {
+                const nickExist = yield index_1.userRep.findOne({
+                    where: {
+                        nickName: reqBody.nickName
+                    }
+                });
+                if (nickExist)
+                    return res.status(403).json(util.successFalse(null, "nickName duplicated.", null));
+            }
+            _user.update({
+                password: hashedPw ? hashedPw : _user.password,
+                salt: salt ? salt : _user.salt,
+                nickName: reqBody.nickName ? reqBody.nickName : _user.nickName
+            });
+            const user = {
+                id: _user.id,
+                userId: _user.userId,
+                name: _user.name,
+                nickName: _user.nickName,
+                gender: _user.gender,
+                age: _user.age,
+                email: _user.email,
+                phone: _user.phone,
+                addressId: _user.addressId,
+                grade: _user.grade,
+                createdAt: _user.createdAt,
+                updatedAt: _user.updatedAt
+            };
+            return res.json(util.successTrue("", user));
+        }
+        catch (err) {
+            return res.status(403).json(util.successFalse(err, "", null));
+        }
+    });
+});
 exports.myinfo.get('/address/list', util.isLoggedin, function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         //자기 주소 리스트 반환
@@ -183,11 +272,14 @@ exports.myinfo.delete('/address', util.isLoggedin, function (req, res, next) {
         const tokenData = req.decoded;
         const reqBody = req.body;
         try {
-            index_1.addressRep.destroy({
+            const address = yield index_1.addressRep.findOne({
                 where: {
                     id: reqBody.addressId
                 }
-            }).then(() => res.json(util.successTrue("Deletion Success.", null)));
+            });
+            if (!address)
+                return res.json(util.successFalse(null, "Deletion Failure.", null));
+            address.destroy().then(() => res.json(util.successTrue("Deletion Success.", null)));
         }
         catch (err) {
             return res.status(403).json(util.successFalse(err, "", null));
@@ -196,11 +288,34 @@ exports.myinfo.delete('/address', util.isLoggedin, function (req, res, next) {
 });
 exports.myinfo.post('/report', util.isLoggedin, function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
-        //신고 접수
+        //신고 접수(req: reportKind, orderId, content, chat포함여부)
         const tokenData = req.decoded;
         const reqBody = req.body;
+        let riderId = 0;
+        let userId = 0;
+        let chatId = "";
         try {
-            //작성
+            index_1.orderRep.findOne({
+                where: { id: reqBody.orderId }
+            }).then((order) => {
+                if (order) {
+                    userId = order.userId;
+                    riderId = order.riderId;
+                    chatId = order.chatId;
+                }
+                return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
+            });
+            const report = yield index_1.reportRep.create({
+                userId: userId,
+                riderId: riderId,
+                reportKind: reqBody.reportKind,
+                orderId: reqBody.orderId,
+                fromId: tokenData.id,
+                // chat은 선택 여부로 넣는데 아직 구현이 안되서 둠, 선택 여부에 따라 chat:chatId 넣는거 추가해야함
+                content: reqBody.content,
+                // status 0은 답변 X
+                status: 0
+            });
         }
         catch (err) {
             return res.status(403).json(util.successFalse(err, "", null));
@@ -209,11 +324,16 @@ exports.myinfo.post('/report', util.isLoggedin, function (req, res, next) {
 });
 exports.myinfo.post('/qna', util.isLoggedin, function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
-        //질문 접수
+        //질문 접수 (id, qnakind, userId, content, answer)
         const tokenData = req.decoded;
         const reqBody = req.body;
         try {
-            //작성
+            const qna = yield index_1.qnaRep.create({
+                userId: tokenData.id,
+                qnakind: reqBody.qnakind,
+                content: reqBody.content
+            });
+            return res.json(util.successTrue("", qna));
         }
         catch (err) {
             return res.status(403).json(util.successFalse(err, "", null));

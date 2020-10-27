@@ -62,14 +62,28 @@ function makeSignature(urlsub, timestamp) {
 exports.auth = express_1.Router();
 exports.auth.post("/signup", function (req, res, next) {
     req.query = null;
-    passport_1.default.authenticate("signup", function (err, user, info) {
+    passport_1.default.authenticate("signup", function (err, _user, info) {
         if (err) {
             return res.status(403).json(util.successFalse(err, "", null));
         }
         if (info) {
             return res.status(403).json(util.successFalse(null, info.message, null));
         }
-        if (user) {
+        if (_user) {
+            const user = {
+                id: _user.id,
+                userId: _user.userId,
+                name: _user.name,
+                nickName: _user.nickName,
+                gender: _user.gender,
+                age: _user.age,
+                email: _user.email,
+                phone: _user.phone,
+                addressId: _user.addressId,
+                grade: _user.grade,
+                createdAt: _user.createdAt,
+                updatedAt: _user.updatedAt
+            };
             return res.json(util.successTrue("", user));
         }
     })(req, res, next);
@@ -124,6 +138,9 @@ exports.auth.post("/sms", /*util.isLoggedin,*/ function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         const body = req.body;
         const phone = body.phone;
+        const user = yield index_1.userRep.findOne({ where: { phone: phone } });
+        if (user)
+            res.status(403).json(util.successFalse(null, "phone number duplicated.", null));
         const sendFrom = process.env.SEND_FROM;
         const serviceID = urlencode_1.default.encode(process.env.NAVER_SMS_SERVICE_ID);
         const timestamp = Date.now().toString();
@@ -196,7 +213,8 @@ exports.auth.post("/sms/verification", function (req, res, next) {
                         const now = Number.parseInt(Date.now().toString());
                         const created = Date.parse(veri.createdAt);
                         const remainingTime = (now - created) / 60000;
-                        if (remainingTime > 3) { //3분
+                        if (remainingTime > 15) { //3분
+                            veri.destroy();
                             return res.status(403).json(util.successFalse(null, "Time Expired.", null));
                         }
                         index_1.veriRep.update({ verified: true }, { where: { phone: phone } });
@@ -274,14 +292,19 @@ exports.auth.post("/email", /*util.isLoggedin,*/ function (req, res, next) {
                     email: email
                 }
             });
+            index_1.userRep.findOne({ where: { email: email } }).then(function (user) {
+                if (user) {
+                    return res.status(200).json(util.successTrue('Already Existed Email', null));
+                }
+            });
             const url = 'http://' + req.get('host') + '/api/v1/auth/email/verification' + '?email_number=' + email_number;
-            const info = yield mail_1.transporter.sendMail({
+            yield mail_1.transporter.sendMail({
                 from: '"발신전용" <noreply@deliversity.co.kr>',
                 to: email,
                 subject: "Deliversity 인증 메일입니다.",
                 html: "<h3>이메일 인증을 위해 URL을 클릭해주세요.</h3><br>" + url
             });
-            index_1.emailVeriRep.create({
+            yield index_1.emailVeriRep.create({
                 email: email,
                 email_number: email_number
             });
@@ -307,14 +330,12 @@ exports.auth.get('/email/verification', (req, res, next) => __awaiter(void 0, vo
             const now = Number.parseInt(Date.now().toString());
             const created = Date.parse(email_veri.createdAt);
             const remainingTime = (now - created) / 60000;
-            if (remainingTime > 3) {
+            if (remainingTime > 15) {
                 email_veri.destroy();
                 return res.status(403).json(util.successFalse(null, "Time Expired", null));
             }
-            index_1.emailVeriRep.update({
+            email_veri.update({
                 email_verified: true
-            }, {
-                where: { email: email_veri.email }
             });
             return res.status(204).json(util.successTrue("Matched", null));
         }
