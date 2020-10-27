@@ -18,9 +18,9 @@ async function phoneVerify(phone:string){
     const veri = await veriRep.findOne({where:{phone:phone}});
     if(!veri || !veri.verified) return 0;
     const now = Number.parseInt(Date.now().toString());
-    const created = Date.parse(veri.createdAt);
+    const created = Date.parse(veri.updatedAt);
     const remainingTime = (now-created)/60000;
-    if(remainingTime>15){ //30분
+    if(remainingTime>15){ //15분
       veri.destroy();
       return 0;
     }
@@ -39,9 +39,9 @@ async function emailVerify(email:string){
     const veri = await emailVeriRep.findOne({where:{email:email}});
     if(!veri || !veri.email_verified) return 0;
     const now = Number.parseInt(Date.now().toString());
-    const created = Date.parse(veri.createdAt);
+    const created = Date.parse(veri.updatedAt);
     const remainingTime = (now-created)/60000;
-    if(remainingTime>15){ //30분
+    if(remainingTime>15){ //15분
       veri.destroy();
       return 0;
     }
