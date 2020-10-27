@@ -284,7 +284,7 @@ auth.post("/email",/*util.isLoggedin,*/async function (req: any, res: Response, 
     return res.status(200).json(util.successTrue('Sent Auth Email', null));
   }
   catch (e) {
-    console.error(e);
+    //console.error(e);
     emailVeriRep.destroy({
       where: {
         email: email
