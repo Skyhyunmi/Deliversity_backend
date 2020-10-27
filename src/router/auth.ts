@@ -190,7 +190,7 @@ auth.post("/sms/verification", async function (req: any, res: Response, next: Ne
           const now = Number.parseInt(Date.now().toString());
           const created = Date.parse(veri.createdAt);
           const remainingTime = (now - created) / 60000;
-          if (remainingTime > 3) { //3분
+          if (remainingTime > 15) { //3분
             veri.destroy();
             return res.status(403).json(util.successFalse(null, "Time Expired.", null));
           }
@@ -311,7 +311,7 @@ auth.get('/email/verification', async (req, res, next: NextFunction) => {
       const now = Number.parseInt(Date.now().toString());
       const created = Date.parse(email_veri.createdAt);
       const remainingTime = (now - created) / 60000;
-      if (remainingTime > 3) {
+      if (remainingTime > 15) {
         email_veri.destroy();
         return res.status(403).json(util.successFalse(null,"Time Expired",null));
       }

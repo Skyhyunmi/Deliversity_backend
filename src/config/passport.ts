@@ -20,7 +20,7 @@ async function phoneVerify(phone:string){
     const now = Number.parseInt(Date.now().toString());
     const created = Date.parse(veri.createdAt);
     const remainingTime = (now-created)/60000;
-    if(remainingTime>5){ //30분
+    if(remainingTime>15){ //30분
       veri.destroy();
       return 0;
     }
@@ -41,7 +41,7 @@ async function emailVerify(email:string){
     const now = Number.parseInt(Date.now().toString());
     const created = Date.parse(veri.createdAt);
     const remainingTime = (now-created)/60000;
-    if(remainingTime>5){ //30분
+    if(remainingTime>15){ //30분
       veri.destroy();
       return 0;
     }
