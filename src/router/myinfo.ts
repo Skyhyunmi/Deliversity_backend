@@ -146,11 +146,35 @@ myinfo.delete('/address', util.isLoggedin, async function (req: any, res: Respon
 });
 
 myinfo.post('/report', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
-  //신고 접수
+  //신고 접수(req: reportKind, orderId, content, chat포함여부)
   const tokenData = req.decoded;
   const reqBody = req.body;
+  let riderId = 0;
+  let userId = 0;
+  let chatId = "";
   try {
-    //작성
+    orderRep.findOne({
+      where: { id: reqBody.orderId }
+    }).then((order) => {
+      if (order) {
+        userId = order.userId;
+        riderId = order.riderId;
+        chatId = order.chatId;
+      }
+      return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
+    });
+
+    const report = await reportRep.create({
+      userId: userId,
+      riderId: riderId,
+      reportKind: reqBody.reportKind,
+      orderId: reqBody.orderId,
+      fromId: tokenData.id,
+      // chat은 선택 여부로 넣는데 아직 구현이 안되서 둠, 선택 여부에 따라 chat:chatId 넣는거 추가해야함
+      content: reqBody.content,
+      // status 0은 답변 X
+      status: 0
+    });
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
