@@ -13,7 +13,7 @@ admin.get('/uploads', /*util.isLoggedin, util.isAdmin,*/ async function (req: an
     let IdList = "";
     await userRep.findAll({
       where: {
-        grade: 0
+        grade: 1
       }
     }).then((lists) => {
       for (let i = 0; i < lists.length; i++) {
@@ -27,12 +27,30 @@ admin.get('/uploads', /*util.isLoggedin, util.isAdmin,*/ async function (req: an
   }
 });
 
-admin.get('/upload', util.isLoggedin, util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
+admin.post('/upload', /*util.isLoggedin, util.isAdmin,*/ async function (req: any, res: Response, next: NextFunction) {
   //상세내용 반환
-  const tokenData = req.decoded;
   const reqBody = req.body;
+  const id = reqBody.id;
   try {
-    //작성
+    let photo;
+    await userRep.findOne({
+      where: {
+        id: id
+      }
+    }).then((user) => {
+      if (!user) {
+        return res.status(403).json(util.successFalse(null, "해당하는 유저가 없습니다.", null));
+      }
+      if (user.grade > 1) {
+        return res.status(403).json(util.successFalse(null, "이미 인증된 유저입니다.", null));
+      }
+      else if (user.grade == 0) {
+        return res.status(403).json(util.successFalse(null, "인증을 요청하지 않은 유저입니다.", null));
+      }
+      photo = user.idCard;
+    });
+    if (!photo) return res.status(403).json(util.successFalse(null, "해당 유저가 사진을 등록하지 않았습니다.", null));
+    return res.json(util.successTrue("", photo));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
