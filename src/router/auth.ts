@@ -2,12 +2,12 @@ import { NextFunction, Response, Router } from "express";
 import * as util from "../config/util";
 import jwt from "jsonwebtoken";
 import passport from "passport";
-import { veriRep, emailVeriRep, userRep } from "../models/index";
+import { emailVeriRep, userRep } from "../models/index";
 import * as crypto from "crypto";
 import axios from "axios";
 import urlencode from "urlencode";
 import { transporter } from "../config/mail";
-
+import * as Cache from "memory-cache";
 import dotenv from "dotenv";
 import Email_Verify from "../models/email-verification";
 dotenv.config();
@@ -114,12 +114,11 @@ auth.get('/refresh', util.isLoggedin, function (req: any, res) {
   });
 });
 
-// 이미 있는 휴대폰번호인지에 대한 확인과정이 필요할듯.
 auth.post("/sms",/*util.isLoggedin,*/async function (req: any, res: Response, next: NextFunction) {
   const body = req.body;
   const phone = body.phone;
   const user = await userRep.findOne({where:{phone:phone}});
-  if(user) res.status(403).json(util.successFalse(null, "phone number duplicated.", null));
+  if(user) return res.status(403).json(util.successFalse(null, "phone number duplicated.", null));
   const sendFrom = process.env.SEND_FROM;
   const serviceID = urlencode.encode(process.env.NAVER_SMS_SERVICE_ID as string);
   const timestamp = Date.now().toString();
@@ -139,11 +138,7 @@ auth.post("/sms",/*util.isLoggedin,*/async function (req: any, res: Response, ne
     ]
   };
   try {
-    veriRep.destroy({
-      where: {
-        phone: phone
-      }
-    });
+    Cache.del(phone);
     const getToken = await axios({
       url: `https://sens.apigw.ntruss.com/sms/v2/services/${serviceID}/messages`,
       method: "post", // POST method
@@ -155,24 +150,15 @@ auth.post("/sms",/*util.isLoggedin,*/async function (req: any, res: Response, ne
       }, // "Content-Type": "application/json"
       data: data
     });
-    // console.log(getToken);
     const tokenData = getToken.data;
-    veriRep.create({
-      phone: phone,
-      sendId: tokenData.requestId,
-      number: randomNumber
-    });
+    Cache.put(phone,randomNumber);
     if (tokenData.statusCode == "202")
       return res.json(util.successTrue(tokenData.statusName, null));
     return res.status(403).json(util.successFalse(null, tokenData.statusName, null));
   }
   catch (e) {
-    //console.error(e);
-    veriRep.destroy({
-      where: {
-        phone: phone
-      }
-    });
+    Cache.del(phone);
+    return res.status(403).json(util.successFalse(null, "Retry.", null));
   }
 });
 
@@ -181,28 +167,20 @@ auth.post("/sms/verification", async function (req: any, res: Response, next: Ne
   const verify = body.verify;
   const phone = body.phone;
   try {
-    veriRep.findOne({
-      where: {
-        phone: phone
-      }
-    }).then(function (veri) {
-      if (veri) {
-        if (veri.number == verify) {
-          const now = Number.parseInt(Date.now().toString());
-          const created = Date.parse(veri.createdAt);
-          const remainingTime = (now - created) / 60000;
-          if (remainingTime > 15) { //3분
-            veri.destroy();
-            return res.status(403).json(util.successFalse(null, "Time Expired.", null));
-          }
-          veriRep.update({ verified: true }, { where: { phone: phone } });
-          return res.json(util.successTrue("Matched.", null));
-        }
-      }
-      return res.status(403).json(util.successFalse(null, "Not Matched.", null));
-    });
+    const veri = Cache.get(phone);
+    if(!veri) return res.status(403).json(util.successFalse(null, "Retry.", null));
+    if(veri != verify) return res.status(403).json(util.successFalse(null, "Not Matched.", null));
+    const now = Number.parseInt(Date.now().toString());
+    const created = Date.parse(veri.createdAt);
+    const remainingTime = (now - created) / 60000;
+    if (remainingTime > 15) { //15분
+      Cache.del(phone);
+      return res.status(403).json(util.successFalse(null, "Time Expired.", null));
+    }
+    Cache.put(phone,1);
+    return res.json(util.successTrue("Matched.", null));
   } catch (e) {
-    //console.error(e);
+    return res.status(403).json(util.successFalse(null, "Retry.", null));
   }
 });
 

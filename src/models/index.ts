@@ -1,6 +1,5 @@
 import { Sequelize } from "sequelize-typescript";
 import User from "./user";
-import Verify from "./verification";
 import Email_Verify from "./email-verification";
 import Address from "./address";
 import Order from "./order";
@@ -33,7 +32,6 @@ export const db = new Sequelize(
 );
 
 db.addModels([User]);
-db.addModels([Verify]);
 db.addModels([Email_Verify]);
 db.addModels([Address]);
 db.addModels([Order]);
@@ -46,7 +44,6 @@ db.addModels([Review]);
 //https://stackoverflow.com/questions/60014874/how-to-use-typescript-with-sequelize
 
 export const userRep  = db.getRepository(User);
-export const veriRep  = db.getRepository(Verify);
 export const emailVeriRep  = db.getRepository(Email_Verify);
 export const addressRep  = db.getRepository(Address);
 export const orderRep  = db.getRepository(Order);
