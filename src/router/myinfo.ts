@@ -206,10 +206,7 @@ myinfo.put('/address', util.isLoggedin, async function (req: any, res: Response,
     });
     if (!old) return res.status(403).json(util.successFalse(null, "해당 하는 주소가 없습니다.", null));
     const address = await addressRep.update({
-      address: reqBody.address ? reqBody.address : old.address,
       detailAddress: reqBody.detailAddress ? reqBody.detailAddress : old.detailAddress,
-      locX: reqBody.locX ? reqBody.locX : old.locX,
-      locY: reqBody.locY ? reqBody.locY : old.locY
     }, {
       where: {
         id: reqBody.addressId
@@ -244,30 +241,24 @@ myinfo.post('/report', util.isLoggedin, async function (req: any, res: Response,
   //신고 접수(req: reportKind, orderId, content, chat포함여부)
   const tokenData = req.decoded;
   const reqBody = req.body;
-  let riderId = 0;
-  let userId = 0;
-  let chatId = "";
   try {
-    orderRep.findOne({
+    const order = await orderRep.findOne({
       where: { id: reqBody.orderId }
-    }).then((order) => {
-      if (order) {
-        userId = order.userId;
-        riderId = order.riderId;
-        chatId = order.chatId;
-      }
-      return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
     });
-
+    if(!order) return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
+    const userId = order.userId;
+    const riderId = order.riderId;
+    const chatId = order.chatId;
     const report = await reportRep.create({
       userId: userId,
       riderId: riderId,
       reportKind: reqBody.reportKind,
       orderId: reqBody.orderId,
       fromId: tokenData.id,
-      // chat은 선택 여부로 넣는데 아직 구현이 안되서 둠, 선택 여부에 따라 chat:chatId 넣는거 추가해야함
+      chatId: reqBody.upload_chat==1?chatId:null,
       content: reqBody.content
     });
+    return res.json(util.successTrue("", report));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
@@ -299,7 +290,7 @@ myinfo.post('/upload',util.isLoggedin, async function (req: any, res: Response, 
     if (user.grade==1) return res.status(403).json(util.successFalse(null, "신분 확인 대기중입니다.", null));
     user.update({
       grade:1,
-      idCard:reqBody.s3url
+      idCard:reqBody.idCard
     });
     return res.json(util.successTrue("", {grade:user.grade, idCard:user.idCard}));
   } catch (err) {
