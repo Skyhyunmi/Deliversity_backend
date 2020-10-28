@@ -295,23 +295,62 @@ myinfo.post('/upload',util.isLoggedin, async function (req: any, res: Response, 
   const tokenData = req.decoded;
   const reqBody = req.body;
   try {
-    return res.json(util.successTrue("", null));
+    const user = await userRep.findOne({where:{userId:tokenData.userId}});
+    if (!user) return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
+    if (user.grade>1) return res.status(403).json(util.successFalse(null, "이미 신분확인이 완료되었습니다.", null));
+    if (user.grade==1) return res.status(403).json(util.successFalse(null, "신분 확인 대기중입니다.", null));
+    user.update({
+      grade:1,
+      idCard:reqBody.s3url
+    });
+    return res.json(util.successTrue("", {grade:user.grade, idCard:user.idCard}));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
 });
 
-myinfo.get('/grade',util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+myinfo.post('/toRider',util.isLoggedin, util.isUser, async function (req: any, res: Response, next: NextFunction) {
   const tokenData = req.decoded;
-  const reqBody = req.body;
-  const reqQuery = req.query;
   try {
     const user = await userRep.findOne({where:{userId:tokenData.userId}});
     if (!user) return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
-    if(reqQuery.id >= 10) return res.json(util.successTrue(`${reqQuery.id}이상으로 올라 갈 수 없습니다.`, null));
-    user.update({grade:reqQuery.id});
+    user.update({grade:3});
     return res.json(util.successTrue("", {grade:user.grade}));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
 });
+
+myinfo.post('/toUser',util.isLoggedin, util.isRider, async function (req: any, res: Response, next: NextFunction) {
+  const tokenData = req.decoded;
+  try {
+    const user = await userRep.findOne({where:{userId:tokenData.userId}});
+    if (!user) return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
+    user.update({grade:2});
+    return res.json(util.successTrue("", {grade:user.grade}));
+  } catch (err) {
+    return res.status(403).json(util.successFalse(err, "", null));
+  }
+});
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////                              개발용 API입니다. 나중에는 지워야 합니다.                              ////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+myinfo.get('/grade',util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+  const tokenData = req.decoded;
+  const reqQuery = req.query;
+  try {
+    const user = await userRep.findOne({where:{userId:tokenData.userId}});
+    if (!user) return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
+    if (reqQuery.grade==null||reqQuery.grade=="") return res.status(403).json(util.successFalse(null, "파라미터가 부족합니다.", null));
+    if(reqQuery.grade >= 4) return res.json(util.successTrue(`4이상으로 올라 갈 수 없습니다.`, null));
+    user.update({grade:reqQuery.grade});
+    return res.json(util.successTrue("", {grade:user.grade}));
+  } catch (err) {
+    return res.status(403).json(util.successFalse(err, "", null));
+  }
+});
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
