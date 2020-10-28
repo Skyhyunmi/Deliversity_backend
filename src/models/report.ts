@@ -52,7 +52,8 @@ export default class Report extends Model<Report> {
     @AllowNull(true)
     @Column(DataType.TEXT)
     answer!:string;
-  
+
+    @Default(0)
     @Column(DataType.STRING)
     stauts!:string;
 

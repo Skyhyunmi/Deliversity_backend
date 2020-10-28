@@ -323,9 +323,7 @@ exports.myinfo.post('/report', util.isLoggedin, function (req, res, next) {
                 orderId: reqBody.orderId,
                 fromId: tokenData.id,
                 // chat은 선택 여부로 넣는데 아직 구현이 안되서 둠, 선택 여부에 따라 chat:chatId 넣는거 추가해야함
-                content: reqBody.content,
-                // status 0은 답변 X
-                status: 0
+                content: reqBody.content
             });
         }
         catch (err) {
