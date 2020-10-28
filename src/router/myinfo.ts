@@ -2,12 +2,17 @@ import { NextFunction, Response, Router } from "express";
 import * as util from "../config/util";
 import { userRep, addressRep, qnaRep, reportRep, orderRep } from "../models/index";
 import * as crypto from "crypto";
+import * as proj4 from "proj4";
 import dotenv from "dotenv";
 dotenv.config();
 
 export const myinfo = Router();
-
-myinfo.get('/', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+const epsg_5181=proj4.Proj("+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 \
+                            +y_0=500000 +ellps=GRS80 +units=m +no_defs");
+const grs80 = proj4.Proj("+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 \
+                          +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs"); //도로명주소 제공 좌표 5179
+const wgs84 = proj4.Proj("EPSG:4326"); //경위도
+myinfo.get('/', util.isLoggedin,util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
 //본인 정보 반환
   const tokenData = req.decoded;
   try{
@@ -159,13 +164,16 @@ myinfo.post('/address', util.isLoggedin, async function (req: any, res: Response
   //주소 추가
   const tokenData = req.decoded;
   const reqBody = req.body;
-  console.log(tokenData);
   try {
     //작성
+    const p = proj4.toPoint([reqBody.locX,reqBody.locY]);
+    const result = proj4.transform(grs80,wgs84,p); //도로명주소 API 좌표를 위도, 경도로 변환
     const address = await addressRep.create({
       userId: tokenData.id,
       address: reqBody.address,
       detailAddress: reqBody.detailAddress,
+      // locX: result.x,
+      // locY: result.y
       locX: reqBody.locX,
       locY: reqBody.locY
     });
@@ -189,6 +197,8 @@ myinfo.put('/address', util.isLoggedin, async function (req: any, res: Response,
   const tokenData = req.decoded;
   const reqBody = req.body;
   try {
+    const p = proj4.toPoint([reqBody.locX,reqBody.locY]); //월드컵로 206
+    const result = proj4.transform(grs80,wgs84,p); //도로명주소 API 좌표를 위도, 경도로 변환
     const old = await addressRep.findOne({
       where: {
         id: reqBody.addressId
