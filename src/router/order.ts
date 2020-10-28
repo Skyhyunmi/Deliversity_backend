@@ -101,7 +101,7 @@ order.get('/price', util.isLoggedin, async function (req: any, res: Response, ne
   }
 });
 
-order.post('/price', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+order.post('/price', util.isLoggedin, util.isRider, async function (req: any, res: Response, next: NextFunction) {
   //배달원이 최종 결제 금액 전송
   const tokenData = req.decoded;
   const reqBody = req.body;
@@ -112,7 +112,7 @@ order.post('/price', util.isLoggedin, async function (req: any, res: Response, n
   }
 });
 
-order.post('/review/user', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+order.post('/review/user', util.isLoggedin, util.isRider, async function (req: any, res: Response, next: NextFunction) {
   //유저에 대한 리뷰 작성
   const tokenData = req.decoded;
   const reqBody = req.body;
@@ -156,7 +156,7 @@ order.get('/review/rider', util.isLoggedin, async function (req: any, res: Respo
   }
 });
 
-order.get('/orders', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+order.get('/orders', util.isLoggedin, util.isRider, async function (req: any, res: Response, next: NextFunction) {
   //배달원이 찾을 배달거리 리스트 반환
   const tokenData = req.decoded;
   const reqBody = req.body;
