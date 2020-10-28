@@ -35,6 +35,7 @@ exports.order = void 0;
 const express_1 = require("express");
 const util = __importStar(require("../config/util"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const models_1 = require("../models");
 dotenv_1.default.config();
 exports.order = express_1.Router();
 exports.order.post('/', util.isLoggedin, function (req, res, next) {
@@ -44,6 +45,32 @@ exports.order.post('/', util.isLoggedin, function (req, res, next) {
         const reqBody = req.body;
         try {
             //작성
+            const address = yield models_1.addressRep.findOne({
+                where: {
+                    id: reqBody.addressId
+                }
+            });
+            console.log(address);
+            if (!address)
+                return res.status(403).json(util.successFalse(null, "유효하지 않은 주소입니다.", null));
+            const distance = Math.sqrt((parseFloat(reqBody.storex) - parseFloat(address.locX)) *
+                (parseFloat(reqBody.storex) - parseFloat(address.locX)) +
+                (parseFloat(reqBody.storey) - parseFloat(address.locY)) *
+                    (parseFloat(reqBody.storey) - parseFloat(address.locY)));
+            const distanceFee = 3000;
+            const data = {
+                userId: tokenData.id,
+                gender: reqBody.gender,
+                addressId: reqBody.addressId,
+                storeName: reqBody.storeName,
+                storex: reqBody.storex,
+                storey: reqBody.storey,
+                startTime: Date.now(),
+                orderStatus: "주문 완료",
+                hotDeal: reqBody.hotDeal ? true : false
+            };
+            const order = yield models_1.orderRep.create(data);
+            return res.json(util.successTrue("", order));
         }
         catch (err) {
             return res.status(403).json(util.successFalse(err, "", null));
@@ -57,6 +84,7 @@ exports.order.get('/', util.isLoggedin, function (req, res, next) {
         const reqBody = req.body;
         try {
             //작성
+            return res.json(util.successTrue("?", null));
         }
         catch (err) {
             return res.status(403).json(util.successFalse(err, "", null));
@@ -116,7 +144,7 @@ exports.order.get('/price', util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.order.post('/price', util.isLoggedin, function (req, res, next) {
+exports.order.post('/price', util.isLoggedin, util.isRider, function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         //배달원이 최종 결제 금액 전송
         const tokenData = req.decoded;
@@ -129,7 +157,7 @@ exports.order.post('/price', util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.order.post('/review/user', util.isLoggedin, function (req, res, next) {
+exports.order.post('/review/user', util.isLoggedin, util.isRider, function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         //유저에 대한 리뷰 작성
         const tokenData = req.decoded;
@@ -181,7 +209,7 @@ exports.order.get('/review/rider', util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.order.get('/orders', util.isLoggedin, function (req, res, next) {
+exports.order.get('/orders', util.isLoggedin, util.isRider, function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         //배달원이 찾을 배달거리 리스트 반환
         const tokenData = req.decoded;

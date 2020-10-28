@@ -1,9 +1,10 @@
 import passport from "passport";
 import passportLocal from "passport-local";
 import passportJwt from "passport-jwt";
-import {userRep,veriRep,emailVeriRep} from "../models/index";
+import {userRep,emailVeriRep} from "../models/index";
 import * as crypto from "crypto";
 import axios from "axios";
+import * as Cache from "memory-cache";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -15,17 +16,17 @@ const ExtractJwt = passportJwt.ExtractJwt;
 
 async function phoneVerify(phone:string){
   try{
-    const veri = await veriRep.findOne({where:{phone:phone}});
-    if(!veri || !veri.verified) return 0;
+    const veri = Cache.get(phone);
+    if(!veri||veri!=1) return 0;
     const now = Number.parseInt(Date.now().toString());
     const created = Date.parse(veri.updatedAt);
     const remainingTime = (now-created)/60000;
     if(remainingTime>15){ //15분
-      veri.destroy();
+      Cache.del(phone);
       return 0;
     }
     else {
-      veri.destroy();
+      Cache.del(phone);
       return 1;
     }
   }

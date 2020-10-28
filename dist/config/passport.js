@@ -37,6 +37,7 @@ const passport_local_1 = __importDefault(require("passport-local"));
 const passport_jwt_1 = __importDefault(require("passport-jwt"));
 const index_1 = require("../models/index");
 const crypto = __importStar(require("crypto"));
+const Cache = __importStar(require("memory-cache"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const LocalStrategy = passport_local_1.default.Strategy;
@@ -45,18 +46,18 @@ const ExtractJwt = passport_jwt_1.default.ExtractJwt;
 function phoneVerify(phone) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const veri = yield index_1.veriRep.findOne({ where: { phone: phone } });
-            if (!veri || !veri.verified)
+            const veri = Cache.get(phone);
+            if (!veri || veri != 1)
                 return 0;
             const now = Number.parseInt(Date.now().toString());
             const created = Date.parse(veri.updatedAt);
             const remainingTime = (now - created) / 60000;
             if (remainingTime > 15) { //15분
-                veri.destroy();
+                Cache.del(phone);
                 return 0;
             }
             else {
-                veri.destroy();
+                Cache.del(phone);
                 return 1;
             }
         }

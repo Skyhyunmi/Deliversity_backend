@@ -3,10 +3,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.reviewRep = exports.reportRep = exports.qnaRep = exports.pointcategoryRep = exports.pointRep = exports.paymentRep = exports.orderRep = exports.addressRep = exports.emailVeriRep = exports.veriRep = exports.userRep = exports.db = void 0;
+exports.reviewRep = exports.reportRep = exports.qnaRep = exports.pointcategoryRep = exports.pointRep = exports.paymentRep = exports.orderRep = exports.addressRep = exports.emailVeriRep = exports.userRep = exports.db = void 0;
 const sequelize_typescript_1 = require("sequelize-typescript");
 const user_1 = __importDefault(require("./user"));
-const verification_1 = __importDefault(require("./verification"));
 const email_verification_1 = __importDefault(require("./email-verification"));
 const address_1 = __importDefault(require("./address"));
 const order_1 = __importDefault(require("./order"));
@@ -31,7 +30,6 @@ exports.db = new sequelize_typescript_1.Sequelize(process.env.DB_NAME, process.e
     models: [__dirname + '/models'],
 });
 exports.db.addModels([user_1.default]);
-exports.db.addModels([verification_1.default]);
 exports.db.addModels([email_verification_1.default]);
 exports.db.addModels([address_1.default]);
 exports.db.addModels([order_1.default]);
@@ -43,7 +41,6 @@ exports.db.addModels([report_1.default]);
 exports.db.addModels([review_1.default]);
 //https://stackoverflow.com/questions/60014874/how-to-use-typescript-with-sequelize
 exports.userRep = exports.db.getRepository(user_1.default);
-exports.veriRep = exports.db.getRepository(verification_1.default);
 exports.emailVeriRep = exports.db.getRepository(email_verification_1.default);
 exports.addressRep = exports.db.getRepository(address_1.default);
 exports.orderRep = exports.db.getRepository(order_1.default);

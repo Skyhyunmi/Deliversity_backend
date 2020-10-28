@@ -18,7 +18,7 @@ admin.get('/uploads', util.isLoggedin, util.isAdmin, async function (req: any, r
   }
 });
 
-admin.get('/upload', util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
+admin.get('/upload', util.isLoggedin, util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
 //상세내용 반환
   const tokenData = req.decoded;
   const reqBody = req.body;
@@ -29,7 +29,7 @@ admin.get('/upload', util.isAdmin, async function (req: any, res: Response, next
   }
 });
 
-admin.put('/upload', util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
+admin.put('/upload', util.isLoggedin, util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
 //민증인증 처리
   const tokenData = req.decoded;
   const reqBody = req.body;
@@ -41,7 +41,7 @@ admin.put('/upload', util.isAdmin, async function (req: any, res: Response, next
 });
 
 
-admin.get('/reports', util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
+admin.get('/reports', util.isLoggedin, util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
 //신고 리스트 반환
   const tokenData = req.decoded;
   const reqBody = req.body;
@@ -52,7 +52,7 @@ admin.get('/reports', util.isAdmin, async function (req: any, res: Response, nex
   }
 });
 
-admin.get('/report', util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
+admin.get('/report', util.isLoggedin, util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
 //신고 상세내용보기
   const tokenData = req.decoded;
   const reqBody = req.body;
@@ -63,7 +63,7 @@ admin.get('/report', util.isAdmin, async function (req: any, res: Response, next
   }
 });
 
-admin.put('/report', util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
+admin.put('/report', util.isLoggedin, util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
 //신고 답변 작성
   const tokenData = req.decoded;
   const reqBody = req.body;
@@ -75,7 +75,7 @@ admin.put('/report', util.isAdmin, async function (req: any, res: Response, next
 });
 
 
-admin.get('/qnas', util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
+admin.get('/qnas', util.isLoggedin, util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
 //문의 리스트 반환
   const tokenData = req.decoded;
   const reqBody = req.body;
@@ -86,7 +86,7 @@ admin.get('/qnas', util.isAdmin, async function (req: any, res: Response, next: 
   }
 });
     
-admin.get('/qna', util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
+admin.get('/qna', util.isLoggedin, util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
 //문의 상세내용보기
   const tokenData = req.decoded;
   const reqBody = req.body;
@@ -97,7 +97,7 @@ admin.get('/qna', util.isAdmin, async function (req: any, res: Response, next: N
   }
 });
 
-admin.put('/qna', util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
+admin.put('/qna', util.isLoggedin, util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
 //문의 답변 작성
   const tokenData = req.decoded;
   const reqBody = req.body;

@@ -36,10 +36,16 @@ const express_1 = require("express");
 const util = __importStar(require("../config/util"));
 const index_1 = require("../models/index");
 const crypto = __importStar(require("crypto"));
+const proj4 = __importStar(require("proj4"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 exports.myinfo = express_1.Router();
-exports.myinfo.get('/', util.isLoggedin, function (req, res, next) {
+const epsg_5181 = proj4.Proj("+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 \
+                            +y_0=500000 +ellps=GRS80 +units=m +no_defs");
+const grs80 = proj4.Proj("+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 \
+                          +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs"); //도로명주소 제공 좌표 5179
+const wgs84 = proj4.Proj("EPSG:4326"); //경위도
+exports.myinfo.get('/', util.isLoggedin, util.isAdmin, function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         //본인 정보 반환
         const tokenData = req.decoded;
@@ -209,13 +215,16 @@ exports.myinfo.post('/address', util.isLoggedin, function (req, res, next) {
         //주소 추가
         const tokenData = req.decoded;
         const reqBody = req.body;
-        console.log(tokenData);
         try {
             //작성
+            const p = proj4.toPoint([reqBody.locX, reqBody.locY]);
+            const result = proj4.transform(grs80, wgs84, p); //도로명주소 API 좌표를 위도, 경도로 변환
             const address = yield index_1.addressRep.create({
                 userId: tokenData.id,
                 address: reqBody.address,
                 detailAddress: reqBody.detailAddress,
+                // locX: result.x,
+                // locY: result.y
                 locX: reqBody.locX,
                 locY: reqBody.locY
             });
@@ -241,6 +250,8 @@ exports.myinfo.put('/address', util.isLoggedin, function (req, res, next) {
         const tokenData = req.decoded;
         const reqBody = req.body;
         try {
+            const p = proj4.toPoint([reqBody.locX, reqBody.locY]); //월드컵로 206
+            const result = proj4.transform(grs80, wgs84, p); //도로명주소 API 좌표를 위도, 경도로 변환
             const old = yield index_1.addressRep.findOne({
                 where: {
                     id: reqBody.addressId
@@ -249,10 +260,7 @@ exports.myinfo.put('/address', util.isLoggedin, function (req, res, next) {
             if (!old)
                 return res.status(403).json(util.successFalse(null, "해당 하는 주소가 없습니다.", null));
             const address = yield index_1.addressRep.update({
-                address: reqBody.address ? reqBody.address : old.address,
                 detailAddress: reqBody.detailAddress ? reqBody.detailAddress : old.detailAddress,
-                locX: reqBody.locX ? reqBody.locX : old.locX,
-                locY: reqBody.locY ? reqBody.locY : old.locY
             }, {
                 where: {
                     id: reqBody.addressId
@@ -291,31 +299,25 @@ exports.myinfo.post('/report', util.isLoggedin, function (req, res, next) {
         //신고 접수(req: reportKind, orderId, content, chat포함여부)
         const tokenData = req.decoded;
         const reqBody = req.body;
-        let riderId = 0;
-        let userId = 0;
-        let chatId = "";
         try {
-            index_1.orderRep.findOne({
+            const order = yield index_1.orderRep.findOne({
                 where: { id: reqBody.orderId }
-            }).then((order) => {
-                if (order) {
-                    userId = order.userId;
-                    riderId = order.riderId;
-                    chatId = order.chatId;
-                }
-                return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
             });
+            if (!order)
+                return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
+            const userId = order.userId;
+            const riderId = order.riderId;
+            const chatId = order.chatId;
             const report = yield index_1.reportRep.create({
                 userId: userId,
                 riderId: riderId,
                 reportKind: reqBody.reportKind,
                 orderId: reqBody.orderId,
                 fromId: tokenData.id,
-                // chat은 선택 여부로 넣는데 아직 구현이 안되서 둠, 선택 여부에 따라 chat:chatId 넣는거 추가해야함
-                content: reqBody.content,
-                // status 0은 답변 X
-                status: 0
+                chatId: reqBody.upload_chat == 1 ? chatId : null,
+                content: reqBody.content
             });
+            return res.json(util.successTrue("", report));
         }
         catch (err) {
             return res.status(403).json(util.successFalse(err, "", null));
@@ -340,3 +342,83 @@ exports.myinfo.post('/qna', util.isLoggedin, function (req, res, next) {
         }
     });
 });
+exports.myinfo.post('/upload', util.isLoggedin, function (req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const tokenData = req.decoded;
+        const reqBody = req.body;
+        try {
+            const user = yield index_1.userRep.findOne({ where: { userId: tokenData.userId } });
+            if (!user)
+                return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
+            if (user.grade > 1)
+                return res.status(403).json(util.successFalse(null, "이미 신분확인이 완료되었습니다.", null));
+            if (user.grade == 1)
+                return res.status(403).json(util.successFalse(null, "신분 확인 대기중입니다.", null));
+            user.update({
+                grade: 1,
+                idCard: reqBody.idCard
+            });
+            return res.json(util.successTrue("", { grade: user.grade, idCard: user.idCard }));
+        }
+        catch (err) {
+            return res.status(403).json(util.successFalse(err, "", null));
+        }
+    });
+});
+exports.myinfo.post('/toRider', util.isLoggedin, util.isUser, function (req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const tokenData = req.decoded;
+        try {
+            const user = yield index_1.userRep.findOne({ where: { userId: tokenData.userId } });
+            if (!user)
+                return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
+            user.update({ grade: 3 });
+            return res.json(util.successTrue("", { grade: user.grade }));
+        }
+        catch (err) {
+            return res.status(403).json(util.successFalse(err, "", null));
+        }
+    });
+});
+exports.myinfo.post('/toUser', util.isLoggedin, util.isRider, function (req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const tokenData = req.decoded;
+        try {
+            const user = yield index_1.userRep.findOne({ where: { userId: tokenData.userId } });
+            if (!user)
+                return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
+            user.update({ grade: 2 });
+            return res.json(util.successTrue("", { grade: user.grade }));
+        }
+        catch (err) {
+            return res.status(403).json(util.successFalse(err, "", null));
+        }
+    });
+});
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////                              개발용 API입니다. 나중에는 지워야 합니다.                              ////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+exports.myinfo.get('/grade', util.isLoggedin, function (req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const tokenData = req.decoded;
+        const reqQuery = req.query;
+        try {
+            const user = yield index_1.userRep.findOne({ where: { userId: tokenData.userId } });
+            if (!user)
+                return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
+            if (reqQuery.grade == null || reqQuery.grade == "")
+                return res.status(403).json(util.successFalse(null, "파라미터가 부족합니다.", null));
+            if (reqQuery.grade >= 4)
+                return res.json(util.successTrue(`4이상으로 올라 갈 수 없습니다.`, null));
+            user.update({ grade: reqQuery.grade });
+            return res.json(util.successTrue("", { grade: user.grade }));
+        }
+        catch (err) {
+            return res.status(403).json(util.successFalse(err, "", null));
+        }
+    });
+});
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////

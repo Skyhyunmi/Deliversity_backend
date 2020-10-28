@@ -45,6 +45,7 @@ __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.TEXT)
 ], Report.prototype, "answer", void 0);
 __decorate([
+    sequelize_typescript_1.Default(0),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
 ], Report.prototype, "stauts", void 0);
 __decorate([
