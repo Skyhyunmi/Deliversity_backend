@@ -184,63 +184,6 @@ auth.post("/sms/verification", async function (req: any, res: Response, next: Ne
   }
 });
 
-auth.get('/google', passport.authenticate('google', {
-  scope: ["profile", "email"]
-}));
-
-auth.get('/google/callback', function (req: any, res: Response, next: NextFunction) {
-  passport.authenticate('google', function (
-    err: any,
-    user: any,
-    info: any
-  ) {
-    if (!user && info) {
-      return res
-        .status(403)
-        .json(util.successFalse(null, "ID or PW is not valid", info.auth));
-    }
-    req.logIn(user, { session: false }, function (err: any) {
-      if (err) return res.status(403).json(util.successFalse(err, "", null));
-      const payload = {
-        id: user.userId,
-        name: user.name,
-        admin: user.admin,
-        loggedAt: new Date(),
-      };
-      user.authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
-        expiresIn: '7d',
-      });
-      return res.json(util.successTrue("", { token: user.authToken, admin: user.admin }));
-    });
-  })(req, res, next);
-}
-);
-
-auth.get('/kakao', passport.authenticate('kakao'));
-
-auth.get('/kakao/callback', function (req, res, next) {
-  passport.authenticate('kakao', function (err, user, info) {
-    if (!user && info) {
-      return res
-        .status(403)
-        .json(util.successFalse(null, "ID or PW is not valid", info.auth));
-    }
-    req.logIn(user, function (err) {
-      if (err) return res.status(403).json(util.successFalse(err, "", null));
-      const payload = {
-        id: user.userId,
-        name: user.name,
-        admin: user.admin,
-        loggedAt: new Date(),
-      };
-      user.authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
-        expiresIn: '7d',
-      });
-      return res.json(util.successTrue("", { token: user.authToken, admin: user.admin }));
-    });
-  })(req, res);
-});
-
 auth.post("/email",/*util.isLoggedin,*/async function (req: any, res: Response, next: NextFunction) {
   const body = req.body;
   const email = body.email;
