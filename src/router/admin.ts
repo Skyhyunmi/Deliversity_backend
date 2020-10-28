@@ -56,12 +56,34 @@ admin.post('/upload', /*util.isLoggedin, util.isAdmin,*/ async function (req: an
   }
 });
 
-admin.put('/upload', util.isLoggedin, util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
+admin.put('/upload', /*util.isLoggedin, util.isAdmin,*/ async function (req: any, res: Response, next: NextFunction) {
   //민증인증 처리
-  const tokenData = req.decoded;
   const reqBody = req.body;
+  const id = reqBody.id;
+  const result = reqBody.result;
   try {
-    //작성
+    await userRep.findOne({
+      where: {
+        id: id
+      }
+    }).then((user) => {
+      if (!user) {
+        return res.status(403).json(util.successFalse(null, "해당하는 유저가 없습니다.", null));
+      }
+      if (user.grade > 1) {
+        return res.status(403).json(util.successFalse(null, "이미 인증된 유저입니다.", null));
+      }
+      else if (user.grade == 0) {
+        return res.status(403).json(util.successFalse(null, "인증을 요청하지 않은 유저입니다.", null));
+      }
+      // 통과
+      if (Number(result)) {
+        user.update({
+          grade: 2
+        });
+      }
+      return res.json(util.successTrue("", user));
+    });
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
