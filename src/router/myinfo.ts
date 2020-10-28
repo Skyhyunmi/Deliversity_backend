@@ -290,3 +290,28 @@ myinfo.post('/qna', util.isLoggedin, async function (req: any, res: Response, ne
     return res.status(403).json(util.successFalse(err, "", null));
   }
 });
+
+myinfo.post('/upload',util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+  const tokenData = req.decoded;
+  const reqBody = req.body;
+  try {
+
+  } catch (err) {
+    return res.status(403).json(util.successFalse(err, "", null));
+  }
+});
+
+myinfo.get('/grade',util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+  const tokenData = req.decoded;
+  const reqBody = req.body;
+  const reqQuery = req.query;
+  try {
+    const user = await userRep.findOne({where:{userId:tokenData.userId}});
+    if (!user) return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
+    if(reqQuery.id >= 10) return res.json(util.successTrue(`${reqQuery.id}이상으로 올라 갈 수 없습니다.`, null));
+    user.update({grade:reqQuery.id});
+    return res.json(util.successTrue("", {grade:user.grade}));
+  } catch (err) {
+    return res.status(403).json(util.successFalse(err, "", null));
+  }
+});
