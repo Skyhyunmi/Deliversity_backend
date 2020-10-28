@@ -53,9 +53,9 @@ export default class Report extends Model<Report> {
     @Column(DataType.TEXT)
     answer!:string;
 
-    @Default(0)
-    @Column(DataType.STRING)
-    stauts!:string;
+    @Default(false)
+    @Column(DataType.BOOLEAN)
+    stauts!:boolean;
 
     @CreatedAt
     createdAt!: Date;

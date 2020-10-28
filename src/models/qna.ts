@@ -37,9 +37,9 @@ export default class QnA extends Model<QnA> {
     @Column(DataType.TEXT)
     answer!:string;  
 
-    @Default(0)
-    @Column(DataType.TEXT)
-    status!:string;
+    @Default(false)
+    @Column(DataType.BOOLEAN)
+    status!:boolean;
   
     @CreatedAt
     createdAt!: Date;

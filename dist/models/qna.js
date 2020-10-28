@@ -30,8 +30,8 @@ __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.TEXT)
 ], QnA.prototype, "answer", void 0);
 __decorate([
-    sequelize_typescript_1.Default(0),
-    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.TEXT)
+    sequelize_typescript_1.Default(false),
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BOOLEAN)
 ], QnA.prototype, "status", void 0);
 __decorate([
     sequelize_typescript_1.CreatedAt
