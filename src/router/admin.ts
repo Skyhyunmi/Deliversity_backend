@@ -47,7 +47,7 @@ admin.post('/upload', /*util.isLoggedin, util.isAdmin,*/ async function (req: an
       else if (user.grade == 0) {
         return res.status(403).json(util.successFalse(null, "인증을 요청하지 않은 유저입니다.", null));
       }
-      photo = user.idCard;
+      photo = "유저 아이디: " + user.id + "유저 닉네임: " + user.userId + "사진 주소: " + user.idCard;
     });
     if (!photo) return res.status(403).json(util.successFalse(null, "해당 유저가 사진을 등록하지 않았습니다.", null));
     return res.json(util.successTrue("", photo));
