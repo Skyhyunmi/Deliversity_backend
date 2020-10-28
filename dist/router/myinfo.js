@@ -36,10 +36,16 @@ const express_1 = require("express");
 const util = __importStar(require("../config/util"));
 const index_1 = require("../models/index");
 const crypto = __importStar(require("crypto"));
+const proj4 = __importStar(require("proj4"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 exports.myinfo = express_1.Router();
-exports.myinfo.get('/', util.isLoggedin, function (req, res, next) {
+const epsg_5181 = proj4.Proj("+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 \
+                            +y_0=500000 +ellps=GRS80 +units=m +no_defs");
+const grs80 = proj4.Proj("+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 \
+                          +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs"); //도로명주소 제공 좌표 5179
+const wgs84 = proj4.Proj("EPSG:4326"); //경위도
+exports.myinfo.get('/', util.isLoggedin, util.isAdmin, function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         //본인 정보 반환
         const tokenData = req.decoded;
@@ -209,13 +215,16 @@ exports.myinfo.post('/address', util.isLoggedin, function (req, res, next) {
         //주소 추가
         const tokenData = req.decoded;
         const reqBody = req.body;
-        console.log(tokenData);
         try {
             //작성
+            const p = proj4.toPoint([reqBody.locX, reqBody.locY]);
+            const result = proj4.transform(grs80, wgs84, p); //도로명주소 API 좌표를 위도, 경도로 변환
             const address = yield index_1.addressRep.create({
                 userId: tokenData.id,
                 address: reqBody.address,
                 detailAddress: reqBody.detailAddress,
+                // locX: result.x,
+                // locY: result.y
                 locX: reqBody.locX,
                 locY: reqBody.locY
             });
@@ -241,6 +250,8 @@ exports.myinfo.put('/address', util.isLoggedin, function (req, res, next) {
         const tokenData = req.decoded;
         const reqBody = req.body;
         try {
+            const p = proj4.toPoint([reqBody.locX, reqBody.locY]); //월드컵로 206
+            const result = proj4.transform(grs80, wgs84, p); //도로명주소 API 좌표를 위도, 경도로 변환
             const old = yield index_1.addressRep.findOne({
                 where: {
                     id: reqBody.addressId
@@ -334,6 +345,37 @@ exports.myinfo.post('/qna', util.isLoggedin, function (req, res, next) {
                 content: reqBody.content
             });
             return res.json(util.successTrue("", qna));
+        }
+        catch (err) {
+            return res.status(403).json(util.successFalse(err, "", null));
+        }
+    });
+});
+exports.myinfo.post('/upload', util.isLoggedin, function (req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const tokenData = req.decoded;
+        const reqBody = req.body;
+        try {
+            return res.json(util.successTrue("", null));
+        }
+        catch (err) {
+            return res.status(403).json(util.successFalse(err, "", null));
+        }
+    });
+});
+exports.myinfo.get('/grade', util.isLoggedin, function (req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const tokenData = req.decoded;
+        const reqBody = req.body;
+        const reqQuery = req.query;
+        try {
+            const user = yield index_1.userRep.findOne({ where: { userId: tokenData.userId } });
+            if (!user)
+                return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
+            if (reqQuery.id >= 10)
+                return res.json(util.successTrue(`${reqQuery.id}이상으로 올라 갈 수 없습니다.`, null));
+            user.update({ grade: reqQuery.id });
+            return res.json(util.successTrue("", { grade: user.grade }));
         }
         catch (err) {
             return res.status(403).json(util.successFalse(err, "", null));

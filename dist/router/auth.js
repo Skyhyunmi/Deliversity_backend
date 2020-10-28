@@ -41,6 +41,7 @@ const crypto = __importStar(require("crypto"));
 const axios_1 = __importDefault(require("axios"));
 const urlencode_1 = __importDefault(require("urlencode"));
 const mail_1 = require("../config/mail");
+const Cache = __importStar(require("memory-cache"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 function makeSignature(urlsub, timestamp) {
@@ -133,14 +134,13 @@ exports.auth.get('/refresh', util.isLoggedin, function (req, res) {
         return res.json(util.successTrue("", { token: authToken, grade: user.grade }));
     });
 });
-// 이미 있는 휴대폰번호인지에 대한 확인과정이 필요할듯.
 exports.auth.post("/sms", /*util.isLoggedin,*/ function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         const body = req.body;
         const phone = body.phone;
         const user = yield index_1.userRep.findOne({ where: { phone: phone } });
         if (user)
-            res.status(403).json(util.successFalse(null, "phone number duplicated.", null));
+            return res.status(403).json(util.successFalse(null, "phone number duplicated.", null));
         const sendFrom = process.env.SEND_FROM;
         const serviceID = urlencode_1.default.encode(process.env.NAVER_SMS_SERVICE_ID);
         const timestamp = Date.now().toString();
@@ -160,11 +160,7 @@ exports.auth.post("/sms", /*util.isLoggedin,*/ function (req, res, next) {
             ]
         };
         try {
-            index_1.veriRep.destroy({
-                where: {
-                    phone: phone
-                }
-            });
+            Cache.del(phone);
             const getToken = yield axios_1.default({
                 url: `https://sens.apigw.ntruss.com/sms/v2/services/${serviceID}/messages`,
                 method: "post",
@@ -176,24 +172,15 @@ exports.auth.post("/sms", /*util.isLoggedin,*/ function (req, res, next) {
                 },
                 data: data
             });
-            // console.log(getToken);
             const tokenData = getToken.data;
-            index_1.veriRep.create({
-                phone: phone,
-                sendId: tokenData.requestId,
-                number: randomNumber
-            });
+            Cache.put(phone, randomNumber);
             if (tokenData.statusCode == "202")
                 return res.json(util.successTrue(tokenData.statusName, null));
             return res.status(403).json(util.successFalse(null, tokenData.statusName, null));
         }
         catch (e) {
-            //console.error(e);
-            index_1.veriRep.destroy({
-                where: {
-                    phone: phone
-                }
-            });
+            Cache.del(phone);
+            return res.status(403).json(util.successFalse(null, "Retry.", null));
         }
     });
 });
@@ -203,81 +190,25 @@ exports.auth.post("/sms/verification", function (req, res, next) {
         const verify = body.verify;
         const phone = body.phone;
         try {
-            index_1.veriRep.findOne({
-                where: {
-                    phone: phone
-                }
-            }).then(function (veri) {
-                if (veri) {
-                    if (veri.number == verify) {
-                        const now = Number.parseInt(Date.now().toString());
-                        const created = Date.parse(veri.createdAt);
-                        const remainingTime = (now - created) / 60000;
-                        if (remainingTime > 15) { //3분
-                            veri.destroy();
-                            return res.status(403).json(util.successFalse(null, "Time Expired.", null));
-                        }
-                        index_1.veriRep.update({ verified: true }, { where: { phone: phone } });
-                        return res.json(util.successTrue("Matched.", null));
-                    }
-                }
+            const veri = Cache.get(phone);
+            if (!veri)
+                return res.status(403).json(util.successFalse(null, "Retry.", null));
+            if (veri != verify)
                 return res.status(403).json(util.successFalse(null, "Not Matched.", null));
-            });
+            const now = Number.parseInt(Date.now().toString());
+            const created = Date.parse(veri.createdAt);
+            const remainingTime = (now - created) / 60000;
+            if (remainingTime > 15) { //15분
+                Cache.del(phone);
+                return res.status(403).json(util.successFalse(null, "Time Expired.", null));
+            }
+            Cache.put(phone, 1);
+            return res.json(util.successTrue("Matched.", null));
         }
         catch (e) {
-            //console.error(e);
+            return res.status(403).json(util.successFalse(null, "Retry.", null));
         }
     });
-});
-exports.auth.get('/google', passport_1.default.authenticate('google', {
-    scope: ["profile", "email"]
-}));
-exports.auth.get('/google/callback', function (req, res, next) {
-    passport_1.default.authenticate('google', function (err, user, info) {
-        if (!user && info) {
-            return res
-                .status(403)
-                .json(util.successFalse(null, "ID or PW is not valid", info.auth));
-        }
-        req.logIn(user, { session: false }, function (err) {
-            if (err)
-                return res.status(403).json(util.successFalse(err, "", null));
-            const payload = {
-                id: user.userId,
-                name: user.name,
-                admin: user.admin,
-                loggedAt: new Date(),
-            };
-            user.authToken = jsonwebtoken_1.default.sign(payload, process.env.JWT_SECRET, {
-                expiresIn: '7d',
-            });
-            return res.json(util.successTrue("", { token: user.authToken, admin: user.admin }));
-        });
-    })(req, res, next);
-});
-exports.auth.get('/kakao', passport_1.default.authenticate('kakao'));
-exports.auth.get('/kakao/callback', function (req, res, next) {
-    passport_1.default.authenticate('kakao', function (err, user, info) {
-        if (!user && info) {
-            return res
-                .status(403)
-                .json(util.successFalse(null, "ID or PW is not valid", info.auth));
-        }
-        req.logIn(user, function (err) {
-            if (err)
-                return res.status(403).json(util.successFalse(err, "", null));
-            const payload = {
-                id: user.userId,
-                name: user.name,
-                admin: user.admin,
-                loggedAt: new Date(),
-            };
-            user.authToken = jsonwebtoken_1.default.sign(payload, process.env.JWT_SECRET, {
-                expiresIn: '7d',
-            });
-            return res.json(util.successTrue("", { token: user.authToken, admin: user.admin }));
-        });
-    })(req, res);
 });
 exports.auth.post("/email", /*util.isLoggedin,*/ function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {

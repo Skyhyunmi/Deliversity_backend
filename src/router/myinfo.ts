@@ -295,7 +295,7 @@ myinfo.post('/upload',util.isLoggedin, async function (req: any, res: Response, 
   const tokenData = req.decoded;
   const reqBody = req.body;
   try {
-
+    return res.json(util.successTrue("", null));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }

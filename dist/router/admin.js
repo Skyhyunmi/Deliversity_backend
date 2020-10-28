@@ -50,7 +50,7 @@ exports.admin.get('/uploads', util.isLoggedin, util.isAdmin, function (req, res,
         }
     });
 });
-exports.admin.get('/upload', util.isAdmin, function (req, res, next) {
+exports.admin.get('/upload', util.isLoggedin, util.isAdmin, function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         //상세내용 반환
         const tokenData = req.decoded;
@@ -63,7 +63,7 @@ exports.admin.get('/upload', util.isAdmin, function (req, res, next) {
         }
     });
 });
-exports.admin.put('/upload', util.isAdmin, function (req, res, next) {
+exports.admin.put('/upload', util.isLoggedin, util.isAdmin, function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         //민증인증 처리
         const tokenData = req.decoded;
@@ -76,7 +76,7 @@ exports.admin.put('/upload', util.isAdmin, function (req, res, next) {
         }
     });
 });
-exports.admin.get('/reports', util.isAdmin, function (req, res, next) {
+exports.admin.get('/reports', util.isLoggedin, util.isAdmin, function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         //신고 리스트 반환
         const tokenData = req.decoded;
@@ -89,7 +89,7 @@ exports.admin.get('/reports', util.isAdmin, function (req, res, next) {
         }
     });
 });
-exports.admin.get('/report', util.isAdmin, function (req, res, next) {
+exports.admin.get('/report', util.isLoggedin, util.isAdmin, function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         //신고 상세내용보기
         const tokenData = req.decoded;
@@ -102,7 +102,7 @@ exports.admin.get('/report', util.isAdmin, function (req, res, next) {
         }
     });
 });
-exports.admin.put('/report', util.isAdmin, function (req, res, next) {
+exports.admin.put('/report', util.isLoggedin, util.isAdmin, function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         //신고 답변 작성
         const tokenData = req.decoded;
@@ -115,7 +115,7 @@ exports.admin.put('/report', util.isAdmin, function (req, res, next) {
         }
     });
 });
-exports.admin.get('/qnas', util.isAdmin, function (req, res, next) {
+exports.admin.get('/qnas', util.isLoggedin, util.isAdmin, function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         //문의 리스트 반환
         const tokenData = req.decoded;
@@ -128,7 +128,7 @@ exports.admin.get('/qnas', util.isAdmin, function (req, res, next) {
         }
     });
 });
-exports.admin.get('/qna', util.isAdmin, function (req, res, next) {
+exports.admin.get('/qna', util.isLoggedin, util.isAdmin, function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         //문의 상세내용보기
         const tokenData = req.decoded;
@@ -141,7 +141,7 @@ exports.admin.get('/qna', util.isAdmin, function (req, res, next) {
         }
     });
 });
-exports.admin.put('/qna', util.isAdmin, function (req, res, next) {
+exports.admin.put('/qna', util.isLoggedin, util.isAdmin, function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         //문의 답변 작성
         const tokenData = req.decoded;
