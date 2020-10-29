@@ -200,7 +200,7 @@ auth.post("/email",/*util.isLoggedin,*/async function (req: any, res: Response, 
     });
     userRep.findOne({ where: { email: email } }).then(function (user) {
       if (user) {
-        return res.status(200).json(util.successTrue('Already Existed Email', null));
+        return res.json(util.successFalse(null, 'Already Existed Email', null));
       }
     });
     const url = 'http://' + req.get('host') + '/api/v1/auth/email/verification' + '?email_number=' + email_number;
@@ -215,7 +215,7 @@ auth.post("/email",/*util.isLoggedin,*/async function (req: any, res: Response, 
       email: email,
       email_number: email_number
     });
-    return res.status(200).json(util.successTrue('Sent Auth Email', null));
+    return res.json(util.successTrue('Sent Auth Email', null));
   }
   catch (e) {
     //console.error(e);
@@ -245,7 +245,7 @@ auth.get('/email/verification', async (req, res, next: NextFunction) => {
       email_veri.update({
         email_verified: true
       });
-      return res.status(204).json(util.successTrue("Matched", null));
+      return res.json(util.successTrue("Matched", null));
     }
     return res.status(403).json(util.successFalse(null, "Not Matched", null));
   }
