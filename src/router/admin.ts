@@ -110,7 +110,7 @@ admin.get('/report/:id',/*util.isLoggedin, util.isAdmin,*/ async function (req: 
       }
     }).then((rp) => {
       if (!rp) {
-        return res.status(403).json(util.successFalse(null, "해당하는 주문 내역이 없습니다.", null));
+        return res.status(403).json(util.successFalse(null, "해당하는 신고 내역이 없습니다.", null));
       }
       return res.json(util.successTrue("", {
         reportId: rp.id, reportKind: rp.reportKind, orderId: rp.orderId,
