@@ -45,9 +45,9 @@ __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.TEXT)
 ], Report.prototype, "answer", void 0);
 __decorate([
-    sequelize_typescript_1.Default(false),
+    sequelize_typescript_1.Default(0),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BOOLEAN)
-], Report.prototype, "stauts", void 0);
+], Report.prototype, "status", void 0);
 __decorate([
     sequelize_typescript_1.CreatedAt
 ], Report.prototype, "createdAt", void 0);
