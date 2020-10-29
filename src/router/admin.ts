@@ -134,7 +134,7 @@ admin.put('/report', /*util.isLoggedin, util.isAdmin,*/ async function (req: any
       }
     }).then((report) => {
       if (!report) {
-        return res.status(403).json(util.successFalse(null, "해당하는 신고가 없습니다.", null));
+        return res.status(403).json(util.successFalse(null, "해당하는 문의가 없습니다.", null));
       }
       if (report.status) {
         return res.status(403).json(util.successFalse(null, "이미 처리된 문의입니다.", null));
