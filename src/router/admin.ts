@@ -10,29 +10,22 @@ export const admin = Router();
 admin.get('/uploads', /*util.isLoggedin, util.isAdmin,*/ async function (req: any, res: Response, next: NextFunction) {
   //민증 확인 리스트 반환
   try {
-    let IdList = "";
     await userRep.findAll({
-      where: {
-        grade: 1
-      }
-    }).then((lists) => {
-      for (let i = 0; i < lists.length; i++) {
-        IdList += i + 1 + ". " + "id: " + lists[i].id + ", userId: " + lists[i].userId + "  ";
-      }
+      where: { grade: 1 },
+      attributes: ['id', 'userId']
+    }).then((list) => {
+      if (!list) return res.status(403).json(util.successFalse(null, "현재 인증을 기다리는 회원이 없습니다.", null));
+      return res.json(util.successTrue("", list));
     });
-    if (!IdList) return res.status(403).json(util.successFalse(null, "현재 인증을 기다리는 회원이 없습니다.", null));
-    return res.json(util.successTrue("", IdList));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
 });
 
-admin.post('/upload', /*util.isLoggedin, util.isAdmin,*/ async function (req: any, res: Response, next: NextFunction) {
+admin.get('/upload/:id', /*util.isLoggedin, util.isAdmin,*/ async function (req: any, res: Response, next: NextFunction) {
   //상세내용 반환
-  const reqBody = req.body;
-  const id = reqBody.id;
+  const id = req.params.id;
   try {
-    let detail_upload;
     await userRep.findOne({
       where: {
         id: id
@@ -47,10 +40,11 @@ admin.post('/upload', /*util.isLoggedin, util.isAdmin,*/ async function (req: an
       else if (user.grade == 0) {
         return res.status(403).json(util.successFalse(null, "인증을 요청하지 않은 유저입니다.", null));
       }
-      detail_upload = "유저 아이디: " + user.id + "유저 닉네임: " + user.userId + "사진 주소: " + user.idCard;
+      if (!user.idCard) return res.status(403).json(util.successFalse(null, "해당 유저가 사진을 등록하지 않았습니다.", null));
+      return res.json(util.successTrue("", {
+        //  Id: user.id, userId: user.userId, idCard: user.idCard
+      }));
     });
-    if (!detail_upload) return res.status(403).json(util.successFalse(null, "해당 유저가 사진을 등록하지 않았습니다.", null));
-    return res.json(util.successTrue("", detail_upload));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
@@ -64,8 +58,9 @@ admin.put('/upload', /*util.isLoggedin, util.isAdmin,*/ async function (req: any
   try {
     await userRep.findOne({
       where: {
-        id: id
-      }
+        id: id,
+      },
+      attributes: ['id', 'grade']
     }).then((user) => {
       if (!user) {
         return res.status(403).json(util.successFalse(null, "해당하는 유저가 없습니다.", null));
@@ -93,30 +88,22 @@ admin.put('/upload', /*util.isLoggedin, util.isAdmin,*/ async function (req: any
 admin.get('/reports', /*util.isLoggedin, util.isAdmin,*/ async function (req: any, res: Response, next: NextFunction) {
   //신고 리스트 반환
   try {
-    let reportList = "";
     await reportRep.findAll({
-      where: {
-        status: "0"
-      }
+      where: { status: 0 },
+      attributes: ['id', 'orderId', 'reportKind', 'fromId']
     }).then((lists) => {
-      console.log("?");
-      for (let i = 0; i < lists.length; i++) {
-        reportList += i + 1 + ". " + "reportId: " + lists[i].id + "orderId: " + lists[i].orderId + ", reportKind: " + lists[i].reportKind + ", fromId: " + lists[i].fromId + "  ";
-      }
+      if (!lists) return res.status(403).json(util.successFalse(null, "현재 처리를 기다리는 신고가 없습니다.", null));
+      return res.json(util.successTrue("", lists));
     });
-    if (!reportList) return res.status(403).json(util.successFalse(null, "현재 처리를 기다리는 신고가 없습니다.", null));
-    return res.json(util.successTrue("", reportList));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
 });
 
-admin.post('/report',/*util.isLoggedin, util.isAdmin,*/ async function (req: any, res: Response, next: NextFunction) {
+admin.get('/report/:id',/*util.isLoggedin, util.isAdmin,*/ async function (req: any, res: Response, next: NextFunction) {
   //신고 상세내용보기
-  const reqBody = req.body;
-  const reportId = reqBody.reportId;
+  const reportId = req.params.id;
   try {
-    let detail_report;
     await reportRep.findOne({
       where: {
         id: reportId
@@ -125,11 +112,11 @@ admin.post('/report',/*util.isLoggedin, util.isAdmin,*/ async function (req: any
       if (!rp) {
         return res.status(403).json(util.successFalse(null, "해당하는 주문 내역이 없습니다.", null));
       }
-      detail_report = "id: " + rp.id + ", reportKind: " + rp.reportKind + ", orderId: " + rp.orderId +
-        ", userId: " + rp.userId + ", riderId: " + rp.riderId + ", fromId: " + rp.fromId +
-        ", chat: " + "채팅 어쩌지" + ", content: " + rp.content;
+      return res.json(util.successTrue("", {
+        reportId: rp.id, reportKind: rp.reportKind, orderId: rp.orderId,
+        userId: rp.userId, riderId: rp.riderId, fromId: rp.fromId, content: rp.content
+      }));
     });
-    return res.json(util.successTrue("", detail_report));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
@@ -167,29 +154,22 @@ admin.put('/report', /*util.isLoggedin, util.isAdmin,*/ async function (req: any
 admin.get('/qnas', /*util.isLoggedin, util.isAdmin,*/ async function (req: any, res: Response, next: NextFunction) {
   //문의 리스트 반환
   try {
-    let qnaList = "";
     await qnaRep.findAll({
-      where: {
-        status: "0"
-      }
+      where: { status: 0 },
+      attributes: ['id', 'qnaKind']
     }).then((lists) => {
-      for (let i = 0; i < lists.length; i++) {
-        qnaList += i + 1 + ". " + "qnaId: " + lists[i].id + ", qnaKind: " + lists[i].qnaKind + "  ";
-      }
+      if (!lists) return res.status(403).json(util.successFalse(null, "현재 처리를 기다리는 문의가 없습니다.", null));
+      return res.json(util.successTrue("", lists));
     });
-    if (!qnaList) return res.status(403).json(util.successFalse(null, "현재 처리를 기다리는 문의가 없습니다.", null));
-    return res.json(util.successTrue("", qnaList));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
 });
 
-admin.post('/qna', /*util.isLoggedin, util.isAdmin,*/ async function (req: any, res: Response, next: NextFunction) {
+admin.get('/qna/:id', /*util.isLoggedin, util.isAdmin,*/ async function (req: any, res: Response, next: NextFunction) {
   //문의 상세내용보기
-  const reqBody = req.body;
-  const qnaId = reqBody.qnaId;
+  const qnaId = req.params.id;
   try {
-    let detail_qna;
     await qnaRep.findOne({
       where: {
         id: qnaId
@@ -198,10 +178,11 @@ admin.post('/qna', /*util.isLoggedin, util.isAdmin,*/ async function (req: any, 
       if (!qna) {
         return res.status(403).json(util.successFalse(null, "해당하는 문의 내역이 없습니다.", null));
       }
-      detail_qna = "id: " + qna.id + ", qnaKind: " + qna.qnaKind + ", userId: " + qna.userId +
-        ", content: " + qna.content;
+      return res.json(util.successTrue("", {
+        qnaId: qna.id, qnaKind: qna.qnaKind, userId: qna.userId,
+        content: qna.content
+      }));
     });
-    return res.json(util.successTrue("", detail_qna));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }

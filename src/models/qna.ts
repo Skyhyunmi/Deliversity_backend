@@ -14,7 +14,8 @@ import {
   Default//, ForeignKey
 } from "sequelize-typescript";
 
-@Table({ timestamps: true })
+// 이거 테스트용으로 임시로 작성해서 false로 꺼놈
+@Table({ timestamps: false })
 export default class QnA extends Model<QnA> {
   @PrimaryKey
   @AutoIncrement
