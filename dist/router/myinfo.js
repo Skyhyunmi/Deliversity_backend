@@ -36,15 +36,13 @@ const express_1 = require("express");
 const util = __importStar(require("../config/util"));
 const index_1 = require("../models/index");
 const crypto = __importStar(require("crypto"));
-const proj4 = __importStar(require("proj4"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const axios_1 = __importDefault(require("axios"));
 dotenv_1.default.config();
+const KAKAO = "+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=500000 +ellps=GRS80 +units=m +no_defs"; //5181
+const GRS80 = "+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs"; //도로명주소 제공 좌표 5179
+const WGS84 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +units=degrees"; //경위도
 exports.myinfo = express_1.Router();
-const epsg_5181 = proj4.Proj("+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 \
-                            +y_0=500000 +ellps=GRS80 +units=m +no_defs");
-const grs80 = proj4.Proj("+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 \
-                          +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs"); //도로명주소 제공 좌표 5179
-const wgs84 = proj4.Proj("EPSG:4326"); //경위도
 exports.myinfo.get('/', util.isLoggedin, util.isAdmin, function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         //본인 정보 반환
@@ -216,17 +214,17 @@ exports.myinfo.post('/address', util.isLoggedin, function (req, res, next) {
         const tokenData = req.decoded;
         const reqBody = req.body;
         try {
-            //작성
-            const p = proj4.toPoint([reqBody.locX, reqBody.locY]);
-            const result = proj4.transform(grs80, wgs84, p); //도로명주소 API 좌표를 위도, 경도로 변환
+            const coord = yield axios_1.default({
+                url: `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(reqBody.address)}`,
+                method: 'get',
+                headers: { Authorization: `KakaoAK ${process.env.KAKAO_KEY}` }
+            });
             const address = yield index_1.addressRep.create({
                 userId: tokenData.id,
                 address: reqBody.address,
                 detailAddress: reqBody.detailAddress,
-                // locX: result.x,
-                // locY: result.y
-                locX: reqBody.locX,
-                locY: reqBody.locY
+                locX: coord.data.documents[0].y,
+                locY: coord.data.documents[0].x
             });
             if (reqBody.setDefault == "1") {
                 index_1.userRep.update({
@@ -250,8 +248,6 @@ exports.myinfo.put('/address', util.isLoggedin, function (req, res, next) {
         const tokenData = req.decoded;
         const reqBody = req.body;
         try {
-            const p = proj4.toPoint([reqBody.locX, reqBody.locY]); //월드컵로 206
-            const result = proj4.transform(grs80, wgs84, p); //도로명주소 API 좌표를 위도, 경도로 변환
             const old = yield index_1.addressRep.findOne({
                 where: {
                     id: reqBody.addressId
