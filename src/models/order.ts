@@ -14,77 +14,79 @@ import {
   DeletedAt,
   Default//, ForeignKey
 } from "sequelize-typescript";
-  
-  @Table({ timestamps: true })
+
+@Table({ timestamps: true })
 export default class Order extends Model<Order> {
-    @PrimaryKey
-    @AutoIncrement
-    @Column(DataType.BIGINT)
-    id!: number;
+  @PrimaryKey
+  @AutoIncrement
+  @Column(DataType.BIGINT)
+  id!: number;
 
-    // @AllowNull(true)
-    @PrimaryKey
-    @Column(DataType.BIGINT)
-    userId!:number;
-  
-    @AllowNull(true)
-    @Column(DataType.BOOLEAN)
-    gender!:boolean;
+  // @AllowNull(true)
+  @PrimaryKey
+  @Column(DataType.BIGINT)
+  userId!: number;
 
-    // @AllowNull(true)
-    @Column(DataType.BIGINT)
-    addressId!:number;
-  
-    @AllowNull(true)
-    @Column(DataType.BIGINT)
-    riderId!:number;
+  @AllowNull(true)
+  @Column(DataType.BOOLEAN)
+  gender!: boolean;
 
-    @Column(DataType.STRING)
-    storeName!:string;
+  // @AllowNull(true)
+  @Column(DataType.BIGINT)
+  addressId!: number;
 
-    @Column(DataType.STRING)
-    storeX!:string;
+  @AllowNull(true)
+  @Column(DataType.BIGINT)
+  riderId!: number;
 
-    @Column(DataType.STRING)
-    storeY!:string;
+  @Column(DataType.STRING)
+  storeName!: string;
 
-    @AllowNull(true)
-    @Column(DataType.STRING)
-    chatId!:string;
-    
-    @Column(DataType.DATE)
-    startTime!:Date;
+  @Column(DataType.STRING)
+  storeX!: string;
 
-    @Column(DataType.STRING)
-    orderStatus!:string;
+  @Column(DataType.STRING)
+  storeY!: string;
 
-    @AllowNull(true)
-    @Column(DataType.DATE)
-    expArrivalTime!:Date;
+  @AllowNull(true)
+  @Column(DataType.STRING)
+  chatId!: string;
 
-    @AllowNull(true)
-    @Column(DataType.BIGINT)
-    totalCost!:number;
+  @Column(DataType.DATE)
+  startTime!: Date;
 
-    @AllowNull(true)
-    @Column(DataType.BIGINT)
-    cost!:number;
+  @Column(DataType.STRING)
+  orderStatus!: string;
 
-    @AllowNull(true)
-    @Column(DataType.BIGINT)
-    distanceFee!:number;
+  @Column(DataType.BOOLEAN)
+  hotDeal!: boolean;
 
-    @AllowNull(true)
-    @Column(DataType.BIGINT)
-    extraFee!:number;
+  @AllowNull(true)
+  @Column(DataType.DATE)
+  expArrivalTime!: Date;
 
-    @CreatedAt
-    createdAt!: Date;
-  
-    @UpdatedAt
-    updatedAt!: Date;
-  
-    @DeletedAt
-    deletedAt!: Date;
+  @AllowNull(true)
+  @Column(DataType.BIGINT)
+  totalCost!: number;
+
+  @AllowNull(true)
+  @Column(DataType.BIGINT)
+  cost!: number;
+
+  @AllowNull(true)
+  @Column(DataType.BIGINT)
+  distanceFee!: number;
+
+  @AllowNull(true)
+  @Column(DataType.BIGINT)
+  extraFee!: number;
+
+  @CreatedAt
+  createdAt!: Date;
+
+  @UpdatedAt
+  updatedAt!: Date;
+
+  @DeletedAt
+  deletedAt!: Date;
 }
-  
