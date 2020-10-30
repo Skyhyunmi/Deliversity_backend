@@ -250,19 +250,16 @@ exports.myinfo.put('/address', util.isLoggedin, function (req, res, next) {
         try {
             const old = yield index_1.addressRep.findOne({
                 where: {
+                    userId: tokenData.id,
                     id: reqBody.addressId
                 }
             });
             if (!old)
                 return res.status(403).json(util.successFalse(null, "해당 하는 주소가 없습니다.", null));
-            const address = yield index_1.addressRep.update({
+            old.update({
                 detailAddress: reqBody.detailAddress ? reqBody.detailAddress : old.detailAddress,
-            }, {
-                where: {
-                    id: reqBody.addressId
-                }
             });
-            return res.json(util.successTrue("", address));
+            return res.json(util.successTrue("", old));
         }
         catch (err) {
             console.log(err);
@@ -278,6 +275,7 @@ exports.myinfo.delete('/address', util.isLoggedin, function (req, res, next) {
         try {
             const address = yield index_1.addressRep.findOne({
                 where: {
+                    userId: tokenData.id,
                     id: reqBody.addressId
                 }
             });

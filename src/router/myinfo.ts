@@ -2,8 +2,7 @@ import { NextFunction, Response, Router } from "express";
 import * as util from "../config/util";
 import { userRep, addressRep, qnaRep, reportRep, orderRep } from "../models/index";
 import * as crypto from "crypto";
-import proj4 from "proj4";
-import dotenv, { config } from "dotenv";
+import dotenv from "dotenv";
 import axios from "axios";
 dotenv.config();
 
@@ -199,18 +198,15 @@ myinfo.put('/address', util.isLoggedin, async function (req: any, res: Response,
   try {
     const old = await addressRep.findOne({
       where: {
+        userId: tokenData.id,
         id: reqBody.addressId
       }
     });
     if (!old) return res.status(403).json(util.successFalse(null, "해당 하는 주소가 없습니다.", null));
-    const address = await addressRep.update({
+    old.update({
       detailAddress: reqBody.detailAddress ? reqBody.detailAddress : old.detailAddress,
-    }, {
-      where: {
-        id: reqBody.addressId
-      }
     });
-    return res.json(util.successTrue("", address));
+    return res.json(util.successTrue("", old));
   } catch (err) {
     console.log(err);
     return res.status(403).json(util.successFalse(err, "?", null));
@@ -224,6 +220,7 @@ myinfo.delete('/address', util.isLoggedin, async function (req: any, res: Respon
   try{
     const address = await addressRep.findOne({
       where:{
+        userId: tokenData.id,
         id: reqBody.addressId
       }
     });
