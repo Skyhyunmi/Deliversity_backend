@@ -18,6 +18,9 @@ import * as fs from "fs";
 import dotenv from "dotenv";
 dotenv.config();
 
+process.env.NODE_ENV = ( process.env.NODE_ENV && ( process.env.NODE_ENV )
+  .trim().toLowerCase() == 'production' ) ? 'production' : 'development';
+
 // authenticate -> Open connection
 // sync -> make table if not exist
 db
@@ -74,5 +77,6 @@ app.use(function(err:any, req:any, res:Response, next:NextFunction) {
 });
 
 app.listen(process.env.WEB_PORT, () => {
+  console.log(process.env.NODE_ENV)
   console.log("Server Started");
 });

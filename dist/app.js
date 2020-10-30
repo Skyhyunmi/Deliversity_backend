@@ -37,8 +37,11 @@ const order_1 = require("./router/order");
 const passport_2 = require("./config/passport");
 const util = __importStar(require("./config/util"));
 const models_1 = require("./models");
+const fs = __importStar(require("fs"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
+process.env.NODE_ENV = (process.env.NODE_ENV && (process.env.NODE_ENV)
+    .trim().toLowerCase() == 'production') ? 'production' : 'development';
 // authenticate -> Open connection
 // sync -> make table if not exist
 models_1.db
@@ -66,6 +69,10 @@ app.use((req, res, next) => {
     res.header("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS");
     next();
 });
+const favicon = fs.readFileSync('favicon.ico');
+app.get('/favicon.ico', (req, res) => {
+    res.status(200).end(favicon);
+});
 app.use("/api/v1/auth", auth_1.auth);
 app.use("/api/v1/test", test_1.test);
 app.use("/api/v1/admin", admin_1.admin);
@@ -83,5 +90,6 @@ app.use(function (err, req, res, next) {
     res.status(err.status || 500).json(util.successFalse(null, "Error", null));
 });
 app.listen(process.env.WEB_PORT, () => {
+    console.log(process.env.NODE_ENV);
     console.log("Server Started");
 });

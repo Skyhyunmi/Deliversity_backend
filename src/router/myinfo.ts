@@ -2,16 +2,15 @@ import { NextFunction, Response, Router } from "express";
 import * as util from "../config/util";
 import { userRep, addressRep, qnaRep, reportRep, orderRep } from "../models/index";
 import * as crypto from "crypto";
-import * as proj4 from "proj4";
 import dotenv from "dotenv";
+import axios from "axios";
 dotenv.config();
 
+const KAKAO = "+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=500000 +ellps=GRS80 +units=m +no_defs"; //5181
+const GRS80 = "+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs"; //도로명주소 제공 좌표 5179
+const WGS84 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +units=degrees"; //경위도
+
 export const myinfo = Router();
-const epsg_5181=proj4.Proj("+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 \
-                            +y_0=500000 +ellps=GRS80 +units=m +no_defs");
-const grs80 = proj4.Proj("+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 \
-                          +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs"); //도로명주소 제공 좌표 5179
-const wgs84 = proj4.Proj("EPSG:4326"); //경위도
 myinfo.get('/', util.isLoggedin,util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
 //본인 정보 반환
   const tokenData = req.decoded;
@@ -165,17 +164,17 @@ myinfo.post('/address', util.isLoggedin, async function (req: any, res: Response
   const tokenData = req.decoded;
   const reqBody = req.body;
   try {
-    //작성
-    const p = proj4.toPoint([reqBody.locX,reqBody.locY]);
-    const result = proj4.transform(grs80,wgs84,p); //도로명주소 API 좌표를 위도, 경도로 변환
+    const coord = await axios({
+      url:`https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(reqBody.address)}`,
+      method:'get',
+      headers:{Authorization: `KakaoAK ${process.env.KAKAO_KEY}`}
+    });
     const address = await addressRep.create({
       userId: tokenData.id,
       address: reqBody.address,
       detailAddress: reqBody.detailAddress,
-      // locX: result.x,
-      // locY: result.y
-      locX: reqBody.locX,
-      locY: reqBody.locY
+      locX: coord.data.documents[0].y,
+      locY: coord.data.documents[0].x
     });
     if (reqBody.setDefault == "1") {
       userRep.update({
@@ -197,22 +196,17 @@ myinfo.put('/address', util.isLoggedin, async function (req: any, res: Response,
   const tokenData = req.decoded;
   const reqBody = req.body;
   try {
-    const p = proj4.toPoint([reqBody.locX,reqBody.locY]); //월드컵로 206
-    const result = proj4.transform(grs80,wgs84,p); //도로명주소 API 좌표를 위도, 경도로 변환
     const old = await addressRep.findOne({
       where: {
+        userId: tokenData.id,
         id: reqBody.addressId
       }
     });
     if (!old) return res.status(403).json(util.successFalse(null, "해당 하는 주소가 없습니다.", null));
-    const address = await addressRep.update({
+    old.update({
       detailAddress: reqBody.detailAddress ? reqBody.detailAddress : old.detailAddress,
-    }, {
-      where: {
-        id: reqBody.addressId
-      }
     });
-    return res.json(util.successTrue("", address));
+    return res.json(util.successTrue("", old));
   } catch (err) {
     console.log(err);
     return res.status(403).json(util.successFalse(err, "?", null));
@@ -226,6 +220,7 @@ myinfo.delete('/address', util.isLoggedin, async function (req: any, res: Respon
   try{
     const address = await addressRep.findOne({
       where:{
+        userId: tokenData.id,
         id: reqBody.addressId
       }
     });
