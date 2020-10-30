@@ -49,8 +49,13 @@ order.get('/', util.isLoggedin, async function (req: any, res: Response, next: N
   const tokenData = req.decoded;
   const reqBody = req.body;
   try {
-    //작성
-    return res.json(util.successTrue("?",null));
+    const _order = await orderRep.findOne({
+      where:{
+        id:req.query.id
+      }
+    });
+    if(!_order) res.status(403).json(util.successFalse(null, "주문건이 없습니다.", null));
+    return res.json(util.successTrue("",_order));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
@@ -162,6 +167,12 @@ order.get('/orders', util.isLoggedin, util.isRider, async function (req: any, re
   const reqBody = req.body;
   try {
     //작성
+    const orders = await orderRep.findAll({
+      where:{
+        orderStatus:0
+      }
+    });
+    return res.json(util.successTrue("",orders));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
