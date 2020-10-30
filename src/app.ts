@@ -77,6 +77,6 @@ app.use(function(err:any, req:any, res:Response, next:NextFunction) {
 });
 
 app.listen(process.env.WEB_PORT, () => {
-  console.log(process.env.NODE_ENV)
+  console.log(process.env.NODE_ENV);
   console.log("Server Started");
 });
