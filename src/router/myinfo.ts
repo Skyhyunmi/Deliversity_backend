@@ -2,8 +2,7 @@ import { NextFunction, Response, Router } from "express";
 import * as util from "../config/util";
 import { userRep, addressRep, qnaRep, reportRep, orderRep } from "../models/index";
 import * as crypto from "crypto";
-import proj4 from "proj4";
-import dotenv, { config } from "dotenv";
+import dotenv from "dotenv";
 import axios from "axios";
 dotenv.config();
 
