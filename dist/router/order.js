@@ -44,31 +44,44 @@ exports.order.post('/', util.isLoggedin, function (req, res, next) {
         //주문 등록
         const tokenData = req.decoded;
         const reqBody = req.body;
+        let gender = reqBody.gender;
         try {
-            //작성
             const address = yield models_1.addressRep.findOne({
                 where: {
+                    userid: tokenData.id,
                     id: reqBody.addressId
                 }
             });
-            console.log(address);
             if (!address)
-                return res.status(403).json(util.successFalse(null, "유효하지 않은 주소입니다.", null));
-            const distance = Math.sqrt((parseFloat(reqBody.storex) - parseFloat(address.locX)) *
-                (parseFloat(reqBody.storex) - parseFloat(address.locX)) +
-                (parseFloat(reqBody.storey) - parseFloat(address.locY)) *
-                    (parseFloat(reqBody.storey) - parseFloat(address.locY)));
-            const distanceFee = 3000;
+                return res.status(403).json(util.successFalse(null, "해당하는 주소가 없습니다.", null));
+            if (reqBody.gender > 0) {
+                const user = yield models_1.userRep.findOne({ where: { id: tokenData.id, grade: [2, 3] } });
+                if (!user)
+                    return res.status(403).json(util.successFalse(null, "준회원은 동성 배달을 이용할 수 없습니다.", null));
+                gender = user.gender;
+            }
+            // const distance = Math.sqrt((parseFloat(reqBody.storex) - parseFloat(address.locX)) *
+            //   (parseFloat(reqBody.storex) - parseFloat(address.locX)) +
+            //   (parseFloat(reqBody.storey) - parseFloat(address.locY)) *
+            //   (parseFloat(reqBody.storey) - parseFloat(address.locY)));
+            let cost = 3000;
+            if (reqBody.hotDeal) {
+                cost = 4000;
+            }
             const data = {
                 userId: tokenData.id,
-                gender: reqBody.gender,
+                gender: gender,
                 addressId: reqBody.addressId,
+                // store 쪽 구현 아직 안되어서
                 storeName: reqBody.storeName,
-                storex: reqBody.storex,
-                storey: reqBody.storey,
+                storeX: reqBody.storeX,
+                storeY: reqBody.storeY,
+                chatId: reqBody.chatId ? reqBody.chatId : null,
                 startTime: Date.now(),
-                orderStatus: "주문 완료",
-                hotDeal: reqBody.hotDeal ? true : false
+                orderStatus: 0,
+                hotDeal: reqBody.hotDeal ? true : false,
+                // hotDeal 계산된 금액(소비자한테 알려줘야함)
+                cost: cost
             };
             const order = yield models_1.orderRep.create(data);
             return res.json(util.successTrue("", order));
@@ -78,15 +91,14 @@ exports.order.post('/', util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.order.get('/', util.isLoggedin, function (req, res, next) {
+exports.order.get('/:id', util.isLoggedin, function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         //주문 확인
         const tokenData = req.decoded;
-        const reqBody = req.body;
         try {
             const _order = yield models_1.orderRep.findOne({
                 where: {
-                    id: req.query.id
+                    id: req.params.id
                 }
             });
             if (!_order)

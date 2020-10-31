@@ -77,7 +77,6 @@ exports.auth.post("/signup", function (req, res, next) {
                 userId: _user.userId,
                 name: _user.name,
                 nickName: _user.nickName,
-                gender: _user.gender,
                 age: _user.age,
                 email: _user.email,
                 phone: _user.phone,
