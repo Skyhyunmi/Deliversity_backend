@@ -45,9 +45,10 @@ export default class User extends Model<User> {
   @Column(DataType.STRING)
   nickName!:string;
 
-  @AllowNull(true)
-  @Column(DataType.STRING)
-  gender!:string;
+  @Default(0)
+  @AllowNull(false)
+  @Column(DataType.TINYINT)
+  gender!:number;
 
   @AllowNull(false)
   @Column(DataType.STRING)

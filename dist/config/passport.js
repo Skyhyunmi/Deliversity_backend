@@ -37,7 +37,7 @@ const passport_local_1 = __importDefault(require("passport-local"));
 const passport_jwt_1 = __importDefault(require("passport-jwt"));
 const index_1 = require("../models/index");
 const crypto = __importStar(require("crypto"));
-const Cache = __importStar(require("memory-cache"));
+const auth_1 = require("../router/auth");
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const LocalStrategy = passport_local_1.default.Strategy;
@@ -46,18 +46,18 @@ const ExtractJwt = passport_jwt_1.default.ExtractJwt;
 function phoneVerify(phone) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const veri = Cache.get(phone);
-            if (!veri || veri != 1)
+            const veri = auth_1.myCache.take(phone);
+            if (!veri || veri.verify !== 1)
                 return 0;
             const now = Number.parseInt(Date.now().toString());
-            const created = Date.parse(veri.updatedAt);
-            const remainingTime = (now - created) / 60000;
+            const updatedAt = Number.parseInt(veri.updatedAt);
+            const remainingTime = (now - updatedAt) / 60000;
             if (remainingTime > 15) { //15분
-                Cache.del(phone);
+                auth_1.myCache.del(phone);
                 return 0;
             }
             else {
-                Cache.del(phone);
+                auth_1.myCache.del(phone);
                 return 1;
             }
         }
@@ -70,18 +70,18 @@ function phoneVerify(phone) {
 function emailVerify(email) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const veri = yield index_1.emailVeriRep.findOne({ where: { email: email } });
-            if (!veri || !veri.email_verified)
+            const veri = auth_1.myCache.take(email);
+            if (!veri || veri.verify !== 1)
                 return 0;
             const now = Number.parseInt(Date.now().toString());
-            const created = Date.parse(veri.updatedAt);
-            const remainingTime = (now - created) / 60000;
+            const updatedAt = Number.parseInt(veri.updatedAt);
+            const remainingTime = (now - updatedAt) / 60000;
             if (remainingTime > 15) { //15분
-                veri.destroy();
+                auth_1.myCache.del(email);
                 return 0;
             }
             else {
-                veri.destroy();
+                auth_1.myCache.del(email);
                 return 1;
             }
         }
@@ -145,7 +145,6 @@ function passportConfig() {
                     salt: salt,
                     name: reqBody.name,
                     nickName: reqBody.nickName,
-                    gender: reqBody.gender,
                     age: Number.parseInt(reqBody.age),
                     email: reqBody.email,
                     phone: reqBody.phone,

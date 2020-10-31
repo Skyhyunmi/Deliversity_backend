@@ -39,8 +39,9 @@ __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
 ], User.prototype, "nickName", void 0);
 __decorate([
-    sequelize_typescript_1.AllowNull(true),
-    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
+    sequelize_typescript_1.Default(0),
+    sequelize_typescript_1.AllowNull(false),
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.TINYINT)
 ], User.prototype, "gender", void 0);
 __decorate([
     sequelize_typescript_1.AllowNull(false),

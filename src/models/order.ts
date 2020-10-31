@@ -27,9 +27,10 @@ export default class Order extends Model<Order> {
   @Column(DataType.BIGINT)
   userId!: number;
 
-  @AllowNull(true)
-  @Column(DataType.BOOLEAN)
-  gender!: boolean;
+  @Default(0)
+  @AllowNull(false)
+  @Column(DataType.TINYINT)
+  gender!:number;
 
   // @AllowNull(true)
   @Column(DataType.BIGINT)
@@ -38,6 +39,15 @@ export default class Order extends Model<Order> {
   @AllowNull(true)
   @Column(DataType.BIGINT)
   riderId!: number;
+
+  @Column(DataType.TEXT)
+  content!: string;
+
+  @Column(DataType.STRING)
+  storeAddress!: string;
+
+  @Column(DataType.STRING)
+  storeDetailAddress!: string;
 
   @Column(DataType.STRING)
   storeName!: string;
