@@ -31,6 +31,9 @@ __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BIGINT)
 ], Order.prototype, "riderId", void 0);
 __decorate([
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.TEXT)
+], Order.prototype, "content", void 0);
+__decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
 ], Order.prototype, "storeAddress", void 0);
 __decorate([

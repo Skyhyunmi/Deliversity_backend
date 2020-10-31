@@ -2,7 +2,7 @@ import { NextFunction, Response, Router } from "express";
 import * as util from "../config/util";
 import jwt from "jsonwebtoken";
 import passport from "passport";
-import { emailVeriRep, userRep } from "../models/index";
+import { userRep } from "../models/index";
 import * as crypto from "crypto";
 import axios from "axios";
 import urlencode from "urlencode";

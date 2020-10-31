@@ -40,6 +40,9 @@ export default class Order extends Model<Order> {
   @Column(DataType.BIGINT)
   riderId!: number;
 
+  @Column(DataType.TEXT)
+  content!: string;
+
   @Column(DataType.STRING)
   storeAddress!: string;
 
