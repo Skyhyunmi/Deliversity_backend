@@ -1,10 +1,10 @@
 import passport from "passport";
 import passportLocal from "passport-local";
 import passportJwt from "passport-jwt";
-import {userRep,emailVeriRep} from "../models/index";
+import {userRep} from "../models/index";
 import * as crypto from "crypto";
 import axios from "axios";
-import * as Cache from "memory-cache";
+import {myCache} from "../router/auth";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -16,17 +16,17 @@ const ExtractJwt = passportJwt.ExtractJwt;
 
 async function phoneVerify(phone:string){
   try{
-    const veri = Cache.get(phone);
-    if(!veri||veri!=1) return 0;
+    const veri = myCache.take(phone) as any;
+    if(!veri||veri.verify!==1) return 0;
     const now = Number.parseInt(Date.now().toString());
-    const created = Date.parse(veri.updatedAt);
-    const remainingTime = (now-created)/60000;
+    const updatedAt = Number.parseInt(veri.updatedAt);
+    const remainingTime = (now-updatedAt)/60000;
     if(remainingTime>15){ //15분
-      Cache.del(phone);
+      myCache.del(phone);
       return 0;
     }
     else {
-      Cache.del(phone);
+      myCache.del(phone);
       return 1;
     }
   }
@@ -37,17 +37,17 @@ async function phoneVerify(phone:string){
 
 async function emailVerify(email:string){
   try{
-    const veri = await emailVeriRep.findOne({where:{email:email}});
-    if(!veri || !veri.email_verified) return 0;
+    const veri = myCache.take(email) as any;
+    if(!veri || veri.verify!==1) return 0;
     const now = Number.parseInt(Date.now().toString());
-    const created = Date.parse(veri.updatedAt);
-    const remainingTime = (now-created)/60000;
+    const updatedAt = Number.parseInt(veri.updatedAt);
+    const remainingTime = (now-updatedAt)/60000;
     if(remainingTime>15){ //15분
-      veri.destroy();
+      myCache.del(email);
       return 0;
     }
     else {
-      veri.destroy();
+      myCache.del(email);
       return 1;
     }
   }
