@@ -31,7 +31,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.auth = void 0;
+exports.auth = exports.myCache = void 0;
 const express_1 = require("express");
 const util = __importStar(require("../config/util"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -41,9 +41,10 @@ const crypto = __importStar(require("crypto"));
 const axios_1 = __importDefault(require("axios"));
 const urlencode_1 = __importDefault(require("urlencode"));
 const mail_1 = require("../config/mail");
-const Cache = __importStar(require("memory-cache"));
+const node_cache_1 = __importDefault(require("node-cache"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
+exports.myCache = new node_cache_1.default();
 function makeSignature(urlsub, timestamp) {
     const space = " ";
     const newLine = "\n";
@@ -160,7 +161,7 @@ exports.auth.post("/sms", /*util.isLoggedin,*/ function (req, res, next) {
             ]
         };
         try {
-            Cache.del(phone);
+            exports.myCache.del(phone);
             const getToken = yield axios_1.default({
                 url: `https://sens.apigw.ntruss.com/sms/v2/services/${serviceID}/messages`,
                 method: "post",
@@ -173,13 +174,13 @@ exports.auth.post("/sms", /*util.isLoggedin,*/ function (req, res, next) {
                 data: data
             });
             const tokenData = getToken.data;
-            Cache.put(phone, randomNumber);
+            exports.myCache.set(phone, { number: randomNumber, createdAt: Date.now() });
             if (tokenData.statusCode == "202")
                 return res.json(util.successTrue(tokenData.statusName, null));
             return res.status(403).json(util.successFalse(null, tokenData.statusName, null));
         }
         catch (e) {
-            Cache.del(phone);
+            exports.myCache.del(phone);
             return res.status(403).json(util.successFalse(null, "Retry.", null));
         }
     });
@@ -190,19 +191,23 @@ exports.auth.post("/sms/verification", function (req, res, next) {
         const verify = body.verify;
         const phone = body.phone;
         try {
-            const veri = Cache.get(phone);
-            if (!veri)
+            const veri = exports.myCache.take(phone);
+            if (!veri) {
+                exports.myCache.del(phone);
                 return res.status(403).json(util.successFalse(null, "Retry.", null));
-            if (veri != verify)
+            }
+            if (veri.number != verify) {
+                exports.myCache.del(phone);
                 return res.status(403).json(util.successFalse(null, "Not Matched.", null));
+            }
             const now = Number.parseInt(Date.now().toString());
-            const created = Date.parse(veri.createdAt);
+            const created = Number.parseInt(veri.createdAt);
             const remainingTime = (now - created) / 60000;
             if (remainingTime > 15) { //15분
-                Cache.del(phone);
+                exports.myCache.del(phone);
                 return res.status(403).json(util.successFalse(null, "Time Expired.", null));
             }
-            Cache.put(phone, 1);
+            exports.myCache.set(phone, { verify: 1, updatedAt: Date.now() });
             return res.json(util.successTrue("Matched.", null));
         }
         catch (e) {
@@ -218,16 +223,10 @@ exports.auth.post("/email", /*util.isLoggedin,*/ function (req, res, next) {
         const key_two = crypto.randomBytes(256).toString('base64').substr(50, 5);
         const email_number = key_one + key_two;
         try {
-            index_1.emailVeriRep.destroy({
-                where: {
-                    email: email
-                }
-            });
-            index_1.userRep.findOne({ where: { email: email } }).then(function (user) {
-                if (user) {
-                    return res.json(util.successFalse(null, 'Already Existed Email', null));
-                }
-            });
+            const user = yield index_1.userRep.findOne({ where: { email: email } });
+            if (user)
+                return res.json(util.successFalse(null, 'Already Existed Email', null));
+            exports.myCache.del(email);
             const url = 'http://' + req.get('host') + '/api/v1/auth/email/verification' + '?email_number=' + email_number;
             yield mail_1.transporter.sendMail({
                 from: '"발신전용" <noreply@deliversity.co.kr>',
@@ -235,41 +234,35 @@ exports.auth.post("/email", /*util.isLoggedin,*/ function (req, res, next) {
                 subject: "Deliversity 인증 메일입니다.",
                 html: "<h3>이메일 인증을 위해 URL을 클릭해주세요.</h3><br>" + url
             });
-            yield index_1.emailVeriRep.create({
-                email: email,
-                email_number: email_number
-            });
+            exports.myCache.set(email_number, { email: email, createdAt: Date.now() });
             return res.json(util.successTrue('Sent Auth Email', null));
         }
         catch (e) {
-            //console.error(e);
-            index_1.emailVeriRep.destroy({
-                where: {
-                    email: email
-                }
-            });
+            exports.myCache.del(email);
+            exports.myCache.del(email_number);
             return res.status(403).json(util.successFalse(null, 'Sent Auth Email Failed', null));
         }
     });
 });
 exports.auth.get('/email/verification', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const email_number = req.query.email_number;
-    index_1.emailVeriRep.findOne({
-        where: { email_number: email_number }
-    }).then((email_veri) => {
-        if (email_veri) {
-            const now = Number.parseInt(Date.now().toString());
-            const created = Date.parse(email_veri.createdAt);
-            const remainingTime = (now - created) / 60000;
-            if (remainingTime > 15) {
-                email_veri.destroy();
-                return res.status(403).json(util.successFalse(null, "Time Expired", null));
-            }
-            email_veri.update({
-                email_verified: true
-            });
-            return res.json(util.successTrue("Matched", null));
+    try {
+        const veri = exports.myCache.take(email_number);
+        if (!veri) {
+            exports.myCache.del(email_number);
+            return res.status(403).json(util.successFalse(null, "Not Matched.", null));
         }
-        return res.status(403).json(util.successFalse(null, "Not Matched", null));
-    });
+        const now = Number.parseInt(Date.now().toString());
+        const created = Number.parseInt(veri.createdAt);
+        const remainingTime = (now - created) / 60000;
+        if (remainingTime > 15) {
+            exports.myCache.del(email_number);
+            return res.status(403).json(util.successFalse(null, "Time Expired", null));
+        }
+        exports.myCache.set(veri.email, { verify: 1, updatedAt: Date.now() });
+        return res.json(util.successTrue("Matched", null));
+    }
+    catch (e) {
+        return res.status(403).json(util.successFalse(null, "Retry.", null));
+    }
 }));
