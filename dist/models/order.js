@@ -57,6 +57,9 @@ __decorate([
 ], Order.prototype, "startTime", void 0);
 __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
+], Order.prototype, "categoryName", void 0);
+__decorate([
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
 ], Order.prototype, "orderStatus", void 0);
 __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BOOLEAN)

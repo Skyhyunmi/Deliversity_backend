@@ -30,7 +30,7 @@ export default class Order extends Model<Order> {
   @Default(0)
   @AllowNull(false)
   @Column(DataType.TINYINT)
-  gender!:number;
+  gender!: number;
 
   // @AllowNull(true)
   @Column(DataType.BIGINT)
@@ -51,9 +51,6 @@ export default class Order extends Model<Order> {
 
   @Column(DataType.STRING)
   storeName!: string;
-
-  @Column(DataType.TEXT)
-  content!: string;
 
   @Column(DataType.STRING)
   storeX!: string;
