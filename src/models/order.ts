@@ -42,6 +42,9 @@ export default class Order extends Model<Order> {
   @Column(DataType.STRING)
   storeName!: string;
 
+  @Column(DataType.TEXT)
+  content!: string;
+
   @Column(DataType.STRING)
   storeX!: string;
 
@@ -54,6 +57,9 @@ export default class Order extends Model<Order> {
 
   @Column(DataType.DATE)
   startTime!: Date;
+
+  @Column(DataType.STRING)
+  categoryName!: string;
 
   @Column(DataType.STRING)
   orderStatus!: string;

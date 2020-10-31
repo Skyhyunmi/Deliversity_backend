@@ -61,6 +61,7 @@
     "eslint": "^7.10.0",
     "eslint-plugin-react": "^7.21.3",
     "morgan": "^1.10.0",
+    "node-cache": "^5.1.2",
     "nodemailer": "^6.4.13",
     "passport": "^0.4.1"
   }
