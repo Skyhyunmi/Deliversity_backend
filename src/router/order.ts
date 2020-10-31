@@ -12,6 +12,7 @@ order.post('/', util.isLoggedin, async function (req: any, res: Response, next: 
   //주문 등록
   const tokenData = req.decoded;
   const reqBody = req.body;
+  let gender = reqBody.gender;
   try {
     const address = await addressRep.findOne({
       where: {
@@ -21,25 +22,27 @@ order.post('/', util.isLoggedin, async function (req: any, res: Response, next: 
     });
     if (!address) return res.status(403).json(util.successFalse(null, "해당하는 주소가 없습니다.", null));
     if (reqBody.gender > 0) {
-      const user = await userRep.findOne({ where: { id: tokenData.id, grade: 1 } });
+      const user = await userRep.findOne({ where: { id: tokenData.id, grade: [2, 3] } });
       if (!user) return res.status(403).json(util.successFalse(null, "준회원은 동성 배달을 이용할 수 없습니다.", null));
+      gender = user.gender;
     }
-    const distance = Math.sqrt((parseFloat(reqBody.storex) - parseFloat(address.locX)) *
-      (parseFloat(reqBody.storex) - parseFloat(address.locX)) +
-      (parseFloat(reqBody.storey) - parseFloat(address.locY)) *
-      (parseFloat(reqBody.storey) - parseFloat(address.locY)));
+    // const distance = Math.sqrt((parseFloat(reqBody.storex) - parseFloat(address.locX)) *
+    //   (parseFloat(reqBody.storex) - parseFloat(address.locX)) +
+    //   (parseFloat(reqBody.storey) - parseFloat(address.locY)) *
+    //   (parseFloat(reqBody.storey) - parseFloat(address.locY)));
     let cost = 3000;
     if (reqBody.hotDeal) { cost = 4000; }
     const data = {
       userId: tokenData.id,
-      gender: reqBody.gender,//null => 랜덤, 0->남자, 1->여자 <- 근데 이렇게 받아오는거 아닌거 같은데 내일 이야기해봐야징
+      gender: gender, // 0이면 random, 1이면 남자 2면 여자
       addressId: reqBody.addressId,
       // store 쪽 구현 아직 안되어서
       storeName: reqBody.storeName,
-      storeX: address.locX,
-      storeY: address.locY,
+      storeX: reqBody.storeX,
+      storeY: reqBody.storeY,
+      chatId: reqBody.chatId ? reqBody.chatId : null,
       startTime: Date.now(),
-      orderStatus: "주문 등록",
+      orderStatus: 0,
       hotDeal: reqBody.hotDeal ? true : false,
       // hotDeal 계산된 금액(소비자한테 알려줘야함)
       cost: cost
@@ -54,7 +57,6 @@ order.post('/', util.isLoggedin, async function (req: any, res: Response, next: 
 order.get('/:id', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
   //주문 확인
   const tokenData = req.decoded;
-  const reqBody = req.body;
   try {
     const _order = await orderRep.findOne({
       where: {
