@@ -19,8 +19,9 @@ __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BIGINT)
 ], Order.prototype, "userId", void 0);
 __decorate([
-    sequelize_typescript_1.AllowNull(true),
-    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BOOLEAN)
+    sequelize_typescript_1.Default(0),
+    sequelize_typescript_1.AllowNull(false),
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.TINYINT)
 ], Order.prototype, "gender", void 0);
 __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BIGINT)
@@ -29,6 +30,12 @@ __decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BIGINT)
 ], Order.prototype, "riderId", void 0);
+__decorate([
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
+], Order.prototype, "storeAddress", void 0);
+__decorate([
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
+], Order.prototype, "storeDetailAddress", void 0);
 __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
 ], Order.prototype, "storeName", void 0);
@@ -48,6 +55,9 @@ __decorate([
 __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
 ], Order.prototype, "orderStatus", void 0);
+__decorate([
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BOOLEAN)
+], Order.prototype, "hotDeal", void 0);
 __decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.DATE)
