@@ -145,7 +145,6 @@ function passportConfig() {
                     salt: salt,
                     name: reqBody.name,
                     nickName: reqBody.nickName,
-                    gender: reqBody.gender,
                     age: Number.parseInt(reqBody.age),
                     email: reqBody.email,
                     phone: reqBody.phone,
