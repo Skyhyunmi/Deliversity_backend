@@ -30,9 +30,14 @@ order.post('/', util.isLoggedin, async function (req: any, res: Response, next: 
   //주문 등록
   const tokenData = req.decoded;
   const reqBody = req.body;
-  const expHour = reqBody.expHour;
-  const expMinute = reqBody.expMinute;
+  let expHour = reqBody.expHour;
+  let expMinute = reqBody.expMinute;
   let gender = parseInt(reqBody.gender);
+  if (reqBody.reservation === "1") {
+    if (!expHour || !expMinute) { return res.status(403).json(util.successFalse(null, "예약 시간 또는 분을 입력하시지 않으셨습니다.", null)); };
+    expHour = parseInt(reqBody.expHour); expMinute = parseInt(reqBody.expMinute);
+  }
+  else return res.status(403).json(util.successFalse(null, "예약을 하지 않으셨습니다.", null));
   try {
     const address = await addressRep.findOne({
       where: {
@@ -81,7 +86,8 @@ order.post('/', util.isLoggedin, async function (req: any, res: Response, next: 
       cost: 0,
       content: reqBody.content,
       categoryName: reqBody.categoryName,
-      deliveryFee: cost
+      deliveryFee: cost,
+      reservation: reqBody.reservation
     };
     const order = await orderRep.create(data);
     return res.json(util.successTrue("", order));
