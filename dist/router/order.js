@@ -61,7 +61,7 @@ exports.order.post('/', util.isLoggedin, function (req, res, next) {
         const reqBody = req.body;
         const expHour = reqBody.expHour;
         const expMinute = reqBody.expMinute;
-        let gender = reqBody.gender;
+        let gender = parseInt(reqBody.gender);
         try {
             const address = yield models_1.addressRep.findOne({
                 where: {
@@ -71,7 +71,7 @@ exports.order.post('/', util.isLoggedin, function (req, res, next) {
             });
             if (!address)
                 return res.status(403).json(util.successFalse(null, "해당하는 주소가 없습니다.", null));
-            if (reqBody.gender > 0) {
+            if (gender >= 1) {
                 const user = yield models_1.userRep.findOne({ where: { id: tokenData.id, grade: [2, 3] } });
                 if (!user)
                     return res.status(403).json(util.successFalse(null, "준회원은 동성 배달을 이용할 수 없습니다.", null));
@@ -92,7 +92,10 @@ exports.order.post('/', util.isLoggedin, function (req, res, next) {
             const data = {
                 userId: tokenData.id,
                 gender: gender,
-                addressId: reqBody.addressId,
+                address: address.address,
+                detailAddress: address.detailAddress,
+                locX: address.locX,
+                locY: address.locY,
                 // store 쪽 구현 아직 안되어서
                 storeName: reqBody.storeName,
                 storeX: coord.data.documents[0].y,
@@ -106,10 +109,10 @@ exports.order.post('/', util.isLoggedin, function (req, res, next) {
                 orderStatus: 0,
                 hotDeal: reqBody.hotDeal === "1" ? true : false,
                 // hotDeal 계산된 금액(소비자한테 알려줘야함)
-                cost: cost,
+                cost: 0,
                 content: reqBody.content,
                 categoryName: reqBody.categoryName,
-                distanceFee: cost
+                deliveryFee: cost
             };
             const order = yield models_1.orderRep.create(data);
             return res.json(util.successTrue("", order));
