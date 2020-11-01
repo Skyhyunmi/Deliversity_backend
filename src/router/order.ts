@@ -52,7 +52,7 @@ order.post('/', util.isLoggedin, async function (req: any, res: Response, next: 
       // coord.data.documents[0].y = 37.5674160, coord.data.documents[0].x = 126.9663050;
       return res.status(403).json(util.successFalse(null, "주소를 다시 확인해주세요.", null));
     }
-    
+
     const from = await axios({
       url:'https://dapi.kakao.com/v2/local/geo/transcoord.json',
       method:"GET",
@@ -82,8 +82,15 @@ order.post('/', util.isLoggedin, async function (req: any, res: Response, next: 
     }) as any;
     // return res.json(util.successTrue("",data.data.documents[0]))
     const distanceData = await axios({
-      url: `https://map.kakao.com/route/walkset.json?sX=${from.data.documents[0].x}&sY=${from.data.documents[0].y}&eX=${to.data.documents[0].x}&eY=${to.data.documents[0].y}&ids=,`,
-      method:"GET"
+      url: 'https://map.kakao.com/route/walkset.json',
+      method:"GET",
+      params:{
+        sX:from.data.documents[0].x,
+        sY:from.data.documents[0].y,
+        eX:to.data.documents[0].x,
+        eY:to.data.documents[0].y,
+        ids:','
+      }
     }) as any;
     const fee = parseInt(distanceData.data.directions[0].length);
     cost += 550 * Math.floor(fee/1000 / 0.5);

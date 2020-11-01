@@ -118,8 +118,15 @@ exports.order.post('/', util.isLoggedin, function (req, res, next) {
             });
             // return res.json(util.successTrue("",data.data.documents[0]))
             const distanceData = yield axios_1.default({
-                url: `https://map.kakao.com/route/walkset.json?sX=${from.data.documents[0].x}&sY=${from.data.documents[0].y}&eX=${to.data.documents[0].x}&eY=${to.data.documents[0].y}&ids=,`,
-                method: "GET"
+                url: 'https://map.kakao.com/route/walkset.json',
+                method: "GET",
+                params: {
+                    sX: from.data.documents[0].x,
+                    sY: from.data.documents[0].y,
+                    eX: to.data.documents[0].x,
+                    eY: to.data.documents[0].y,
+                    ids: ','
+                }
             });
             const fee = parseInt(distanceData.data.directions[0].length);
             cost += 550 * Math.floor(fee / 1000 / 0.5);
