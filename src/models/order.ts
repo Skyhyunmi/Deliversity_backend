@@ -36,6 +36,22 @@ export default class Order extends Model<Order> {
   @Column(DataType.BIGINT)
   addressId!: number;
 
+  @Column(DataType.STRING)
+  address!:string;
+  
+  // @AllowNull(true)
+  @Column(DataType.STRING)
+  detailAddress!:string;
+
+  // @AllowNull(true)
+  // @ForeignKey(()=>{Address})
+  @Column(DataType.STRING)
+  locX!:string;
+  
+  // @AllowNull(true)
+  @Column(DataType.STRING)
+  locY!:string;
+
   @AllowNull(true)
   @Column(DataType.BIGINT)
   riderId!: number;
@@ -88,7 +104,7 @@ export default class Order extends Model<Order> {
 
   @AllowNull(true)
   @Column(DataType.BIGINT)
-  distanceFee!: number;
+  deliveryFee!: number;
 
   @AllowNull(true)
   @Column(DataType.BIGINT)

@@ -2,11 +2,27 @@ import { NextFunction, Response, Router } from "express";
 import * as util from "../config/util";
 import NodeCache from "node-cache";  
 import * as db from "sequelize";
-import dotenv from "dotenv";
+import axios from "axios";
 import { addressRep, orderRep, reviewRep, userRep } from "../models";
 
-
+import dotenv from "dotenv";
 dotenv.config();
+
+function getDistance(lat1:number,lng1:number,lat2:number,lng2:number) {
+  function deg2rad(deg:number) {
+    
+    return deg * (Math.PI/180);
+  }
+
+  const R = 6371; // Radius of the earth in km
+  const dLat = deg2rad(lat2-lat1);  // deg2rad below
+  const dLon = deg2rad(lng2-lng1);
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const d = R * c; // Distance in km
+  return d;
+}
+
 export const order = Router();
 const myCache = new NodeCache({ stdTTL: 0, checkperiod: 0 });
 
@@ -16,7 +32,7 @@ order.post('/', util.isLoggedin, async function (req: any, res: Response, next: 
   const reqBody = req.body;
   const expHour = reqBody.expHour;
   const expMinute = reqBody.expMinute;
-  let gender = reqBody.gender;
+  let gender=parseInt(reqBody.gender);
   try {
     const address = await addressRep.findOne({
       where: {
@@ -25,33 +41,47 @@ order.post('/', util.isLoggedin, async function (req: any, res: Response, next: 
       }
     });
     if (!address) return res.status(403).json(util.successFalse(null, "해당하는 주소가 없습니다.", null));
-    if (reqBody.gender > 0) {
+    if (gender >= 1) {
       const user = await userRep.findOne({ where: { id: tokenData.id, grade: [2, 3] } });
       if (!user) return res.status(403).json(util.successFalse(null, "준회원은 동성 배달을 이용할 수 없습니다.", null));
       gender = user.gender;
     }
     let cost = 3000;
-    if (reqBody.hotDeal) { cost = 4000; }
+    if (reqBody.hotDeal==="1") cost = 4000;
+    const coord = await axios({
+      url:`https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(reqBody.storeAddress)}`,
+      method:'get',
+      headers:{Authorization: `KakaoAK ${process.env.KAKAO_KEY}`}
+    }) as any;
+    if(!coord) coord.data.documents[0].y=1,coord.data.documents[0].x=1;
+    const fee = getDistance(
+      parseFloat(address.locX),parseFloat(address.locY),
+      parseFloat(coord.data.documents[0].y), parseFloat(coord.data.documents[0].x))-1;
+    cost+=550* Math.floor(fee/0.5);
     const data = {
       userId: tokenData.id,
       gender: gender, // 0이면 random, 1이면 남자 2면 여자
-      addressId: reqBody.addressId,
+      address: address.address,
+      detailAddress: address.detailAddress,
+      locX: address.locX,
+      locY: address.locY,
       // store 쪽 구현 아직 안되어서
       storeName: reqBody.storeName,
-      storeX: reqBody.storeX,
-      storeY: reqBody.storeY,
-      storeAddressId: reqBody.storeAddressId,
+      storeX: coord.data.documents[0].y,
+      storeY: coord.data.documents[0].x,
+      storeAddress: reqBody.storeAddress,
       storeDetailAddress: reqBody.storeDetailAddress,
       chatId: reqBody.chatId ? reqBody.chatId : null,
       startTime: Date.now(),
       // 이거 계산하는거 추가하기 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
       expArrivalTime: reqBody.expArrivalTime ? reqBody.expArrivalTime : Date.now(),
       orderStatus: 0,
-      hotDeal: reqBody.hotDeal ? true : false,
+      hotDeal: reqBody.hotDeal==="1" ? true : false,
       // hotDeal 계산된 금액(소비자한테 알려줘야함)
-      cost: cost,
+      cost: 0,
       content: reqBody.content,
-      categoryName: reqBody.categoryName
+      categoryName: reqBody.categoryName,
+      deliveryFee:cost
     };
     const order = await orderRep.create(data);
     return res.json(util.successTrue("", order));
@@ -60,12 +90,12 @@ order.post('/', util.isLoggedin, async function (req: any, res: Response, next: 
   }
 });
 
-order.get('/:id', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+order.get('/', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
   //주문 확인
   try {
     const _order = await orderRep.findOne({
       where: {
-        id: req.params.id
+        id: req.query.orderId
       }
     });
     if(!_order) return res.status(403).json(util.successFalse(null, "주문건이 없습니다.", null));
@@ -175,7 +205,7 @@ order.get('/review/user', util.isLoggedin, util.isRider, async function (req: an
     if(_user === null) return res.status(403).json(util.successFalse(null, "사용자가 없거나 권한이 없습니다.", null));
     const _order = await orderRep.findOne({
       where:{
-        orderId:reqBody.orderId,
+        id:reqBody.orderId,
         orderStatus:0
       }
     });
@@ -240,7 +270,7 @@ order.get('/review/rider', util.isLoggedin, async function (req: any, res: Respo
     if(_user === null) return res.status(403).json(util.successFalse(null, "사용자가 없거나 권한이 없습니다.", null));
     const _order = await orderRep.findOne({
       where:{
-        orderId:reqBody.orderId,
+        id:reqBody.orderId,
         orderStatus:0
       }
     });
@@ -295,18 +325,17 @@ order.get('/setDelivered', util.isLoggedin, util.isRider, async function (req: a
   const reqBody = req.query;
   try {
     //작성
-    const orders = await orderRep.findOne({
+    const order = await orderRep.findOne({
       where:{
         id:reqBody.orderId,
         orderStatus:0
       }
     });
-    if(!orders) return res.json(util.successFalse(null,"주문이 없습니다.",null));
-    orders?.update({
+    if(!order) return res.json(util.successFalse(null,"주문이 없습니다.",null));
+    order?.update({
       orderStatus:3
     });
-    return res.json(util.successTrue("",orders));
-
+    return res.json(util.successTrue("",order));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }

@@ -36,9 +36,22 @@ const express_1 = require("express");
 const util = __importStar(require("../config/util"));
 const node_cache_1 = __importDefault(require("node-cache"));
 const db = __importStar(require("sequelize"));
-const dotenv_1 = __importDefault(require("dotenv"));
+const axios_1 = __importDefault(require("axios"));
 const models_1 = require("../models");
+const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
+function getDistance(lat1, lng1, lat2, lng2) {
+    function deg2rad(deg) {
+        return deg * (Math.PI / 180);
+    }
+    const R = 6371; // Radius of the earth in km
+    const dLat = deg2rad(lat2 - lat1); // deg2rad below
+    const dLon = deg2rad(lng2 - lng1);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const d = R * c; // Distance in km
+    return d;
+}
 exports.order = express_1.Router();
 const myCache = new node_cache_1.default({ stdTTL: 0, checkperiod: 0 });
 exports.order.post('/', util.isLoggedin, function (req, res, next) {
@@ -48,7 +61,7 @@ exports.order.post('/', util.isLoggedin, function (req, res, next) {
         const reqBody = req.body;
         const expHour = reqBody.expHour;
         const expMinute = reqBody.expMinute;
-        let gender = reqBody.gender;
+        let gender = parseInt(reqBody.gender);
         try {
             const address = yield models_1.addressRep.findOne({
                 where: {
@@ -58,36 +71,48 @@ exports.order.post('/', util.isLoggedin, function (req, res, next) {
             });
             if (!address)
                 return res.status(403).json(util.successFalse(null, "해당하는 주소가 없습니다.", null));
-            if (reqBody.gender > 0) {
+            if (gender >= 1) {
                 const user = yield models_1.userRep.findOne({ where: { id: tokenData.id, grade: [2, 3] } });
                 if (!user)
                     return res.status(403).json(util.successFalse(null, "준회원은 동성 배달을 이용할 수 없습니다.", null));
                 gender = user.gender;
             }
             let cost = 3000;
-            if (reqBody.hotDeal) {
+            if (reqBody.hotDeal === "1")
                 cost = 4000;
-            }
+            const coord = yield axios_1.default({
+                url: `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(reqBody.storeAddress)}`,
+                method: 'get',
+                headers: { Authorization: `KakaoAK ${process.env.KAKAO_KEY}` }
+            });
+            if (!coord)
+                coord.data.documents[0].y = 1, coord.data.documents[0].x = 1;
+            const fee = getDistance(parseFloat(address.locX), parseFloat(address.locY), parseFloat(coord.data.documents[0].y), parseFloat(coord.data.documents[0].x)) - 1;
+            cost += 550 * Math.floor(fee / 0.5);
             const data = {
                 userId: tokenData.id,
                 gender: gender,
-                addressId: reqBody.addressId,
+                address: address.address,
+                detailAddress: address.detailAddress,
+                locX: address.locX,
+                locY: address.locY,
                 // store 쪽 구현 아직 안되어서
                 storeName: reqBody.storeName,
-                storeX: reqBody.storeX,
-                storeY: reqBody.storeY,
-                storeAddressId: reqBody.storeAddressId,
+                storeX: coord.data.documents[0].y,
+                storeY: coord.data.documents[0].x,
+                storeAddress: reqBody.storeAddress,
                 storeDetailAddress: reqBody.storeDetailAddress,
                 chatId: reqBody.chatId ? reqBody.chatId : null,
                 startTime: Date.now(),
                 // 이거 계산하는거 추가하기 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
                 expArrivalTime: reqBody.expArrivalTime ? reqBody.expArrivalTime : Date.now(),
                 orderStatus: 0,
-                hotDeal: reqBody.hotDeal ? true : false,
+                hotDeal: reqBody.hotDeal === "1" ? true : false,
                 // hotDeal 계산된 금액(소비자한테 알려줘야함)
-                cost: cost,
+                cost: 0,
                 content: reqBody.content,
-                categoryName: reqBody.categoryName
+                categoryName: reqBody.categoryName,
+                deliveryFee: cost
             };
             const order = yield models_1.orderRep.create(data);
             return res.json(util.successTrue("", order));
@@ -97,13 +122,13 @@ exports.order.post('/', util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.order.get('/:id', util.isLoggedin, function (req, res, next) {
+exports.order.get('/', util.isLoggedin, function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         //주문 확인
         try {
             const _order = yield models_1.orderRep.findOne({
                 where: {
-                    id: req.params.id
+                    id: req.query.orderId
                 }
             });
             if (!_order)
@@ -233,7 +258,7 @@ exports.order.get('/review/user', util.isLoggedin, util.isRider, function (req, 
                 return res.status(403).json(util.successFalse(null, "사용자가 없거나 권한이 없습니다.", null));
             const _order = yield models_1.orderRep.findOne({
                 where: {
-                    orderId: reqBody.orderId,
+                    id: reqBody.orderId,
                     orderStatus: 0
                 }
             });
@@ -306,7 +331,7 @@ exports.order.get('/review/rider', util.isLoggedin, function (req, res, next) {
                 return res.status(403).json(util.successFalse(null, "사용자가 없거나 권한이 없습니다.", null));
             const _order = yield models_1.orderRep.findOne({
                 where: {
-                    orderId: reqBody.orderId,
+                    id: reqBody.orderId,
                     orderStatus: 0
                 }
             });
@@ -366,18 +391,18 @@ exports.order.get('/setDelivered', util.isLoggedin, util.isRider, function (req,
         const reqBody = req.query;
         try {
             //작성
-            const orders = yield models_1.orderRep.findOne({
+            const order = yield models_1.orderRep.findOne({
                 where: {
                     id: reqBody.orderId,
                     orderStatus: 0
                 }
             });
-            if (!orders)
+            if (!order)
                 return res.json(util.successFalse(null, "주문이 없습니다.", null));
-            orders === null || orders === void 0 ? void 0 : orders.update({
+            order === null || order === void 0 ? void 0 : order.update({
                 orderStatus: 3
             });
-            return res.json(util.successTrue("", orders));
+            return res.json(util.successTrue("", order));
         }
         catch (err) {
             return res.status(403).json(util.successFalse(err, "", null));
