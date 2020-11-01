@@ -87,7 +87,7 @@ exports.order.post('/', util.isLoggedin, function (req, res, next) {
             });
             if (!coord)
                 coord.data.documents[0].y = 1, coord.data.documents[0].x = 1;
-            const fee = getDistance(parseFloat(address.locX), parseFloat(address.locY), parseFloat(coord.data.documents[0].y), parseFloat(coord.data.documents[0].x)) - 3;
+            const fee = getDistance(parseFloat(address.locX), parseFloat(address.locY), parseFloat(coord.data.documents[0].y), parseFloat(coord.data.documents[0].x)) - 1;
             cost += 550 * Math.floor(fee / 0.5);
             const data = {
                 userId: tokenData.id,
