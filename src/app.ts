@@ -56,6 +56,14 @@ app.get('/favicon.ico',(req:any,res:Response)=>{
   res.status(200).end(favicon);
 });
 
+//   이걸 켜게되면 모든 api 요청은 x-initial-token에 INITIAL_TOKEN이 들어있어야 작동함.
+//   없을 경우 404에러 반환
+// app.use('/*',(req,res,next)=>{
+//   const token = req.headers["x-initial-token"] as string;
+//   if (token!=process.env.INITIAL_TOKEN) next(createError(404));
+//   else next();
+// })
+
 app.use("/api/v1/auth", auth);
 app.use("/api/v1/test", test);
 app.use("/api/v1/admin", admin);
