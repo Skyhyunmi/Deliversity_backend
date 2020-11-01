@@ -62,6 +62,7 @@ exports.order.post('/', util.isLoggedin, function (req, res, next) {
         let expHour = reqBody.expHour;
         let expMinute = reqBody.expMinute;
         let gender = parseInt(reqBody.gender);
+        const today = new Date();
         if (reqBody.reservation === "1") {
             if (!expHour || !expMinute) {
                 return res.status(403).json(util.successFalse(null, "예약 시간 또는 분을 입력하시지 않으셨습니다.", null));
@@ -69,24 +70,26 @@ exports.order.post('/', util.isLoggedin, function (req, res, next) {
             ;
             expHour = parseInt(reqBody.expHour);
             expMinute = parseInt(reqBody.expMinute);
+            today.setHours(today.getHours() + expHour);
+            today.setMinutes(today.getMinutes() + expMinute);
         }
-        else
-            return res.status(403).json(util.successFalse(null, "예약을 하지 않으셨습니다.", null));
+        else {
+            today.setHours(today.getHours() + 1);
+        }
         try {
-            const address = yield models_1.addressRep.findOne({
-                where: {
-                    userid: tokenData.id,
-                    id: reqBody.addressId
-                }
-            });
-            if (!address)
-                return res.status(403).json(util.successFalse(null, "해당하는 주소가 없습니다.", null));
             if (gender >= 1) {
                 const user = yield models_1.userRep.findOne({ where: { id: tokenData.id, grade: [2, 3] } });
                 if (!user)
                     return res.status(403).json(util.successFalse(null, "준회원은 동성 배달을 이용할 수 없습니다.", null));
                 gender = user.gender;
             }
+            const address = yield models_1.addressRep.findOne({
+                where: {
+                    userid: tokenData.id,
+                }
+            });
+            if (!address)
+                return res.status(403).json(util.successFalse(null, "해당하는 주소가 없습니다.", null));
             let cost = 3000;
             if (reqBody.hotDeal === "1")
                 cost = 4000;
@@ -113,9 +116,8 @@ exports.order.post('/', util.isLoggedin, function (req, res, next) {
                 storeAddress: reqBody.storeAddress,
                 storeDetailAddress: reqBody.storeDetailAddress,
                 chatId: reqBody.chatId ? reqBody.chatId : null,
-                startTime: Date.now(),
                 // 이거 계산하는거 추가하기 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                expArrivalTime: reqBody.expArrivalTime ? reqBody.expArrivalTime : Date.now() + 1,
+                expArrivalTime: today,
                 orderStatus: 0,
                 hotDeal: reqBody.hotDeal === "1" ? true : false,
                 // hotDeal 계산된 금액(소비자한테 알려줘야함)
@@ -123,6 +125,7 @@ exports.order.post('/', util.isLoggedin, function (req, res, next) {
                 content: reqBody.content,
                 categoryName: reqBody.categoryName,
                 deliveryFee: cost,
+                reservation: reqBody.reservation
             };
             const order = yield models_1.orderRep.create(data);
             return res.json(util.successTrue("", order));
