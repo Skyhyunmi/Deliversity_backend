@@ -59,8 +59,8 @@ exports.order.post('/', util.isLoggedin, function (req, res, next) {
         //주문 등록
         const tokenData = req.decoded;
         const reqBody = req.body;
-        const expHour = reqBody.expHour;
-        const expMinute = reqBody.expMinute;
+        let expHour = reqBody.expHour;
+        let expMinute = reqBody.expMinute;
         let gender = parseInt(reqBody.gender);
         const today = new Date();
         if (reqBody.reservation === "1") {
@@ -109,12 +109,14 @@ exports.order.post('/', util.isLoggedin, function (req, res, next) {
                 detailAddress: address.detailAddress,
                 locX: address.locX,
                 locY: address.locY,
+                // store 쪽 구현 아직 안되어서
                 storeName: reqBody.storeName,
                 storeX: coord.data.documents[0].y,
                 storeY: coord.data.documents[0].x,
                 storeAddress: reqBody.storeAddress,
                 storeDetailAddress: reqBody.storeDetailAddress,
                 chatId: reqBody.chatId ? reqBody.chatId : null,
+                // 이거 계산하는거 추가하기 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
                 expArrivalTime: today,
                 orderStatus: 0,
                 hotDeal: reqBody.hotDeal === "1" ? true : false,

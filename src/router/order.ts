@@ -30,8 +30,8 @@ order.post('/', util.isLoggedin, async function (req: any, res: Response, next: 
   //주문 등록
   const tokenData = req.decoded;
   const reqBody = req.body;
-  const expHour = reqBody.expHour;
-  const expMinute = reqBody.expMinute;
+  let expHour = reqBody.expHour;
+  let expMinute = reqBody.expMinute;
   let gender = parseInt(reqBody.gender);
   const today = new Date();
 
