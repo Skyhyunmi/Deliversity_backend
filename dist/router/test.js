@@ -35,6 +35,7 @@ exports.test = void 0;
 const express_1 = require("express");
 const util = __importStar(require("../config/util"));
 const proj4 = __importStar(require("proj4"));
+const axios_1 = __importDefault(require("axios"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 exports.test = express_1.Router();
@@ -46,16 +47,17 @@ const epsg_5181 = proj4.Proj("+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 
 const grs80 = proj4.Proj("+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 \
                           +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs"); //도로명주소 제공 좌표 5179
 const wgs84 = proj4.Proj("EPSG:4326"); //경위도
-exports.test.get('/juso', function (req, res, next) {
+exports.test.post('/juso', function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         //주문 등록
         const reqBody = req.body;
         try {
-            const p_x_y = proj4.toPoint([959542.9434374387, 1920240.148967761]); //월드컵로 206 grs80 -> wgs84
-            const p_lat_lng = proj4.toPoint([127.0436252026175, 37.28020872988387]); //월드컵로 206 wgs84 -> grs80
-            const result = proj4.transform(wgs84, grs80, p_lat_lng);
-            console.log(result);
-            return res.json(util.successTrue("", result));
+            const coord = yield axios_1.default({
+                url: `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(reqBody.address)}`,
+                method: 'get',
+                headers: { Authorization: `KakaoAK ${process.env.KAKAO_KEY}` }
+            });
+            return res.json(util.successTrue("", coord.data.documents[0]));
         }
         catch (err) {
             console.error(err);
