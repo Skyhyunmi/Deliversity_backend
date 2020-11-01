@@ -30,8 +30,8 @@ order.post('/', util.isLoggedin, async function (req: any, res: Response, next: 
   //주문 등록
   const tokenData = req.decoded;
   const reqBody = req.body;
-  let expHour = reqBody.expHour;
-  let expMinute = reqBody.expMinute;
+  const expHour = reqBody.expHour;
+  const expMinute = reqBody.expMinute;
   let gender = parseInt(reqBody.gender);
   const today = new Date();
 
@@ -85,6 +85,7 @@ order.post('/', util.isLoggedin, async function (req: any, res: Response, next: 
       orderStatus: 0,
       hotDeal: reqBody.hotDeal === "1" ? true : false,
       // hotDeal 계산된 금액(소비자한테 알려줘야함)
+      totalCost: 0,
       cost: 0,
       content: reqBody.content,
       categoryName: reqBody.categoryName,
@@ -326,7 +327,7 @@ order.get('/orders', util.isLoggedin, util.isRider, async function (req: any, re
         gender: [0, rider?.gender as any]
       }
     });
-    return res.json(util.successTrue("", orders));
+    return res.json(util.successTrue("", {length:orders.length,orders:orders}));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
