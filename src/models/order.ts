@@ -37,20 +37,20 @@ export default class Order extends Model<Order> {
   addressId!: number;
 
   @Column(DataType.STRING)
-  address!:string;
-  
+  address!: string;
+
   // @AllowNull(true)
   @Column(DataType.STRING)
-  detailAddress!:string;
+  detailAddress!: string;
 
   // @AllowNull(true)
   // @ForeignKey(()=>{Address})
   @Column(DataType.STRING)
-  locX!:string;
-  
+  locX!: string;
+
   // @AllowNull(true)
   @Column(DataType.STRING)
-  locY!:string;
+  locY!: string;
 
   @AllowNull(true)
   @Column(DataType.BIGINT)
@@ -109,6 +109,9 @@ export default class Order extends Model<Order> {
   @AllowNull(true)
   @Column(DataType.BIGINT)
   extraFee!: number;
+
+  @Column(DataType.BOOLEAN)
+  reservation!: boolean;
 
   @CreatedAt
   createdAt!: Date;

@@ -97,6 +97,9 @@ __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BIGINT)
 ], Order.prototype, "extraFee", void 0);
 __decorate([
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BOOLEAN)
+], Order.prototype, "reservation", void 0);
+__decorate([
     sequelize_typescript_1.CreatedAt
 ], Order.prototype, "createdAt", void 0);
 __decorate([
