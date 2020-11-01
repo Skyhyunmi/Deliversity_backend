@@ -59,19 +59,11 @@ exports.order.post('/', util.isLoggedin, function (req, res, next) {
         //주문 등록
         const tokenData = req.decoded;
         const reqBody = req.body;
-        let expHour = reqBody.expHour;
-        let expMinute = reqBody.expMinute;
+        const expHour = reqBody.expHour;
+        const expMinute = reqBody.expMinute;
         let gender = parseInt(reqBody.gender);
-        if (reqBody.reservation === "1") {
-            if (!expHour || !expMinute) {
-                return res.status(403).json(util.successFalse(null, "예약 시간 또는 분을 입력하시지 않으셨습니다.", null));
-            }
-            ;
-            expHour = parseInt(reqBody.expHour);
-            expMinute = parseInt(reqBody.expMinute);
-        }
-        else
-            return res.status(403).json(util.successFalse(null, "예약을 하지 않으셨습니다.", null));
+        if (reqBody.reservation === "1" && (!expHour || !expMinute))
+            return res.status(403).json(util.successFalse(null, "예약 시간 또는 분을 입력하시지 않으셨습니다.", null));
         try {
             const address = yield models_1.addressRep.findOne({
                 where: {
@@ -115,14 +107,16 @@ exports.order.post('/', util.isLoggedin, function (req, res, next) {
                 chatId: reqBody.chatId ? reqBody.chatId : null,
                 startTime: Date.now(),
                 // 이거 계산하는거 추가하기 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                expArrivalTime: reqBody.expArrivalTime ? reqBody.expArrivalTime : Date.now() + 1,
+                expArrivalTime: reqBody.expArrivalTime ? reqBody.expArrivalTime : Date.now(),
                 orderStatus: 0,
                 hotDeal: reqBody.hotDeal === "1" ? true : false,
                 // hotDeal 계산된 금액(소비자한테 알려줘야함)
+                totalCost: 0,
                 cost: 0,
                 content: reqBody.content,
                 categoryName: reqBody.categoryName,
                 deliveryFee: cost,
+                reservation: reqBody.reservation
             };
             const order = yield models_1.orderRep.create(data);
             return res.json(util.successTrue("", order));
@@ -392,7 +386,7 @@ exports.order.get('/orders', util.isLoggedin, util.isRider, function (req, res, 
                     gender: [0, rider === null || rider === void 0 ? void 0 : rider.gender]
                 }
             });
-            return res.json(util.successTrue("", orders));
+            return res.json(util.successTrue("", { length: orders.length, orders: orders }));
         }
         catch (err) {
             return res.status(403).json(util.successFalse(err, "", null));
