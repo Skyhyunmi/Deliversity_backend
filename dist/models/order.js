@@ -24,9 +24,6 @@ __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.TINYINT)
 ], Order.prototype, "gender", void 0);
 __decorate([
-    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BIGINT)
-], Order.prototype, "addressId", void 0);
-__decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
 ], Order.prototype, "address", void 0);
 __decorate([
@@ -64,9 +61,6 @@ __decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
 ], Order.prototype, "chatId", void 0);
-__decorate([
-    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.DATE)
-], Order.prototype, "startTime", void 0);
 __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
 ], Order.prototype, "categoryName", void 0);
