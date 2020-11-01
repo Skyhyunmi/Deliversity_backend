@@ -327,7 +327,7 @@ order.get('/orders', util.isLoggedin, util.isRider, async function (req: any, re
         gender: [0, rider?.gender as any]
       }
     });
-    return res.json(util.successTrue("", {length:orders.length,orders:orders}));
+    return res.json(util.successTrue("", { length: orders.length, orders: orders }));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }

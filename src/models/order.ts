@@ -32,10 +32,6 @@ export default class Order extends Model<Order> {
   @Column(DataType.TINYINT)
   gender!: number;
 
-  // @AllowNull(true)
-  @Column(DataType.BIGINT)
-  addressId!: number;
-
   @Column(DataType.STRING)
   address!: string;
 
@@ -77,9 +73,6 @@ export default class Order extends Model<Order> {
   @AllowNull(true)
   @Column(DataType.STRING)
   chatId!: string;
-
-  @Column(DataType.DATE)
-  startTime!: Date;
 
   @Column(DataType.STRING)
   categoryName!: string;
