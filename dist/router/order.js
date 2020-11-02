@@ -40,18 +40,6 @@ const axios_1 = __importDefault(require("axios"));
 const models_1 = require("../models");
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
-function getDistance(lat1, lng1, lat2, lng2) {
-    function deg2rad(deg) {
-        return deg * (Math.PI / 180);
-    }
-    const R = 6371; // Radius of the earth in km
-    const dLat = deg2rad(lat2 - lat1); // deg2rad below
-    const dLon = deg2rad(lng2 - lng1);
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const d = R * c; // Distance in km
-    return d;
-}
 exports.order = express_1.Router();
 const myCache = new node_cache_1.default({ stdTTL: 0, checkperiod: 0 });
 exports.order.post('/', util.isLoggedin, function (req, res, next) {
@@ -98,10 +86,50 @@ exports.order.post('/', util.isLoggedin, function (req, res, next) {
                 method: 'get',
                 headers: { Authorization: `KakaoAK ${process.env.KAKAO_KEY}` }
             });
-            if (!coord)
-                coord.data.documents[0].y = 1, coord.data.documents[0].x = 1;
-            const fee = getDistance(parseFloat(address.locX), parseFloat(address.locY), parseFloat(coord.data.documents[0].y), parseFloat(coord.data.documents[0].x)) - 1;
-            cost += 550 * Math.floor(fee / 0.5);
+            if (coord.data.documents[0] === undefined) {
+                // coord.data.documents[0].y = 37.5674160, coord.data.documents[0].x = 126.9663050;
+                return res.status(403).json(util.successFalse(null, "주소를 다시 확인해주세요.", null));
+            }
+            const from = yield axios_1.default({
+                url: 'https://dapi.kakao.com/v2/local/geo/transcoord.json',
+                method: "GET",
+                params: {
+                    y: address.locX,
+                    x: address.locY,
+                    input_coord: "WGS84",
+                    output_coord: "WCONGNAMUL"
+                },
+                headers: {
+                    Authorization: `KakaoAK ${process.env.KAKAO_KEY}`
+                }
+            });
+            const to = yield axios_1.default({
+                url: 'https://dapi.kakao.com/v2/local/geo/transcoord.json',
+                method: "GET",
+                params: {
+                    y: coord.data.documents[0].y,
+                    x: coord.data.documents[0].x,
+                    input_coord: "WGS84",
+                    output_coord: "WCONGNAMUL"
+                },
+                headers: {
+                    Authorization: `KakaoAK ${process.env.KAKAO_KEY}`
+                }
+            });
+            // return res.json(util.successTrue("",data.data.documents[0]))
+            const distanceData = yield axios_1.default({
+                url: 'https://map.kakao.com/route/walkset.json',
+                method: "GET",
+                params: {
+                    sX: from.data.documents[0].x,
+                    sY: from.data.documents[0].y,
+                    eX: to.data.documents[0].x,
+                    eY: to.data.documents[0].y,
+                    ids: ','
+                }
+            });
+            const fee = parseInt(distanceData.data.directions[0].length);
+            cost += 550 * Math.floor(fee / 1000 / 0.5);
             const data = {
                 userId: tokenData.id,
                 gender: gender,
