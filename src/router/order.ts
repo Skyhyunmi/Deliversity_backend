@@ -174,11 +174,7 @@ order.post('/rider', util.isLoggedin, async function (req: any, res: Response, n
     if (!order) return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
     const riderlist = myCache.get(req.query.orderId) as Rider[];
     if (riderlist == undefined) return res.status(403).json(util.successFalse(null, "배달을 희망하는 배달원이 없습니다.", null));
-    // function findrider(riderlist: { riderId: string; }) {
-    //   return parseInt(riderlist.riderId) == riderId;
-    // }
     const rider = riderlist.filter(rider => rider.riderId == riderId)[0];
-    // const rider = riderlist.find(findrider);
     if (!rider) return res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
     order.update({
       riderId: rider.riderId,
@@ -432,9 +428,6 @@ order.post('/apply', util.isLoggedin, util.isRider, async function (req: any, re
   extraFee = parseInt(reqBody.extraFee);
   if (!reqBody.extraFee) extraFee = 0;
   let riderlist = myCache.get(req.query.orderId) as Rider[];
-  // function existRider(rider: { riderId: string; }) {
-  //   return rider.riderId === riderId;
-  // }
   if (riderlist == undefined) { myCache.set(req.query.orderId, [{ riderId: riderId, extraFee: extraFee }]); }
   else {
     const rider = riderlist.filter(rider => rider.riderId == riderId)[0];
