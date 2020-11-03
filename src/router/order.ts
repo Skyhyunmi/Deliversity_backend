@@ -1,3 +1,4 @@
+/* eslint-disable no-inner-declarations */
 import { NextFunction, Response, Router } from "express";
 import * as util from "../config/util";
 import NodeCache from "node-cache";
@@ -10,6 +11,11 @@ dotenv.config();
 
 export const order = Router();
 const myCache = new NodeCache({ stdTTL: 0, checkperiod: 0 });
+
+class Rider {
+  riderId!: number;
+  extraFee!: number;
+};
 
 order.post('/', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
   //주문 등록
@@ -41,59 +47,59 @@ order.post('/', util.isLoggedin, async function (req: any, res: Response, next: 
     if (!address) return res.status(403).json(util.successFalse(null, "해당하는 주소가 없습니다.", null));
     let cost = 3000;
     if (reqBody.hotDeal === "1") cost = 4000;
-    
+
     const coord = await axios({
       url: `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(reqBody.storeAddress)}`,
       method: 'get',
       headers: { Authorization: `KakaoAK ${process.env.KAKAO_KEY}` }
     }) as any;
 
-    if(coord.data.documents[0]===undefined) {
+    if (coord.data.documents[0] === undefined) {
       // coord.data.documents[0].y = 37.5674160, coord.data.documents[0].x = 126.9663050;
       return res.status(403).json(util.successFalse(null, "주소를 다시 확인해주세요.", null));
     }
 
     const from = await axios({
-      url:'https://dapi.kakao.com/v2/local/geo/transcoord.json',
-      method:"GET",
-      params:{
+      url: 'https://dapi.kakao.com/v2/local/geo/transcoord.json',
+      method: "GET",
+      params: {
         y: address.locX,
         x: address.locY,
-        input_coord:"WGS84",
-        output_coord:"WCONGNAMUL"
+        input_coord: "WGS84",
+        output_coord: "WCONGNAMUL"
       },
-      headers:{
+      headers: {
         Authorization: `KakaoAK ${process.env.KAKAO_KEY}`
       }
     }) as any;
 
     const to = await axios({
-      url:'https://dapi.kakao.com/v2/local/geo/transcoord.json',
-      method:"GET",
-      params:{
+      url: 'https://dapi.kakao.com/v2/local/geo/transcoord.json',
+      method: "GET",
+      params: {
         y: coord.data.documents[0].y,
         x: coord.data.documents[0].x,
-        input_coord:"WGS84",
-        output_coord:"WCONGNAMUL"
+        input_coord: "WGS84",
+        output_coord: "WCONGNAMUL"
       },
-      headers:{
+      headers: {
         Authorization: `KakaoAK ${process.env.KAKAO_KEY}`
       }
     }) as any;
     // return res.json(util.successTrue("",data.data.documents[0]))
     const distanceData = await axios({
       url: 'https://map.kakao.com/route/walkset.json',
-      method:"GET",
-      params:{
-        sX:from.data.documents[0].x,
-        sY:from.data.documents[0].y,
-        eX:to.data.documents[0].x,
-        eY:to.data.documents[0].y,
-        ids:','
+      method: "GET",
+      params: {
+        sX: from.data.documents[0].x,
+        sY: from.data.documents[0].y,
+        eX: to.data.documents[0].x,
+        eY: to.data.documents[0].y,
+        ids: ','
       }
     }) as any;
     const fee = parseInt(distanceData.data.directions[0].length);
-    cost += 550 * Math.floor(fee/1000 / 0.5);
+    cost += 550 * Math.floor(fee / 1000 / 0.5);
 
     const data = {
       userId: tokenData.id,
@@ -146,8 +152,8 @@ order.get('/', util.isLoggedin, async function (req: any, res: Response, next: N
 order.get('/riders', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
   //신청 배달원 목록 반환
   try {
-    const riderlist = myCache.get(req.query.riderId);
-    if (!riderlist) { return res.status(403).json(util.successFalse(null, "배달을 희망하는 배달원이 없습니다.", null)); }
+    const riderlist = myCache.get(req.query.orderId) as any;
+    if (riderlist == undefined) { return res.status(403).json(util.successFalse(null, "배달을 희망하는 배달원이 없습니다.", null)); }
     return res.json(util.successTrue("", riderlist));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
@@ -158,8 +164,25 @@ order.post('/rider', util.isLoggedin, async function (req: any, res: Response, n
   //배달원 선택
   const tokenData = req.decoded;
   const reqBody = req.body;
+  const riderId = parseInt(reqBody.riderId);
   try {
-    //작성
+    const order = await orderRep.findOne({
+      where: {
+        id: req.query.orderId
+      }
+    });
+    if (!order) return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
+    const riderlist = myCache.get(req.query.orderId) as Rider[];
+    if (riderlist == undefined) return res.status(403).json(util.successFalse(null, "배달을 희망하는 배달원이 없습니다.", null));
+    const rider = riderlist.filter(rider => rider.riderId == riderId)[0];
+    if (!rider) return res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
+    order.update({
+      riderId: rider.riderId,
+      extraFee: rider.extraFee,
+      orderStatus: 1
+    });
+    myCache.del(req.query.orderId);
+    return res.json(util.successTrue("", order));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
@@ -389,20 +412,30 @@ order.get('/setDelivered', util.isLoggedin, util.isRider, async function (req: a
   }
 });
 
-/*
+
 order.post('/apply', util.isLoggedin, util.isRider, async function (req: any, res: Response, next: NextFunction) {
   // 배달원이 해당 주문에 배달원 신청
   const tokenData = req.decoded;
   const reqBody = req.body;
+  let orderStatus;
   // 해당 주문 번호
   const order = await orderRep.findOne({ where: { id: req.query.orderId } });
-  if (!order) res.status(403).json(util.successFalse(null, "주문 건이 없습니다.", null));
+  if (!order) return res.status(403).json(util.successFalse(null, "주문 건이 없습니다.", null));
+  else { orderStatus = parseInt(order?.orderStatus); }
+  if (orderStatus != 0) return res.status(403).json(util.successFalse(null, "배달원 모집이 끝난 주문입니다.", null));
   const riderId = tokenData.id;
-  const extrafee = reqBody.extrafee;
-  const riderlist = myCache.get(req.query.orderId) as any;
-  console.log(riderlist);
-  if (!riderlist) { myCache.set(req.query.orderId, [{ riderId: riderId, extrafee: extrafee }]); }
-  await riderlist.push([{ riderId: riderId, extrafee: extrafee }]);
-  console.log(riderlist);
+  let extraFee;
+  extraFee = parseInt(reqBody.extraFee);
+  if (!reqBody.extraFee) extraFee = 0;
+  let riderlist = myCache.get(req.query.orderId) as Rider[];
+  if (riderlist == undefined) { myCache.set(req.query.orderId, [{ riderId: riderId, extraFee: extraFee }]); }
+  else {
+    const rider = riderlist.filter(rider => rider.riderId == riderId)[0];
+    if (rider) return res.status(403).json(util.successFalse(null, "이미 배달 신청한 주문입니다.", null));
+
+    riderlist = myCache.take(req.query.orderId) as Rider[];
+    riderlist.push({ riderId: riderId, extraFee: extraFee });
+    myCache.set(req.query.orderId, riderlist);
+  }
   return res.json(util.successTrue("", riderlist));
-});*/
+});
