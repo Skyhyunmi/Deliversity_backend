@@ -8,6 +8,8 @@ import PointCategory from "./pointCategory";
 import QnA from "./qna";
 import Report from "./report";
 import Review from "./review";
+import Chat from "./chat";
+import Room from "./room";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -39,6 +41,8 @@ db.addModels([PointCategory]);
 db.addModels([QnA]);
 db.addModels([Report]);
 db.addModels([Review]);
+db.addModels([Chat]);
+db.addModels([Room]);
 //https://stackoverflow.com/questions/60014874/how-to-use-typescript-with-sequelize
 
 export const userRep  = db.getRepository(User);
@@ -50,3 +54,5 @@ export const pointcategoryRep  = db.getRepository(PointCategory);
 export const qnaRep  = db.getRepository(QnA);
 export const reportRep  = db.getRepository(Report);
 export const reviewRep  = db.getRepository(Review);
+export const chatRep  = db.getRepository(Chat);
+export const roomRep  = db.getRepository(Room);
