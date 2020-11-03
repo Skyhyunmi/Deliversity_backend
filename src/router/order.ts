@@ -149,7 +149,6 @@ order.get('/riders', util.isLoggedin, async function (req: any, res: Response, n
   try {
     const riderlist = myCache.get(req.query.orderId) as any;
     if (riderlist == undefined) { return res.status(403).json(util.successFalse(null, "배달을 희망하는 배달원이 없습니다.", null)); }
-    // myCache.set(req.query.orderId, riderlist);
     return res.json(util.successTrue("", riderlist));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
@@ -171,13 +170,9 @@ order.post('/rider', util.isLoggedin, async function (req: any, res: Response, n
     const riderlist = myCache.take(req.query.orderId) as any;
     if (riderlist == undefined) return res.status(403).json(util.successFalse(null, "배달을 희망하는 배달원이 없습니다.", null));
     function findrider(riderlist: { riderId: string; }) {
-      console.log(riderlist.riderId);
-      console.log(reqBody.riderId);
       return parseInt(riderlist.riderId) == riderId;
     }
-    console.log(riderlist);
     const rider = riderlist.find(findrider);
-    console.log(rider);
     if (!rider) return res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
     order.update({
       riderId: rider.riderId,
@@ -283,7 +278,6 @@ order.get('/review/user', util.isLoggedin, util.isRider, async function (req: an
         fromId: { [db.Op.ne]: _user?.id }
       }
     });
-    console.log(reviews);
     const rating = reviews.reduce((sum, cur) => sum + cur.rating, 0);
     return res.json(util.successTrue("", {
       rating: rating / reviews.length,
