@@ -167,7 +167,7 @@ order.post('/rider', util.isLoggedin, async function (req: any, res: Response, n
       }
     });
     if (!order) return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
-    const riderlist = myCache.take(req.query.orderId) as any;
+    const riderlist = myCache.get(req.query.orderId) as any;
     if (riderlist == undefined) return res.status(403).json(util.successFalse(null, "배달을 희망하는 배달원이 없습니다.", null));
     function findrider(riderlist: { riderId: string; }) {
       return parseInt(riderlist.riderId) == riderId;
@@ -179,6 +179,7 @@ order.post('/rider', util.isLoggedin, async function (req: any, res: Response, n
       extraFee: rider.extraFee,
       orderStatus: 1
     });
+    myCache.del(req.query.orderId) as any;
     return res.json(util.successTrue("", order));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
