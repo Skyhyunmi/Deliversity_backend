@@ -12,6 +12,11 @@ dotenv.config();
 export const order = Router();
 const myCache = new NodeCache({ stdTTL: 0, checkperiod: 0 });
 
+class Rider {
+  riderId!: number;
+  extraFee!: number;
+};
+
 order.post('/', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
   //주문 등록
   const tokenData = req.decoded;
@@ -167,19 +172,20 @@ order.post('/rider', util.isLoggedin, async function (req: any, res: Response, n
       }
     });
     if (!order) return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
-    const riderlist = myCache.get(req.query.orderId) as any;
+    const riderlist = myCache.get(req.query.orderId) as Rider[];
     if (riderlist == undefined) return res.status(403).json(util.successFalse(null, "배달을 희망하는 배달원이 없습니다.", null));
-    function findrider(riderlist: { riderId: string; }) {
-      return parseInt(riderlist.riderId) == riderId;
-    }
-    const rider = riderlist.find(findrider);
+    // function findrider(riderlist: { riderId: string; }) {
+    //   return parseInt(riderlist.riderId) == riderId;
+    // }
+    const rider = riderlist.filter(rider => rider.riderId == riderId)[0];
+    // const rider = riderlist.find(findrider);
     if (!rider) return res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
     order.update({
       riderId: rider.riderId,
       extraFee: rider.extraFee,
       orderStatus: 1
     });
-    myCache.del(req.query.orderId) as any;
+    myCache.del(req.query.orderId);
     return res.json(util.successTrue("", order));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
@@ -425,16 +431,16 @@ order.post('/apply', util.isLoggedin, util.isRider, async function (req: any, re
   let extraFee;
   extraFee = parseInt(reqBody.extraFee);
   if (!reqBody.extraFee) extraFee = 0;
-  let riderlist = myCache.get(req.query.orderId) as any;
-  function existRider(rider: { riderId: string; }) {
-    return rider.riderId === riderId;
-  }
+  let riderlist = myCache.get(req.query.orderId) as Rider[];
+  // function existRider(rider: { riderId: string; }) {
+  //   return rider.riderId === riderId;
+  // }
   if (riderlist == undefined) { myCache.set(req.query.orderId, [{ riderId: riderId, extraFee: extraFee }]); }
   else {
-    const rider = riderlist.find(existRider);
+    const rider = riderlist.filter(rider => rider.riderId == riderId)[0];
     if (rider) return res.status(403).json(util.successFalse(null, "이미 배달 신청한 주문입니다.", null));
 
-    riderlist = myCache.take(req.query.orderId) as any;
+    riderlist = myCache.take(req.query.orderId) as Rider[];
     riderlist.push({ riderId: riderId, extraFee: extraFee });
     myCache.set(req.query.orderId, riderlist);
   }
