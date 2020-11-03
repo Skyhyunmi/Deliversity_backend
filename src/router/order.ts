@@ -1,5 +1,5 @@
 /* eslint-disable no-inner-declarations */
-import { NextFunction, Response, Router } from "express";
+import { Request, Response, Router } from "express";
 import * as util from "../config/util";
 import NodeCache from "node-cache";
 import * as db from "sequelize";
@@ -17,7 +17,7 @@ class Rider {
   extraFee!: number;
 };
 
-order.post('/', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+order.post('/', util.isLoggedin, async function ( req: Request, res: Response ) {
   //주문 등록
   const tokenData = req.decoded;
   const reqBody = req.body;
@@ -134,12 +134,12 @@ order.post('/', util.isLoggedin, async function (req: any, res: Response, next: 
   }
 });
 
-order.get('/', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+order.get('/', util.isLoggedin, async function ( req: Request, res: Response ) {
   //주문 확인
   try {
     const _order = await orderRep.findOne({
       where: {
-        id: req.query.orderId
+        id: req.query.orderId as string
       }
     });
     if (!_order) return res.status(403).json(util.successFalse(null, "주문건이 없습니다.", null));
@@ -149,10 +149,10 @@ order.get('/', util.isLoggedin, async function (req: any, res: Response, next: N
   }
 });
 
-order.get('/riders', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+order.get('/riders', util.isLoggedin, async function ( req: Request, res: Response ) {
   //신청 배달원 목록 반환
   try {
-    const riderlist = myCache.get(req.query.orderId) as any;
+    const riderlist = myCache.get(req.query.orderId as string) as any;
     if (riderlist == undefined) { return res.status(403).json(util.successFalse(null, "배달을 희망하는 배달원이 없습니다.", null)); }
     return res.json(util.successTrue("", riderlist));
   } catch (err) {
@@ -160,19 +160,19 @@ order.get('/riders', util.isLoggedin, async function (req: any, res: Response, n
   }
 });
 
-order.post('/rider', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+order.post('/rider', util.isLoggedin, async function ( req: Request, res: Response ) {
   //배달원 선택
-  const tokenData = req.decoded;
+  // const tokenData = req.decoded;
   const reqBody = req.body;
   const riderId = parseInt(reqBody.riderId);
   try {
     const order = await orderRep.findOne({
       where: {
-        id: req.query.orderId
+        id: req.query.orderId as string
       }
     });
     if (!order) return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
-    const riderlist = myCache.get(req.query.orderId) as Rider[];
+    const riderlist = myCache.get(req.query.orderId as string) as Rider[];
     if (riderlist == undefined) return res.status(403).json(util.successFalse(null, "배달을 희망하는 배달원이 없습니다.", null));
     const rider = riderlist.filter(rider => rider.riderId == riderId)[0];
     if (!rider) return res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
@@ -181,18 +181,18 @@ order.post('/rider', util.isLoggedin, async function (req: any, res: Response, n
       extraFee: rider.extraFee,
       orderStatus: 1
     });
-    myCache.del(req.query.orderId);
+    myCache.del(req.query.orderId as string);
     return res.json(util.successTrue("", order));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
 });
 
-order.get('/chat', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+order.get('/chat', util.isLoggedin, async function ( req: Request, res: Response ) {
   //주문에 대한 채팅을 위한 주소 반환
   //필요없을 수도... 주문 등록 할때 반환해도 될 수도..
-  const tokenData = req.decoded;
-  const reqBody = req.body;
+  // const tokenData = req.decoded;
+  // const reqBody = req.body;
   try {
     //작성
   } catch (err) {
@@ -200,10 +200,10 @@ order.get('/chat', util.isLoggedin, async function (req: any, res: Response, nex
   }
 });
 
-order.get('/price', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+order.get('/price', util.isLoggedin, async function ( req: Request, res: Response ) {
   //최종 결제 금액 반환
-  const tokenData = req.decoded;
-  const reqBody = req.body;
+  // const tokenData = req.decoded;
+  // const reqBody = req.body;
   try {
     //작성
   } catch (err) {
@@ -211,10 +211,10 @@ order.get('/price', util.isLoggedin, async function (req: any, res: Response, ne
   }
 });
 
-order.post('/price', util.isLoggedin, util.isRider, async function (req: any, res: Response, next: NextFunction) {
+order.post('/price', util.isLoggedin, util.isRider, async function ( req: Request, res: Response ) {
   //배달원이 최종 결제 금액 전송
-  const tokenData = req.decoded;
-  const reqBody = req.body;
+  // const tokenData = req.decoded;
+  // const reqBody = req.body;
   try {
     //작성
   } catch (err) {
@@ -222,7 +222,7 @@ order.post('/price', util.isLoggedin, util.isRider, async function (req: any, re
   }
 });
 
-order.post('/review/user', util.isLoggedin, util.isRider, async function (req: any, res: Response, next: NextFunction) {
+order.post('/review/user', util.isLoggedin, util.isRider, async function ( req: Request, res: Response ) {
   //유저에 대한 리뷰 작성
   const tokenData = req.decoded;
   const reqBody = req.body;
@@ -256,21 +256,21 @@ order.post('/review/user', util.isLoggedin, util.isRider, async function (req: a
   }
 });
 
-order.get('/review/user', util.isLoggedin, util.isRider, async function (req: any, res: Response, next: NextFunction) {
+order.get('/review/user', util.isLoggedin, util.isRider, async function ( req: Request, res: Response ) {
   //유저에 대한 리뷰 확인
-  const tokenData = req.decoded;
+  // const tokenData = req.decoded;
   const reqBody = req.query;
   try {
     //작성
     const _user = await userRep.findOne({
       where: {
-        id: reqBody.userId
+        id: reqBody.userId as string
       }
     });
     if (_user === null) return res.status(403).json(util.successFalse(null, "사용자가 없거나 권한이 없습니다.", null));
     const _order = await orderRep.findOne({
       where: {
-        id: reqBody.orderId,
+        id: reqBody.orderId as string,
         orderStatus: 0
       }
     });
@@ -291,7 +291,7 @@ order.get('/review/user', util.isLoggedin, util.isRider, async function (req: an
   }
 });
 
-order.post('/review/rider', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+order.post('/review/rider', util.isLoggedin, async function ( req: Request, res: Response ) {
   //라이더에 대한 리뷰 작성
   const tokenData = req.decoded;
   const reqBody = req.body;
@@ -325,21 +325,21 @@ order.post('/review/rider', util.isLoggedin, async function (req: any, res: Resp
   }
 });
 
-order.get('/review/rider', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+order.get('/review/rider', util.isLoggedin, async function ( req: Request, res: Response ) {
   //라이더에 대한 리뷰 확인
-  const tokenData = req.decoded;
+  // const tokenData = req.decoded;
   const reqBody = req.query;
   try {
     //작성
     const _user = await userRep.findOne({
       where: {
-        id: reqBody.riderId
+        id: reqBody.riderId as string
       }
     });
     if (_user === null) return res.status(403).json(util.successFalse(null, "사용자가 없거나 권한이 없습니다.", null));
     const _order = await orderRep.findOne({
       where: {
-        id: reqBody.orderId,
+        id: reqBody.orderId as string,
         orderStatus: 0
       }
     });
@@ -360,10 +360,10 @@ order.get('/review/rider', util.isLoggedin, async function (req: any, res: Respo
   }
 });
 
-order.get('/orders', util.isLoggedin, util.isRider, async function (req: any, res: Response, next: NextFunction) {
+order.get('/orders', util.isLoggedin, util.isRider, async function ( req: Request, res: Response ) {
   //배달원이 찾을 배달거리 리스트 반환
   const tokenData = req.decoded;
-  const reqBody = req.body;
+  // const reqBody = req.body;
   try {
     //작성
     const rider = await userRep.findOne({
@@ -390,15 +390,15 @@ order.get('/orders', util.isLoggedin, util.isRider, async function (req: any, re
 ////                              개발용 API입니다. 나중에는 지워야 합니다.                              ////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-order.get('/setDelivered', util.isLoggedin, util.isRider, async function (req: any, res: Response, next: NextFunction) {
+order.get('/setDelivered', util.isLoggedin, util.isRider, async function ( req: Request, res: Response ) {
   //배달원이 찾을 배달거리 리스트 반환
-  const tokenData = req.decoded;
+  // const tokenData = req.decoded;
   const reqBody = req.query;
   try {
     //작성
     const order = await orderRep.findOne({
       where: {
-        id: reqBody.orderId,
+        id: reqBody.orderId as string,
         orderStatus: 0
       }
     });
@@ -413,13 +413,13 @@ order.get('/setDelivered', util.isLoggedin, util.isRider, async function (req: a
 });
 
 
-order.post('/apply', util.isLoggedin, util.isRider, async function (req: any, res: Response, next: NextFunction) {
+order.post('/apply', util.isLoggedin, util.isRider, async function ( req: Request, res: Response ) {
   // 배달원이 해당 주문에 배달원 신청
   const tokenData = req.decoded;
   const reqBody = req.body;
   let orderStatus;
   // 해당 주문 번호
-  const order = await orderRep.findOne({ where: { id: req.query.orderId } });
+  const order = await orderRep.findOne({ where: { id: req.query.orderId as string} });
   if (!order) return res.status(403).json(util.successFalse(null, "주문 건이 없습니다.", null));
   else { orderStatus = parseInt(order?.orderStatus); }
   if (orderStatus != 0) return res.status(403).json(util.successFalse(null, "배달원 모집이 끝난 주문입니다.", null));
@@ -427,15 +427,15 @@ order.post('/apply', util.isLoggedin, util.isRider, async function (req: any, re
   let extraFee;
   extraFee = parseInt(reqBody.extraFee);
   if (!reqBody.extraFee) extraFee = 0;
-  let riderlist = myCache.get(req.query.orderId) as Rider[];
-  if (riderlist == undefined) { myCache.set(req.query.orderId, [{ riderId: riderId, extraFee: extraFee }]); }
+  let riderlist = myCache.get(req.query.orderId as string) as Rider[];
+  if (riderlist == undefined) { myCache.set(req.query.orderId as string, [{ riderId: riderId, extraFee: extraFee }]); }
   else {
     const rider = riderlist.filter(rider => rider.riderId == riderId)[0];
     if (rider) return res.status(403).json(util.successFalse(null, "이미 배달 신청한 주문입니다.", null));
 
-    riderlist = myCache.take(req.query.orderId) as Rider[];
+    riderlist = myCache.take(req.query.orderId as string) as Rider[];
     riderlist.push({ riderId: riderId, extraFee: extraFee });
-    myCache.set(req.query.orderId, riderlist);
+    myCache.set(req.query.orderId as string, riderlist);
   }
   return res.json(util.successTrue("", riderlist));
 });

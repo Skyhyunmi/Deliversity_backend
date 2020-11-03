@@ -38,7 +38,7 @@ const index_1 = require("../models/index");
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 exports.admin = express_1.Router();
-exports.admin.get('/uploads', util.isLoggedin, util.isAdmin, function (req, res, next) {
+exports.admin.get('/uploads', util.isLoggedin, util.isAdmin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //민증 확인 리스트 반환
         try {
@@ -56,7 +56,7 @@ exports.admin.get('/uploads', util.isLoggedin, util.isAdmin, function (req, res,
         }
     });
 });
-exports.admin.get('/upload/:id', util.isLoggedin, util.isAdmin, function (req, res, next) {
+exports.admin.get('/upload/:id', util.isLoggedin, util.isAdmin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //상세내용 반환
         const id = req.params.id;
@@ -87,7 +87,7 @@ exports.admin.get('/upload/:id', util.isLoggedin, util.isAdmin, function (req, r
         }
     });
 });
-exports.admin.put('/upload', util.isLoggedin, util.isAdmin, function (req, res, next) {
+exports.admin.put('/upload', util.isLoggedin, util.isAdmin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //민증인증 처리
         const reqBody = req.body;
@@ -123,7 +123,7 @@ exports.admin.put('/upload', util.isLoggedin, util.isAdmin, function (req, res, 
         }
     });
 });
-exports.admin.get('/reports', util.isLoggedin, util.isAdmin, function (req, res, next) {
+exports.admin.get('/reports', util.isLoggedin, util.isAdmin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //신고 리스트 반환
         try {
@@ -141,7 +141,7 @@ exports.admin.get('/reports', util.isLoggedin, util.isAdmin, function (req, res,
         }
     });
 });
-exports.admin.get('/report/:id', util.isLoggedin, util.isAdmin, function (req, res, next) {
+exports.admin.get('/report/:id', util.isLoggedin, util.isAdmin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //신고 상세내용보기
         const reportId = req.params.id;
@@ -165,7 +165,7 @@ exports.admin.get('/report/:id', util.isLoggedin, util.isAdmin, function (req, r
         }
     });
 });
-exports.admin.put('/report', util.isLoggedin, util.isAdmin, function (req, res, next) {
+exports.admin.put('/report', util.isLoggedin, util.isAdmin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //신고 답변 작성
         const reqBody = req.body;
@@ -195,7 +195,7 @@ exports.admin.put('/report', util.isLoggedin, util.isAdmin, function (req, res, 
         }
     });
 });
-exports.admin.get('/qnas', util.isLoggedin, util.isAdmin, function (req, res, next) {
+exports.admin.get('/qnas', util.isLoggedin, util.isAdmin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //문의 리스트 반환
         try {
@@ -213,7 +213,7 @@ exports.admin.get('/qnas', util.isLoggedin, util.isAdmin, function (req, res, ne
         }
     });
 });
-exports.admin.get('/qna/:id', util.isLoggedin, util.isAdmin, function (req, res, next) {
+exports.admin.get('/qna/:id', util.isLoggedin, util.isAdmin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //문의 상세내용보기
         const qnaId = req.params.id;
@@ -237,7 +237,7 @@ exports.admin.get('/qna/:id', util.isLoggedin, util.isAdmin, function (req, res,
         }
     });
 });
-exports.admin.put('/qna', util.isLoggedin, util.isAdmin, function (req, res, next) {
+exports.admin.put('/qna', util.isLoggedin, util.isAdmin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //문의 답변 작성
         const reqBody = req.body;

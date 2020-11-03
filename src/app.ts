@@ -1,4 +1,4 @@
-import express, { Response, NextFunction } from "express";
+import express, { Request, Response, NextFunction } from "express";
 import createError from "http-errors";
 import logger from "morgan";
 import * as bodyParser from "body-parser";
@@ -71,7 +71,7 @@ app.use("/api/v1/myinfo", myinfo);
 app.use("/api/v1/order", order);
 app.use(cors());
 
-app.use(function (req: any, res: Response, next: NextFunction) {
+app.use(function ( req: Request, res: Response, next:NextFunction ) {
   next(createError(404));
 });
 

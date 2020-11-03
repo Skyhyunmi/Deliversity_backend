@@ -39,11 +39,11 @@ const crypto = __importStar(require("crypto"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const axios_1 = __importDefault(require("axios"));
 dotenv_1.default.config();
-const KAKAO = "+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=500000 +ellps=GRS80 +units=m +no_defs"; //5181
-const GRS80 = "+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs"; //도로명주소 제공 좌표 5179
-const WGS84 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +units=degrees"; //경위도
+// const KAKAO = "+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=500000 +ellps=GRS80 +units=m +no_defs"; //5181
+// const GRS80 = "+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs"; //도로명주소 제공 좌표 5179
+// const WGS84 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +units=degrees"; //경위도
 exports.myinfo = express_1.Router();
-exports.myinfo.get('/', util.isLoggedin, util.isAdmin, function (req, res, next) {
+exports.myinfo.get('/', util.isLoggedin, util.isAdmin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //본인 정보 반환
         const tokenData = req.decoded;
@@ -76,7 +76,7 @@ exports.myinfo.get('/', util.isLoggedin, util.isAdmin, function (req, res, next)
         }
     });
 });
-exports.myinfo.put('/', util.isLoggedin, function (req, res, next) {
+exports.myinfo.put('/', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //본인 정보 수정
         const tokenData = req.decoded;
@@ -131,7 +131,7 @@ exports.myinfo.put('/', util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.myinfo.get('/address/list', util.isLoggedin, function (req, res, next) {
+exports.myinfo.get('/address/list', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //자기 주소 리스트 반환
         const tokenData = req.decoded;
@@ -150,7 +150,7 @@ exports.myinfo.get('/address/list', util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.myinfo.put('/address/set', util.isLoggedin, function (req, res, next) {
+exports.myinfo.put('/address/set', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //기본 주소 설정
         const tokenData = req.decoded;
@@ -181,7 +181,7 @@ exports.myinfo.put('/address/set', util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.myinfo.get('/address', util.isLoggedin, function (req, res, next) {
+exports.myinfo.get('/address', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //기본 주소 반환
         const tokenData = req.decoded;
@@ -208,7 +208,7 @@ exports.myinfo.get('/address', util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.myinfo.post('/address', util.isLoggedin, function (req, res, next) {
+exports.myinfo.post('/address', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //주소 추가
         const tokenData = req.decoded;
@@ -242,7 +242,7 @@ exports.myinfo.post('/address', util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.myinfo.put('/address', util.isLoggedin, function (req, res, next) {
+exports.myinfo.put('/address', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //주소 변경
         const tokenData = req.decoded;
@@ -267,7 +267,7 @@ exports.myinfo.put('/address', util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.myinfo.delete('/address', util.isLoggedin, function (req, res, next) {
+exports.myinfo.delete('/address', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //주소 삭제
         const tokenData = req.decoded;
@@ -288,7 +288,7 @@ exports.myinfo.delete('/address', util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.myinfo.post('/report', util.isLoggedin, function (req, res, next) {
+exports.myinfo.post('/report', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //신고 접수(req: reportKind, orderId, content, chat포함여부)
         const tokenData = req.decoded;
@@ -318,7 +318,7 @@ exports.myinfo.post('/report', util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.myinfo.post('/qna', util.isLoggedin, function (req, res, next) {
+exports.myinfo.post('/qna', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //질문 접수 (id, qnakind, userId, content, answer)
         const tokenData = req.decoded;
@@ -336,7 +336,7 @@ exports.myinfo.post('/qna', util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.myinfo.post('/upload', util.isLoggedin, function (req, res, next) {
+exports.myinfo.post('/upload', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const tokenData = req.decoded;
         const reqBody = req.body;
@@ -359,7 +359,7 @@ exports.myinfo.post('/upload', util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.myinfo.post('/toRider', util.isLoggedin, util.isUser, function (req, res, next) {
+exports.myinfo.post('/toRider', util.isLoggedin, util.isUser, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const tokenData = req.decoded;
         try {
@@ -374,7 +374,7 @@ exports.myinfo.post('/toRider', util.isLoggedin, util.isUser, function (req, res
         }
     });
 });
-exports.myinfo.post('/toUser', util.isLoggedin, util.isRider, function (req, res, next) {
+exports.myinfo.post('/toUser', util.isLoggedin, util.isRider, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const tokenData = req.decoded;
         try {
@@ -394,7 +394,7 @@ exports.myinfo.post('/toUser', util.isLoggedin, util.isRider, function (req, res
 ////                              개발용 API입니다. 나중에는 지워야 합니다.                              ////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-exports.myinfo.get('/grade', util.isLoggedin, function (req, res, next) {
+exports.myinfo.get('/grade', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const tokenData = req.decoded;
         const reqQuery = req.query;
@@ -404,7 +404,7 @@ exports.myinfo.get('/grade', util.isLoggedin, function (req, res, next) {
                 return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
             if (reqQuery.grade == null || reqQuery.grade == "")
                 return res.status(403).json(util.successFalse(null, "파라미터가 부족합니다.", null));
-            if (reqQuery.grade >= 4)
+            if (parseInt(reqQuery.grade) >= 4)
                 return res.json(util.successTrue(`4이상으로 올라 갈 수 없습니다.`, null));
             user.update({ grade: reqQuery.grade });
             return res.json(util.successTrue("", { grade: user.grade }));
