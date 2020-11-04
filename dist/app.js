@@ -18,6 +18,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -38,6 +47,8 @@ const passport_2 = require("./config/passport");
 const util = __importStar(require("./config/util"));
 const models_1 = require("./models");
 const fs = __importStar(require("fs"));
+const path_1 = __importDefault(require("path"));
+const socket_io_1 = __importDefault(require("socket.io"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 process.env.NODE_ENV = (process.env.NODE_ENV && (process.env.NODE_ENV)
@@ -73,6 +84,16 @@ const favicon = fs.readFileSync('favicon.ico');
 app.get('/favicon.ico', (req, res) => {
     res.status(200).end(favicon);
 });
+app.get('/', function (req, res) {
+    console.log(__dirname);
+    res.status(200).sendFile(path_1.default.join(__dirname, '../index.html'));
+});
+app.get('/socket.io/socket.io.js', (req, res) => {
+    res.sendFile(path_1.default.resolve(__dirname + '/../node_modules/socket.io-client/dist/socket.io.js'));
+});
+app.get('/socket.io/socket.io.js.map', (req, res) => {
+    res.sendFile(path_1.default.resolve(__dirname + '/../node_modules/socket.io-client/dist/socket.io.js.map'));
+});
 //   이걸 켜게되면 모든 api 요청은 x-initial-token에 INITIAL_TOKEN이 들어있어야 작동함.
 //   없을 경우 404에러 반환
 // app.use('/*',(req,res,next)=>{
@@ -96,7 +117,22 @@ app.use(function (err, req, res, next) {
     // render the error page
     res.status(err.status || 500).json(util.successFalse(null, "Error", null));
 });
-app.listen(process.env.WEB_PORT, () => {
+const server = app.listen(process.env.WEB_PORT, () => {
     console.log(process.env.NODE_ENV);
     console.log("Server Started");
 });
+const io = socket_io_1.default.listen(server);
+io.of('/api/v1/chat/io').on('connection', (socket) => __awaiter(void 0, void 0, void 0, function* () {
+    socket.on('chat', (data) => __awaiter(void 0, void 0, void 0, function* () {
+        let room = data.roomId;
+        console.log(`Room: ${room} Message from ${data.userName}: ${data.msg}`);
+        socket.join(room);
+        socket.to(room).emit('rChat', data.msg); // 백에서 클라이언트로 rChat으로 emit
+        yield models_1.chatRep.create({
+            userName: data.userName,
+            roomId: data.roomId,
+            chat: data.msg,
+            gif: data.photo
+        });
+    }));
+}));

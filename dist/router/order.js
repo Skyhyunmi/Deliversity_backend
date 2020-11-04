@@ -46,7 +46,7 @@ const myCache = new node_cache_1.default({ stdTTL: 0, checkperiod: 0 });
 class Rider {
 }
 ;
-exports.order.post('/', util.isLoggedin, function (req, res, next) {
+exports.order.post('/', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //주문 등록
         const tokenData = req.decoded;
@@ -168,7 +168,7 @@ exports.order.post('/', util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.order.get('/', util.isLoggedin, function (req, res, next) {
+exports.order.get('/', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //주문 확인
         try {
@@ -186,7 +186,7 @@ exports.order.get('/', util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.order.get('/riders', util.isLoggedin, function (req, res, next) {
+exports.order.get('/riders', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //신청 배달원 목록 반환
         try {
@@ -206,10 +206,10 @@ exports.order.get('/riders', util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.order.post('/rider', util.isLoggedin, function (req, res, next) {
+exports.order.post('/rider', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //배달원 선택
-        const tokenData = req.decoded;
+        // const tokenData = req.decoded;
         const reqBody = req.body;
         const riderId = parseInt(reqBody.riderId);
         try {
@@ -239,12 +239,12 @@ exports.order.post('/rider', util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.order.get('/chat', util.isLoggedin, function (req, res, next) {
+exports.order.get('/chat', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //주문에 대한 채팅을 위한 주소 반환
         //필요없을 수도... 주문 등록 할때 반환해도 될 수도..
-        const tokenData = req.decoded;
-        const reqBody = req.body;
+        // const tokenData = req.decoded;
+        // const reqBody = req.body;
         try {
             //작성
         }
@@ -253,11 +253,11 @@ exports.order.get('/chat', util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.order.get('/price', util.isLoggedin, function (req, res, next) {
+exports.order.get('/price', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //최종 결제 금액 반환
-        const tokenData = req.decoded;
-        const reqBody = req.body;
+        // const tokenData = req.decoded;
+        // const reqBody = req.body;
         try {
             //작성
         }
@@ -266,11 +266,11 @@ exports.order.get('/price', util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.order.post('/price', util.isLoggedin, util.isRider, function (req, res, next) {
+exports.order.post('/price', util.isLoggedin, util.isRider, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //배달원이 최종 결제 금액 전송
-        const tokenData = req.decoded;
-        const reqBody = req.body;
+        // const tokenData = req.decoded;
+        // const reqBody = req.body;
         try {
             //작성
         }
@@ -279,7 +279,7 @@ exports.order.post('/price', util.isLoggedin, util.isRider, function (req, res, 
         }
     });
 });
-exports.order.post('/review/user', util.isLoggedin, util.isRider, function (req, res, next) {
+exports.order.post('/review/user', util.isLoggedin, util.isRider, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //유저에 대한 리뷰 작성
         const tokenData = req.decoded;
@@ -317,10 +317,10 @@ exports.order.post('/review/user', util.isLoggedin, util.isRider, function (req,
         }
     });
 });
-exports.order.get('/review/user', util.isLoggedin, util.isRider, function (req, res, next) {
+exports.order.get('/review/user', util.isLoggedin, util.isRider, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //유저에 대한 리뷰 확인
-        const tokenData = req.decoded;
+        // const tokenData = req.decoded;
         const reqBody = req.query;
         try {
             //작성
@@ -356,7 +356,7 @@ exports.order.get('/review/user', util.isLoggedin, util.isRider, function (req, 
         }
     });
 });
-exports.order.post('/review/rider', util.isLoggedin, function (req, res, next) {
+exports.order.post('/review/rider', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //라이더에 대한 리뷰 작성
         const tokenData = req.decoded;
@@ -394,10 +394,10 @@ exports.order.post('/review/rider', util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.order.get('/review/rider', util.isLoggedin, function (req, res, next) {
+exports.order.get('/review/rider', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //라이더에 대한 리뷰 확인
-        const tokenData = req.decoded;
+        // const tokenData = req.decoded;
         const reqBody = req.query;
         try {
             //작성
@@ -433,11 +433,11 @@ exports.order.get('/review/rider', util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.order.get('/orders', util.isLoggedin, util.isRider, function (req, res, next) {
+exports.order.get('/orders', util.isLoggedin, util.isRider, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //배달원이 찾을 배달거리 리스트 반환
         const tokenData = req.decoded;
-        const reqBody = req.body;
+        // const reqBody = req.body;
         try {
             //작성
             const rider = yield models_1.userRep.findOne({
@@ -465,10 +465,10 @@ exports.order.get('/orders', util.isLoggedin, util.isRider, function (req, res, 
 ////                              개발용 API입니다. 나중에는 지워야 합니다.                              ////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-exports.order.get('/setDelivered', util.isLoggedin, util.isRider, function (req, res, next) {
+exports.order.get('/setDelivered', util.isLoggedin, util.isRider, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //배달원이 찾을 배달거리 리스트 반환
-        const tokenData = req.decoded;
+        // const tokenData = req.decoded;
         const reqBody = req.query;
         try {
             //작성
@@ -490,7 +490,7 @@ exports.order.get('/setDelivered', util.isLoggedin, util.isRider, function (req,
         }
     });
 });
-exports.order.post('/apply', util.isLoggedin, util.isRider, function (req, res, next) {
+exports.order.post('/apply', util.isLoggedin, util.isRider, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         // 배달원이 해당 주문에 배달원 신청
         const tokenData = req.decoded;

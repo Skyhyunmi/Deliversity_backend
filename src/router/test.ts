@@ -1,4 +1,4 @@
-import {  NextFunction, Request, Response, Router } from "express";
+import { Request, Response, Router } from "express";
 import * as util from "../config/util";
 import * as proj4 from "proj4";
 import axios from "axios";
@@ -11,13 +11,13 @@ export const test = Router();
 test.get("/hello", (req: Request, res: Response) => {
   res.json({ string: "hello pm2! nice to meet you!" });
 });
-const epsg_5181=proj4.Proj("+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 \
-                            +y_0=500000 +ellps=GRS80 +units=m +no_defs");
-const grs80 = proj4.Proj("+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 \
-                          +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs"); //도로명주소 제공 좌표 5179
-const wgs84 = proj4.Proj("EPSG:4326"); //경위도
+// const epsg_5181=proj4.Proj("+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 \
+//                             +y_0=500000 +ellps=GRS80 +units=m +no_defs");
+// const grs80 = proj4.Proj("+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 \
+//                           +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs"); //도로명주소 제공 좌표 5179
+// const wgs84 = proj4.Proj("EPSG:4326"); //경위도
 
-test.post('/juso',async function (req: any, res: Response, next: NextFunction) {
+test.post('/juso',async function ( req: Request, res: Response ) {
   //주문 등록
   const reqBody = req.body;
   try {

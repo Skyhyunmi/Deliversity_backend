@@ -63,7 +63,6 @@ function makeSignature(urlsub, timestamp) {
 }
 exports.auth = express_1.Router();
 exports.auth.post("/signup", function (req, res, next) {
-    req.query = null;
     passport_1.default.authenticate("signup", function (err, _user, info) {
         if (err) {
             return res.status(403).json(util.successFalse(err, "", null));
@@ -90,7 +89,6 @@ exports.auth.post("/signup", function (req, res, next) {
     })(req, res, next);
 });
 exports.auth.post("/login", function (req, res, next) {
-    req.query = null;
     passport_1.default.authenticate("login", { session: false }, function (err, user, info) {
         if (info === {})
             return res.status(403).json(util.successFalse(null, info.message, null));
@@ -134,7 +132,7 @@ exports.auth.get('/refresh', util.isLoggedin, function (req, res) {
         return res.json(util.successTrue("", { token: authToken, grade: user.grade }));
     });
 });
-exports.auth.post("/sms", /*util.isLoggedin,*/ function (req, res, next) {
+exports.auth.post("/sms", /*util.isLoggedin,*/ function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const body = req.body;
         const phone = body.phone;
@@ -184,7 +182,7 @@ exports.auth.post("/sms", /*util.isLoggedin,*/ function (req, res, next) {
         }
     });
 });
-exports.auth.post("/sms/verification", function (req, res, next) {
+exports.auth.post("/sms/verification", function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const body = req.body;
         const verify = body.verify;
@@ -214,7 +212,7 @@ exports.auth.post("/sms/verification", function (req, res, next) {
         }
     });
 });
-exports.auth.post("/email", /*util.isLoggedin,*/ function (req, res, next) {
+exports.auth.post("/email", /*util.isLoggedin,*/ function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const body = req.body;
         const email = body.email;
@@ -243,7 +241,7 @@ exports.auth.post("/email", /*util.isLoggedin,*/ function (req, res, next) {
         }
     });
 });
-exports.auth.get('/email/verification', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.auth.get('/email/verification', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const email_number = req.query.email_number;
     try {
         const veri = exports.myCache.take(email_number);

@@ -1,4 +1,4 @@
-import { NextFunction, Response, Router } from "express";
+import { Request, Response, Router } from "express";
 import * as util from "../config/util";
 import { qnaRep, reportRep, userRep } from "../models/index";
 
@@ -7,7 +7,7 @@ dotenv.config();
 
 export const admin = Router();
 
-admin.get('/uploads', util.isLoggedin, util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
+admin.get('/uploads', util.isLoggedin, util.isAdmin, async function ( req: Request, res: Response ) {
   //민증 확인 리스트 반환
   try {
     await userRep.findAll({
@@ -22,7 +22,7 @@ admin.get('/uploads', util.isLoggedin, util.isAdmin, async function (req: any, r
   }
 });
 
-admin.get('/upload/:id', util.isLoggedin, util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
+admin.get('/upload/:id', util.isLoggedin, util.isAdmin, async function ( req: Request, res: Response ) {
   //상세내용 반환
   const id = req.params.id;
   try {
@@ -50,7 +50,7 @@ admin.get('/upload/:id', util.isLoggedin, util.isAdmin, async function (req: any
   }
 });
 
-admin.put('/upload', util.isLoggedin, util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
+admin.put('/upload', util.isLoggedin, util.isAdmin, async function ( req: Request, res: Response ) {
   //민증인증 처리
   const reqBody = req.body;
   const id = reqBody.id;
@@ -85,7 +85,7 @@ admin.put('/upload', util.isLoggedin, util.isAdmin, async function (req: any, re
 });
 
 
-admin.get('/reports', util.isLoggedin, util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
+admin.get('/reports', util.isLoggedin, util.isAdmin, async function ( req: Request, res: Response ) {
   //신고 리스트 반환
   try {
     await reportRep.findAll({
@@ -100,7 +100,7 @@ admin.get('/reports', util.isLoggedin, util.isAdmin, async function (req: any, r
   }
 });
 
-admin.get('/report/:id', util.isLoggedin, util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
+admin.get('/report/:id', util.isLoggedin, util.isAdmin, async function ( req: Request, res: Response ) {
   //신고 상세내용보기
   const reportId = req.params.id;
   try {
@@ -122,7 +122,7 @@ admin.get('/report/:id', util.isLoggedin, util.isAdmin, async function (req: any
   }
 });
 
-admin.put('/report', util.isLoggedin, util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
+admin.put('/report', util.isLoggedin, util.isAdmin, async function ( req: Request, res: Response ) {
   //신고 답변 작성
   const reqBody = req.body;
   const reportId = reqBody.reportId;
@@ -151,7 +151,7 @@ admin.put('/report', util.isLoggedin, util.isAdmin, async function (req: any, re
 });
 
 
-admin.get('/qnas', util.isLoggedin, util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
+admin.get('/qnas', util.isLoggedin, util.isAdmin, async function ( req: Request, res: Response ) {
   //문의 리스트 반환
   try {
     await qnaRep.findAll({
@@ -166,7 +166,7 @@ admin.get('/qnas', util.isLoggedin, util.isAdmin, async function (req: any, res:
   }
 });
 
-admin.get('/qna/:id', util.isLoggedin, util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
+admin.get('/qna/:id', util.isLoggedin, util.isAdmin, async function ( req: Request, res: Response ) {
   //문의 상세내용보기
   const qnaId = req.params.id;
   try {
@@ -188,7 +188,7 @@ admin.get('/qna/:id', util.isLoggedin, util.isAdmin, async function (req: any, r
   }
 });
 
-admin.put('/qna', util.isLoggedin, util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
+admin.put('/qna', util.isLoggedin, util.isAdmin, async function ( req: Request, res: Response ) {
   //문의 답변 작성
   const reqBody = req.body;
   const qnaId = reqBody.qnaId;

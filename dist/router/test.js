@@ -34,7 +34,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.test = void 0;
 const express_1 = require("express");
 const util = __importStar(require("../config/util"));
-const proj4 = __importStar(require("proj4"));
 const axios_1 = __importDefault(require("axios"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
@@ -42,12 +41,12 @@ exports.test = express_1.Router();
 exports.test.get("/hello", (req, res) => {
     res.json({ string: "hello pm2! nice to meet you!" });
 });
-const epsg_5181 = proj4.Proj("+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 \
-                            +y_0=500000 +ellps=GRS80 +units=m +no_defs");
-const grs80 = proj4.Proj("+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 \
-                          +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs"); //도로명주소 제공 좌표 5179
-const wgs84 = proj4.Proj("EPSG:4326"); //경위도
-exports.test.post('/juso', function (req, res, next) {
+// const epsg_5181=proj4.Proj("+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 \
+//                             +y_0=500000 +ellps=GRS80 +units=m +no_defs");
+// const grs80 = proj4.Proj("+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 \
+//                           +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs"); //도로명주소 제공 좌표 5179
+// const wgs84 = proj4.Proj("EPSG:4326"); //경위도
+exports.test.post('/juso', function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //주문 등록
         const reqBody = req.body;

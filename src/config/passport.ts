@@ -3,7 +3,6 @@ import passportLocal from "passport-local";
 import passportJwt from "passport-jwt";
 import {userRep} from "../models/index";
 import * as crypto from "crypto";
-import axios from "axios";
 import {myCache} from "../router/auth";
 
 import dotenv from "dotenv";

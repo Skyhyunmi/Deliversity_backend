@@ -7,6 +7,7 @@ module.exports = {
       // "plugin:prettier/recommended",
     ],
     "rules": {
+      "@typescript-eslint/explicit-module-boundary-types":"off",
       "indent": [
         "error",
             2

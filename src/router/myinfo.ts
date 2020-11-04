@@ -1,4 +1,4 @@
-import { NextFunction, Response, Router } from "express";
+import { Request, Response, Router } from "express";
 import * as util from "../config/util";
 import { userRep, addressRep, qnaRep, reportRep, orderRep } from "../models/index";
 import * as crypto from "crypto";
@@ -6,12 +6,12 @@ import dotenv from "dotenv";
 import axios from "axios";
 dotenv.config();
 
-const KAKAO = "+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=500000 +ellps=GRS80 +units=m +no_defs"; //5181
-const GRS80 = "+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs"; //도로명주소 제공 좌표 5179
-const WGS84 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +units=degrees"; //경위도
+// const KAKAO = "+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=500000 +ellps=GRS80 +units=m +no_defs"; //5181
+// const GRS80 = "+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs"; //도로명주소 제공 좌표 5179
+// const WGS84 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +units=degrees"; //경위도
 
 export const myinfo = Router();
-myinfo.get('/', util.isLoggedin,util.isAdmin, async function (req: any, res: Response, next: NextFunction) {
+myinfo.get('/', util.isLoggedin,util.isAdmin, async function ( req: Request, res: Response ) {
 //본인 정보 반환
   const tokenData = req.decoded;
   try{
@@ -41,7 +41,7 @@ myinfo.get('/', util.isLoggedin,util.isAdmin, async function (req: any, res: Res
   }
 });
 
-myinfo.put('/', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+myinfo.put('/', util.isLoggedin, async function ( req: Request, res: Response ) {
 //본인 정보 수정
   const tokenData = req.decoded;
   const reqBody = req.body;
@@ -92,7 +92,7 @@ myinfo.put('/', util.isLoggedin, async function (req: any, res: Response, next: 
   }
 });
 
-myinfo.get('/address/list', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+myinfo.get('/address/list', util.isLoggedin, async function ( req: Request, res: Response ) {
   //자기 주소 리스트 반환
   const tokenData = req.decoded;
   try {
@@ -108,7 +108,7 @@ myinfo.get('/address/list', util.isLoggedin, async function (req: any, res: Resp
   }
 });
 
-myinfo.put('/address/set', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+myinfo.put('/address/set', util.isLoggedin, async function ( req: Request, res: Response ) {
   //기본 주소 설정
   const tokenData = req.decoded;
   const reqBody = req.body;
@@ -136,7 +136,7 @@ myinfo.put('/address/set', util.isLoggedin, async function (req: any, res: Respo
   }
 });
 
-myinfo.get('/address', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+myinfo.get('/address', util.isLoggedin, async function ( req: Request, res: Response ) {
   //기본 주소 반환
   const tokenData = req.decoded;
   try {
@@ -159,7 +159,7 @@ myinfo.get('/address', util.isLoggedin, async function (req: any, res: Response,
   }
 });
 
-myinfo.post('/address', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+myinfo.post('/address', util.isLoggedin, async function ( req: Request, res: Response ) {
   //주소 추가
   const tokenData = req.decoded;
   const reqBody = req.body;
@@ -191,7 +191,7 @@ myinfo.post('/address', util.isLoggedin, async function (req: any, res: Response
   }
 });
 
-myinfo.put('/address', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+myinfo.put('/address', util.isLoggedin, async function ( req: Request, res: Response ) {
   //주소 변경
   const tokenData = req.decoded;
   const reqBody = req.body;
@@ -213,7 +213,7 @@ myinfo.put('/address', util.isLoggedin, async function (req: any, res: Response,
   }
 });
 
-myinfo.delete('/address', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+myinfo.delete('/address', util.isLoggedin, async function ( req: Request, res: Response ) {
   //주소 삭제
   const tokenData = req.decoded;
   const reqBody = req.body;
@@ -232,7 +232,7 @@ myinfo.delete('/address', util.isLoggedin, async function (req: any, res: Respon
   }
 });
 
-myinfo.post('/report', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+myinfo.post('/report', util.isLoggedin, async function ( req: Request, res: Response ) {
   //신고 접수(req: reportKind, orderId, content, chat포함여부)
   const tokenData = req.decoded;
   const reqBody = req.body;
@@ -259,7 +259,7 @@ myinfo.post('/report', util.isLoggedin, async function (req: any, res: Response,
   }
 });
 
-myinfo.post('/qna', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+myinfo.post('/qna', util.isLoggedin, async function ( req: Request, res: Response ) {
   //질문 접수 (id, qnakind, userId, content, answer)
   const tokenData = req.decoded;
   const reqBody = req.body;
@@ -275,7 +275,7 @@ myinfo.post('/qna', util.isLoggedin, async function (req: any, res: Response, ne
   }
 });
 
-myinfo.post('/upload',util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+myinfo.post('/upload',util.isLoggedin, async function ( req: Request, res: Response ) {
   const tokenData = req.decoded;
   const reqBody = req.body;
   try {
@@ -293,7 +293,7 @@ myinfo.post('/upload',util.isLoggedin, async function (req: any, res: Response, 
   }
 });
 
-myinfo.post('/toRider',util.isLoggedin, util.isUser, async function (req: any, res: Response, next: NextFunction) {
+myinfo.post('/toRider',util.isLoggedin, util.isUser, async function ( req: Request, res: Response ) {
   const tokenData = req.decoded;
   try {
     const user = await userRep.findOne({where:{userId:tokenData.userId}});
@@ -305,7 +305,7 @@ myinfo.post('/toRider',util.isLoggedin, util.isUser, async function (req: any, r
   }
 });
 
-myinfo.post('/toUser',util.isLoggedin, util.isRider, async function (req: any, res: Response, next: NextFunction) {
+myinfo.post('/toUser',util.isLoggedin, util.isRider, async function ( req: Request, res: Response ) {
   const tokenData = req.decoded;
   try {
     const user = await userRep.findOne({where:{userId:tokenData.userId}});
@@ -322,14 +322,14 @@ myinfo.post('/toUser',util.isLoggedin, util.isRider, async function (req: any, r
 ////                              개발용 API입니다. 나중에는 지워야 합니다.                              ////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-myinfo.get('/grade',util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+myinfo.get('/grade',util.isLoggedin, async function ( req: Request, res: Response ) {
   const tokenData = req.decoded;
   const reqQuery = req.query;
   try {
     const user = await userRep.findOne({where:{userId:tokenData.userId}});
     if (!user) return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
     if (reqQuery.grade==null||reqQuery.grade=="") return res.status(403).json(util.successFalse(null, "파라미터가 부족합니다.", null));
-    if(reqQuery.grade >= 4) return res.json(util.successTrue(`4이상으로 올라 갈 수 없습니다.`, null));
+    if(parseInt(reqQuery.grade as string) >= 4) return res.json(util.successTrue(`4이상으로 올라 갈 수 없습니다.`, null));
     user.update({grade:reqQuery.grade});
     return res.json(util.successTrue("", {grade:user.grade}));
   } catch (err) {

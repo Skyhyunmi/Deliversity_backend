@@ -1,4 +1,4 @@
-import { NextFunction, Response, Router } from "express";
+import { NextFunction, Request, Response, Router } from "express";
 import * as util from "../config/util";
 import jwt from "jsonwebtoken";
 import passport from "passport";
@@ -9,7 +9,6 @@ import urlencode from "urlencode";
 import { transporter } from "../config/mail";
 import Cache from "node-cache";
 import dotenv from "dotenv";
-import Email_Verify from "../models/email-verification";
 dotenv.config();
 export const myCache = new Cache();
 
@@ -31,8 +30,7 @@ function makeSignature(urlsub: string, timestamp: string) {
 }
 
 export const auth = Router();
-auth.post("/signup", function (req: any, res: Response, next: NextFunction) {
-  req.query = null;
+auth.post("/signup", function (req: Request, res: Response, next: NextFunction) {
   passport.authenticate("signup", function (
     err: any,
     _user: any,
@@ -63,8 +61,7 @@ auth.post("/signup", function (req: any, res: Response, next: NextFunction) {
   })(req, res, next);
 });
 
-auth.post("/login", function (req: any, res: Response, next: NextFunction) {
-  req.query = null;
+auth.post("/login", function (req: Request, res: Response, next: NextFunction) {
   passport.authenticate("login", { session: false }, function (
     err: any,
     user: any,
@@ -94,7 +91,7 @@ auth.post("/login", function (req: any, res: Response, next: NextFunction) {
   })(req, res, next);
 });
 
-auth.get('/refresh', util.isLoggedin, function (req: any, res) {
+auth.get('/refresh', util.isLoggedin, function (req: Request, res:Response) {
   userRep.findOne({ where: { userId: req.decoded.userId } }).then(function (user) {
     if (!user) {
       return res.status(403).json(util.successFalse(null, "Can't refresh the token", { user: user }));
@@ -113,7 +110,7 @@ auth.get('/refresh', util.isLoggedin, function (req: any, res) {
   });
 });
 
-auth.post("/sms",/*util.isLoggedin,*/async function (req: any, res: Response, next: NextFunction) {
+auth.post("/sms",/*util.isLoggedin,*/async function (req: Request, res: Response) {
   const body = req.body;
   const phone = body.phone;
   const user = await userRep.findOne({ where: { phone: phone } });
@@ -150,7 +147,6 @@ auth.post("/sms",/*util.isLoggedin,*/async function (req: any, res: Response, ne
       data: data
     });
     const tokenData = getToken.data;
-
     myCache.set(phone,{number:randomNumber, createdAt:Date.now()});
 
     if (tokenData.statusCode == "202")
@@ -163,7 +159,7 @@ auth.post("/sms",/*util.isLoggedin,*/async function (req: any, res: Response, ne
   }
 });
 
-auth.post("/sms/verification", async function (req: any, res: Response, next: NextFunction) {
+auth.post("/sms/verification", async function (req: Request, res: Response) {
   const body = req.body;
   const verify = body.verify;
   const phone = body.phone;
@@ -191,7 +187,7 @@ auth.post("/sms/verification", async function (req: any, res: Response, next: Ne
   }
 });
 
-auth.post("/email",/*util.isLoggedin,*/async function (req: any, res: Response, next: NextFunction) {
+auth.post("/email",/*util.isLoggedin,*/async function (req: Request, res: Response) {
   const body = req.body;
   const email = body.email;
   const key_one = crypto.randomBytes(256).toString('hex').substr(100, 5);
@@ -220,7 +216,7 @@ auth.post("/email",/*util.isLoggedin,*/async function (req: any, res: Response, 
 }
 );
 
-auth.get('/email/verification', async (req, res, next: NextFunction) => {
+auth.get('/email/verification', async (req:Request, res) => {
   const email_number = req.query.email_number as string;
   try{
     const veri = myCache.take(email_number) as any;
