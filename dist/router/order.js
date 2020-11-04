@@ -43,6 +43,9 @@ const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 exports.order = express_1.Router();
 const myCache = new node_cache_1.default({ stdTTL: 0, checkperiod: 0 });
+class Rider {
+}
+;
 exports.order.post('/', util.isLoggedin, function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         //주문 등록
@@ -191,7 +194,6 @@ exports.order.get('/riders', util.isLoggedin, function (req, res, next) {
             if (riderlist == undefined) {
                 return res.status(403).json(util.successFalse(null, "배달을 희망하는 배달원이 없습니다.", null));
             }
-            // myCache.set(req.query.orderId, riderlist);
             return res.json(util.successTrue("", riderlist));
         }
         catch (err) {
@@ -213,17 +215,10 @@ exports.order.post('/rider', util.isLoggedin, function (req, res, next) {
             });
             if (!order)
                 return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
-            const riderlist = myCache.take(req.query.orderId);
+            const riderlist = myCache.get(req.query.orderId);
             if (riderlist == undefined)
                 return res.status(403).json(util.successFalse(null, "배달을 희망하는 배달원이 없습니다.", null));
-            function findrider(riderlist) {
-                console.log(riderlist.riderId);
-                console.log(reqBody.riderId);
-                return parseInt(riderlist.riderId) == riderId;
-            }
-            console.log(riderlist);
-            const rider = riderlist.find(findrider);
-            console.log(rider);
+            const rider = riderlist.filter(rider => rider.riderId == riderId)[0];
             if (!rider)
                 return res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
             order.update({
@@ -231,6 +226,7 @@ exports.order.post('/rider', util.isLoggedin, function (req, res, next) {
                 extraFee: rider.extraFee,
                 orderStatus: 1
             });
+            myCache.del(req.query.orderId);
             return res.json(util.successTrue("", order));
         }
         catch (err) {
@@ -344,7 +340,6 @@ exports.order.get('/review/user', util.isLoggedin, util.isRider, function (req, 
                     fromId: { [db.Op.ne]: _user === null || _user === void 0 ? void 0 : _user.id }
                 }
             });
-            console.log(reviews);
             const rating = reviews.reduce((sum, cur) => sum + cur.rating, 0);
             return res.json(util.successTrue("", {
                 rating: rating / reviews.length,
@@ -511,14 +506,11 @@ exports.order.post('/apply', util.isLoggedin, util.isRider, function (req, res, 
         if (!reqBody.extraFee)
             extraFee = 0;
         let riderlist = myCache.get(req.query.orderId);
-        function existRider(rider) {
-            return rider.riderId === riderId;
-        }
         if (riderlist == undefined) {
             myCache.set(req.query.orderId, [{ riderId: riderId, extraFee: extraFee }]);
         }
         else {
-            const rider = riderlist.find(existRider);
+            const rider = riderlist.filter(rider => rider.riderId == riderId)[0];
             if (rider)
                 return res.status(403).json(util.successFalse(null, "이미 배달 신청한 주문입니다.", null));
             riderlist = myCache.take(req.query.orderId);
@@ -526,5 +518,49 @@ exports.order.post('/apply', util.isLoggedin, util.isRider, function (req, res, 
             myCache.set(req.query.orderId, riderlist);
         }
         return res.json(util.successTrue("", riderlist));
+    });
+});
+exports.order.get('/orderList', util.isLoggedin, util.isRider, function (req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        //현재 주문 중인 주문 내용 받아오기 (소비자)
+        const tokenData = req.decoded;
+        const reqBody = req.query;
+        try {
+            //작성
+            const orderList = yield models_1.orderRep.findAll({
+                where: {
+                    userId: tokenData.id
+                },
+                order: [['orderStatus', 'ASC'], ['id', 'ASC']]
+            });
+            if (!orderList)
+                return res.json(util.successFalse(null, "주문 내역이 없습니다", null));
+            return res.json(util.successTrue("", orderList));
+        }
+        catch (err) {
+            return res.status(403).json(util.successFalse(err, "", null));
+        }
+    });
+});
+exports.order.get('/deliverList', util.isLoggedin, util.isRider, function (req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        //현재 배달 중인 배달 내용 받아오기 (배달원)
+        const tokenData = req.decoded;
+        const reqBody = req.query;
+        try {
+            //작성
+            const deliverList = yield models_1.orderRep.findAll({
+                where: {
+                    riderId: tokenData.id
+                },
+                order: [['orderStatus', 'ASC'], ['id', 'ASC']]
+            });
+            if (!deliverList)
+                return res.json(util.successFalse(null, "배달 내역이 없습니다", null));
+            return res.json(util.successTrue("", deliverList));
+        }
+        catch (err) {
+            return res.status(403).json(util.successFalse(err, "", null));
+        }
     });
 });
