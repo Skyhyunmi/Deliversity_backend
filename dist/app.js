@@ -49,8 +49,19 @@ const models_1 = require("./models");
 const fs = __importStar(require("fs"));
 const path_1 = __importDefault(require("path"));
 const socket_io_1 = __importDefault(require("socket.io"));
+const node_cache_1 = __importDefault(require("node-cache"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
+class userData {
+    constructor(data) {
+        this.userName = data.userName;
+        this.roomId = data.roomId;
+        this.chat = data.chat;
+        this.gif = data.gif;
+        this.createdAt = Date.now();
+    }
+}
+const myCache = new node_cache_1.default();
 process.env.NODE_ENV = (process.env.NODE_ENV && (process.env.NODE_ENV)
     .trim().toLowerCase() == 'production') ? 'production' : 'development';
 // authenticate -> Open connection
@@ -121,18 +132,46 @@ const server = app.listen(process.env.WEB_PORT, () => {
     console.log(process.env.NODE_ENV);
     console.log("Server Started");
 });
-const io = socket_io_1.default.listen(server);
+setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
+    const Data = yield myCache.take('chat');
+    if (Data) {
+        yield models_1.chatRep.bulkCreate(Data);
+    }
+}), 10000);
+const io = socket_io_1.default.listen(server, { transports: ['websocket'] });
 io.of('/api/v1/chat/io').on('connection', (socket) => __awaiter(void 0, void 0, void 0, function* () {
+    socket.on('disconnect', (data) => __awaiter(void 0, void 0, void 0, function* () {
+    }));
     socket.on('chat', (data) => __awaiter(void 0, void 0, void 0, function* () {
-        let room = data.roomId;
-        console.log(`Room: ${room} Message from ${data.userName}: ${data.msg}`);
+        const pre = Date.now();
+        let user = myCache.get(data.userId);
+        if (user == undefined) {
+            user = yield models_1.userRep.findOne({
+                where: { id: data.userId }
+            });
+            if (!user)
+                return;
+            const _user = {
+                id: user.id,
+                nickName: user.nickName
+            };
+            myCache.set(data.userId, _user);
+            user = _user;
+        }
+        const post = Date.now();
+        console.log((post - pre));
+        const room = data.password;
+        console.log(`Message from ${user.nickName}: ${data.msg}`);
         socket.join(room);
-        socket.to(room).emit('rChat', data.msg); // 백에서 클라이언트로 rChat으로 emit
-        yield models_1.chatRep.create({
-            userName: data.userName,
-            roomId: data.roomId,
-            chat: data.msg,
-            gif: data.photo
-        });
+        const msg = `${user.nickName}: ${data.msg}`;
+        socket.to(room).emit('rChat', msg); // 백에서 클라이언트로 rChat으로 emit
+        var list = myCache.get('chat');
+        if (list == undefined)
+            myCache.set('chat', [new userData(data)]);
+        else {
+            list = myCache.take('chat');
+            list.push(new userData(data));
+            myCache.set('chat', list);
+        }
     }));
 }));

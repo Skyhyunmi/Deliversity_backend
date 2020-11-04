@@ -41,7 +41,7 @@
   <script>
     $(function() {
       // 지정 namespace로 접속한다
-      var chat = io('http://192.168.219.121:3000/api/v1/chat/io'),
+      var chat = io('http://0b7e3b2d70f3.ngrok.io/api/v1/chat/io',{transports:['websocket']}),
           news = io('/news');
 
       $("form").submit(function(e) {
@@ -49,12 +49,12 @@
 
         // 서버로 자신의 정보를 전송한다.
         chat.emit("chat", {
-          userName: $("#name").val(),
-          roomId: $("#room").val(),
+          userId: $("#name").val(),
+          password: $("#room").val(),
           msg: $("#msg").val()
         });
+        $("#chat").append($('<li>').text($("#name").val()+": "+$("#msg").val()));
       });
-
       // 서버로부터의 메시지가 수신되면
       chat.on("rChat", function(data) {
         $("#chat").append($('<li>').text(data));

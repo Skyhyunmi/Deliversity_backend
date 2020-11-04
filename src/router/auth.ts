@@ -80,6 +80,7 @@ auth.post("/login", function (req: Request, res: Response, next: NextFunction) {
         id: user.id,
         userId: user.userId,
         name: user.name,
+        nickName: user.nickName,
         grade: user.grade,
         loggedAt: new Date(),
       };
@@ -100,6 +101,7 @@ auth.get('/refresh', util.isLoggedin, function (req: Request, res:Response) {
       id: user.id,
       userId: user.userId,
       name: user.name,
+      nickName: user.nickName,
       grade: user.grade,
       loggedAt: new Date(),
     };

@@ -27,7 +27,7 @@ module.exports = (server:any, app:any, sessionMiddleware:any) => {
 
     // 소켓 > 네입스페이스 > 룸(방)으로 접속하기 위해 socket.join 과 socket.leave 메소드를 사용한다.
     socket.join(roomId);
-
+    
     // socket.to(roomId).emit('join', {
     //  user: 'system',
     //  chat: `${req.session}님이 입장하셨습니다.`
