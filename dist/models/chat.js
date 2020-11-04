@@ -19,7 +19,7 @@ __decorate([
 ], Chat.prototype, "roomId", void 0);
 __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
-], Chat.prototype, "userId", void 0);
+], Chat.prototype, "userName", void 0);
 __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.TEXT)
 ], Chat.prototype, "chat", void 0);

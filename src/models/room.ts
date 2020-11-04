@@ -25,7 +25,7 @@ export default class Room extends Model<Room> {
           order:[[ db.models.chat, 'createdAt', 'DESC']]
         }],
         // order: [[ db.models.chat, 'createdAt', 'DESC']]
-      })
-    })
+      });
+    });
   }
 }
