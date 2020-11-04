@@ -12,13 +12,31 @@ import { myinfo } from "./router/myinfo";
 import { order } from "./router/order";
 import {passportConfig} from './config/passport';
 import * as util from "./config/util";
-import { chatRep, db } from "./models";
+import { chatRep, db, userRep } from "./models";
 import * as fs from "fs";
 import path from "path";
 import socketio from "socket.io";
-
+import nCache from "node-cache";
 import dotenv from "dotenv";
 dotenv.config();
+
+class userData {
+  userName!: string;
+  roomId!: number;
+  chat?: string;
+  gif?: string;
+  createdAt!: number;
+
+  constructor(data:any){
+    this.userName=data.userName;
+    this.roomId=data.roomId;
+    this.chat=data.chat;
+    this.gif=data.gif;
+    this.createdAt=Date.now();
+  }
+}
+
+const myCache = new nCache();
 
 process.env.NODE_ENV = ( process.env.NODE_ENV && ( process.env.NODE_ENV )
   .trim().toLowerCase() == 'production' ) ? 'production' : 'development';
@@ -110,21 +128,50 @@ const server = app.listen(process.env.WEB_PORT, () => {
   console.log(process.env.NODE_ENV);
   console.log("Server Started");
 })
-const io = socketio.listen(server);
+
+setInterval(async ()=>{
+  const Data = await myCache.take('chat') as userData[];
+  if(Data){
+    await chatRep.bulkCreate(Data)
+  }
+},10000);
+
+const io = socketio.listen(server,{transports:['websocket']});
 
 io.of('/api/v1/chat/io').on('connection',async (socket)=>{
-  
-  socket.on('chat',async (data)=>{ // 클라이언트에서 백으로 chat으로 emit
-    let room = data.roomId;
-    console.log(`Room: ${room} Message from ${data.userName}: ${data.msg}`);
-    socket.join(room);
-    socket.to(room).emit('rChat',data.msg); // 백에서 클라이언트로 rChat으로 emit
-    await chatRep.create({
-      userName: data.userName,
-      roomId: data.roomId,
-      chat:data.msg,
-      gif:data.photo
-    })
+  socket.on('disconnect',async (data)=>{ // 클라이언트에서 백으로 chat으로 emit
 
+  });
+  socket.on('chat',async (data)=>{ // 클라이언트에서 백으로 chat으로 emit
+    const pre = Date.now();
+    let user = myCache.get(data.userId) as any;
+    if(user == undefined) {
+      user = await userRep.findOne({
+        where:{id:data.userId}
+      })
+      if(!user) return;
+      const _user = {
+        id:user.id,
+        nickName:user.nickName
+      }
+      myCache.set(data.userId,_user);
+      user = _user;
+    }
+    const post = Date.now();
+    console.log((post-pre))
+    const room = data.password;
+    console.log(`Message from ${user.nickName}: ${data.msg}`);
+    socket.join(room);
+    const msg = `${user.nickName}: ${data.msg}`;
+    socket.to(room).emit('rChat',msg); // 백에서 클라이언트로 rChat으로 emit
+
+    var list = myCache.get('chat') as userData[];
+    if(list == undefined)
+      myCache.set('chat',[new userData(data)])
+    else{
+      list=myCache.take('chat') as userData[];
+      list.push(new userData(data))
+      myCache.set('chat',list)
+    }
   })
 })

@@ -37,6 +37,7 @@ const express_1 = require("express");
 const util = __importStar(require("../config/util"));
 const node_cache_1 = __importDefault(require("node-cache"));
 const db = __importStar(require("sequelize"));
+const crypto = __importStar(require("crypto"));
 const axios_1 = __importDefault(require("axios"));
 const models_1 = require("../models");
 const dotenv_1 = __importDefault(require("dotenv"));
@@ -204,7 +205,7 @@ exports.order.get('/riders', util.isLoggedin, function (req, res) {
 exports.order.post('/rider', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //배달원 선택
-        // const tokenData = req.decoded;
+        const tokenData = req.decoded;
         const reqBody = req.body;
         const riderId = parseInt(reqBody.riderId);
         try {
@@ -221,10 +222,18 @@ exports.order.post('/rider', util.isLoggedin, function (req, res) {
             const rider = riderlist.filter(rider => rider.riderId == riderId)[0];
             if (!rider)
                 return res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
+            const room = yield models_1.roomRep.create({
+                orderId: order.id,
+                owner: tokenData.nickName,
+                ownerId: tokenData.id,
+                riderId: rider.riderId,
+                password: crypto.randomBytes(256).toString('hex').substr(100, 15)
+            });
             order.update({
                 riderId: rider.riderId,
                 extraFee: rider.extraFee,
-                orderStatus: 1
+                orderStatus: 1,
+                chatId: room.id
             });
             myCache.del(req.query.orderId);
             return res.json(util.successTrue("", order));
@@ -238,10 +247,35 @@ exports.order.get('/chat', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //주문에 대한 채팅을 위한 주소 반환
         //필요없을 수도... 주문 등록 할때 반환해도 될 수도..
-        // const tokenData = req.decoded;
-        // const reqBody = req.body;
+        const tokenData = req.decoded;
+        // const reqBody = req.query;
         try {
             //작성
+            const order = yield models_1.orderRep.findOne({
+                where: {
+                    id: req.query.orderId,
+                }
+            });
+            if (!order)
+                return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
+            let room;
+            if (parseInt(tokenData.grade) <= 2)
+                room = yield models_1.roomRep.findOne({
+                    where: {
+                        orderId: order.id,
+                        userId: tokenData.id
+                    }
+                });
+            else if (tokenData.grade == "3")
+                room = yield models_1.roomRep.findOne({
+                    where: {
+                        orderId: order.id,
+                        riderId: order.riderId
+                    }
+                });
+            if (!room)
+                return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
+            return res.json(util.successTrue("", { password: room.password }));
         }
         catch (err) {
             return res.status(403).json(util.successFalse(err, "", null));

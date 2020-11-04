@@ -3,8 +3,9 @@ import { Request, Response, Router } from "express";
 import * as util from "../config/util";
 import NodeCache from "node-cache";
 import * as db from "sequelize";
+import * as crypto from "crypto";
 import axios from "axios";
-import { addressRep, orderRep, reviewRep, userRep } from "../models";
+import { addressRep, orderRep, reviewRep, roomRep, userRep } from "../models";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -162,7 +163,7 @@ order.get('/riders', util.isLoggedin, async function ( req: Request, res: Respon
 
 order.post('/rider', util.isLoggedin, async function ( req: Request, res: Response ) {
   //배달원 선택
-  // const tokenData = req.decoded;
+  const tokenData = req.decoded;
   const reqBody = req.body;
   const riderId = parseInt(reqBody.riderId);
   try {
@@ -176,10 +177,18 @@ order.post('/rider', util.isLoggedin, async function ( req: Request, res: Respon
     if (riderlist == undefined) return res.status(403).json(util.successFalse(null, "배달을 희망하는 배달원이 없습니다.", null));
     const rider = riderlist.filter(rider => rider.riderId == riderId)[0];
     if (!rider) return res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
+    const room = await roomRep.create({
+      orderId:order.id,
+      owner:tokenData.nickName,
+      ownerId: tokenData.id,
+      riderId: rider.riderId,
+      password:crypto.randomBytes(256).toString('hex').substr(100, 15)
+    });
     order.update({
       riderId: rider.riderId,
       extraFee: rider.extraFee,
-      orderStatus: 1
+      orderStatus: 1,
+      chatId: room.id
     });
     myCache.del(req.query.orderId as string);
     return res.json(util.successTrue("", order));
@@ -191,10 +200,33 @@ order.post('/rider', util.isLoggedin, async function ( req: Request, res: Respon
 order.get('/chat', util.isLoggedin, async function ( req: Request, res: Response ) {
   //주문에 대한 채팅을 위한 주소 반환
   //필요없을 수도... 주문 등록 할때 반환해도 될 수도..
-  // const tokenData = req.decoded;
-  // const reqBody = req.body;
+  const tokenData = req.decoded;
+  // const reqBody = req.query;
   try {
     //작성
+    const order = await orderRep.findOne({
+      where: {
+        id: req.query.orderId as string,
+      }
+    });
+    if (!order) return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
+    let room;
+    if(parseInt(tokenData.grade) <=2)
+      room = await roomRep.findOne({
+        where:{
+          orderId: order.id,
+          userId:tokenData.id
+        }
+      });
+    else if(tokenData.grade =="3")
+      room = await roomRep.findOne({
+        where:{
+          orderId: order.id,
+          riderId:order.riderId
+        }
+      });
+    if (!room) return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
+    return res.json(util.successTrue("",{password:room.password}));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }

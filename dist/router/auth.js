@@ -104,6 +104,7 @@ exports.auth.post("/login", function (req, res, next) {
                 id: user.id,
                 userId: user.userId,
                 name: user.name,
+                nickName: user.nickName,
                 grade: user.grade,
                 loggedAt: new Date(),
             };
@@ -123,6 +124,7 @@ exports.auth.get('/refresh', util.isLoggedin, function (req, res) {
             id: user.id,
             userId: user.userId,
             name: user.name,
+            nickName: user.nickName,
             grade: user.grade,
             loggedAt: new Date(),
         };
