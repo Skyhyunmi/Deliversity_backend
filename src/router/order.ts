@@ -440,7 +440,7 @@ order.post('/apply', util.isLoggedin, util.isRider, async function (req: any, re
   return res.json(util.successTrue("", riderlist));
 });
 
-order.get('/orderList', util.isLoggedin, util.isRider, async function (req: any, res: Response, next: NextFunction) {
+order.get('/orderList', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
   //현재 주문 중인 주문 내용 받아오기 (소비자)
   const tokenData = req.decoded;
   const reqBody = req.query;
