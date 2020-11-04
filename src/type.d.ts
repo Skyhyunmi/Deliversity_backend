@@ -3,3 +3,9 @@ declare namespace Express {
         decoded: any;
     }
 }
+
+declare namespace SocketIO {
+    export interface Socket {
+        user:any;
+    }
+}

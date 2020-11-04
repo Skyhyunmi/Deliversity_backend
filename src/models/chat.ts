@@ -1,3 +1,4 @@
+import { db, roomRep } from "./";
 import {
   Table,
   Column,
@@ -10,33 +11,31 @@ import {
   DeletedAt,
 } from "sequelize-typescript";
   
-  @Table({ timestamps: true })
+@Table({ timestamps: true })
 export default class Chat extends Model<Chat> {
-      @PrimaryKey
-      @AutoIncrement
-      @Column(DataType.BIGINT)
-      id!: number;
-      
-      @Column(DataType.BIGINT)
-      roomId!:number;
+  @PrimaryKey
+  @AutoIncrement
+  @Column(DataType.BIGINT)
+  id!: number;
+
+  @Column(DataType.BIGINT)
+  roomId!:number;
+
+  @Column(DataType.STRING)
+  userName!:string;
   
-      @Column(DataType.STRING)
-      userId!:string;
-      
-      @Column(DataType.TEXT)
-      chat!:string;
-      
-      @Column(DataType.BLOB)
-      gif!:string;
-      
-      @CreatedAt
-      createdAt!: Date;
+  @Column(DataType.TEXT)
+  chat!:string;
   
-      @UpdatedAt
-      updatedAt!: Date;
+  @Column(DataType.BLOB)
+  gif!:string;
   
-      @DeletedAt
-      deletedAt!: Date;
+  @CreatedAt
+  createdAt!: Date;
+
+  @UpdatedAt
+  updatedAt!: Date;
+
+  @DeletedAt
+  deletedAt!: Date;
 }
-      
-  

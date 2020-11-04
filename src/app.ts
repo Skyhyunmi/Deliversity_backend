@@ -12,8 +12,10 @@ import { myinfo } from "./router/myinfo";
 import { order } from "./router/order";
 import {passportConfig} from './config/passport';
 import * as util from "./config/util";
-import { db } from "./models";
+import { chatRep, db } from "./models";
 import * as fs from "fs";
+import path from "path";
+import socketio from "socket.io";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -35,6 +37,7 @@ db
   });
 
 const app = express();
+
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -56,6 +59,25 @@ app.get('/favicon.ico',(req:any,res:Response)=>{
   res.status(200).end(favicon);
 });
 
+app.get('/', function(req, res) {
+  console.log(__dirname)
+  res.status(200).sendFile(path.join(__dirname, '../index.html'));
+});
+
+app.get('/socket.io/socket.io.js', (req, res) => {
+  res.sendFile(
+    path.resolve(
+      __dirname + '/../node_modules/socket.io-client/dist/socket.io.js'
+    )
+  );
+});
+app.get('/socket.io/socket.io.js.map', (req, res) => {
+  res.sendFile(
+    path.resolve(
+      __dirname + '/../node_modules/socket.io-client/dist/socket.io.js.map'
+    )
+  );
+});
 //   이걸 켜게되면 모든 api 요청은 x-initial-token에 INITIAL_TOKEN이 들어있어야 작동함.
 //   없을 경우 404에러 반환
 // app.use('/*',(req,res,next)=>{
@@ -84,7 +106,25 @@ app.use(function(err:any, req:any, res:Response, next:NextFunction) {
   res.status(err.status || 500).json(util.successFalse(null,"Error",null));
 });
 
-app.listen(process.env.WEB_PORT, () => {
+const server = app.listen(process.env.WEB_PORT, () => {
   console.log(process.env.NODE_ENV);
   console.log("Server Started");
-});
+})
+const io = socketio.listen(server);
+
+io.of('/api/v1/chat/io').on('connection',async (socket)=>{
+  
+  socket.on('chat',async (data)=>{ // 클라이언트에서 백으로 chat으로 emit
+    let room = data.roomId;
+    console.log(`Room: ${room} Message from ${data.userName}: ${data.msg}`);
+    socket.join(room);
+    socket.to(room).emit('rChat',data.msg); // 백에서 클라이언트로 rChat으로 emit
+    await chatRep.create({
+      userName: data.userName,
+      roomId: data.roomId,
+      chat:data.msg,
+      gif:data.photo
+    })
+
+  })
+})
