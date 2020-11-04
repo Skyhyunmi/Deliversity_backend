@@ -439,3 +439,41 @@ order.post('/apply', util.isLoggedin, util.isRider, async function (req: any, re
   }
   return res.json(util.successTrue("", riderlist));
 });
+
+order.get('/orderList', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+  //현재 주문 중인 주문 내용 받아오기 (소비자)
+  const tokenData = req.decoded;
+  const reqBody = req.query;
+  try {
+    //작성
+    const orderList = await orderRep.findAll({
+      where: {
+        userId: tokenData.id
+      },
+      order: [['orderStatus', 'ASC'], ['id', 'ASC']]
+    });
+    if (!orderList) return res.json(util.successFalse(null, "주문 내역이 없습니다", null));
+    return res.json(util.successTrue("", orderList));
+  } catch (err) {
+    return res.status(403).json(util.successFalse(err, "", null));
+  }
+});
+
+order.get('/deliverList', util.isLoggedin, util.isRider, async function (req: any, res: Response, next: NextFunction) {
+  //현재 배달 중인 배달 내용 받아오기 (배달원)
+  const tokenData = req.decoded;
+  const reqBody = req.query;
+  try {
+    //작성
+    const deliverList = await orderRep.findAll({
+      where: {
+        riderId: tokenData.id
+      },
+      order: [['orderStatus', 'ASC'], ['id', 'ASC']]
+    });
+    if (!deliverList) return res.json(util.successFalse(null, "배달 내역이 없습니다", null));
+    return res.json(util.successTrue("", deliverList));
+  } catch (err) {
+    return res.status(403).json(util.successFalse(err, "", null));
+  }
+});
