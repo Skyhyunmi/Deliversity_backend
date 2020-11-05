@@ -165,7 +165,7 @@ io.of('/api/v1/chat/io').on('connection', (socket) => __awaiter(void 0, void 0, 
         socket.join(room);
         const msg = `${user.nickName}: ${data.msg}`;
         socket.to(room).emit('rChat', msg); // 백에서 클라이언트로 rChat으로 emit
-        var list = myCache.get('chat');
+        let list = myCache.get('chat');
         if (list == undefined)
             myCache.set('chat', [new userData(data)]);
         else {

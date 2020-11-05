@@ -198,7 +198,7 @@ exports.order.get('/riders', util.isLoggedin, function (req, res) {
                 return res.status(403).json(util.successFalse(null, "배달원 모집이 완료된 주문입니다.", null));
             const riderlist = myCache.get(req.query.orderId);
             if (riderlist == undefined) {
-                return res.status(403).json(util.successFalse(null, "배달을 희망하는 배달원이 없습니다.", null));
+                return res.status(403).json(util.successTrue("배달을 희망하는 배달원이 없습니다.", null));
             }
             return res.json(util.successTrue("", riderlist));
         }
@@ -483,6 +483,7 @@ exports.order.get('/orders', util.isLoggedin, util.isRider, function (req, res) 
                 return res.status(403).json(util.successFalse(null, "사용자가 없거나 권한이 없습니다.", null));
             const orders = yield models_1.orderRep.findAll({
                 where: {
+                    userId: { [db.Op.ne]: tokenData.id },
                     orderStatus: 0,
                     gender: [0, rider === null || rider === void 0 ? void 0 : rider.gender]
                 }

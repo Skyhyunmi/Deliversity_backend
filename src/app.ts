@@ -78,7 +78,7 @@ app.get('/favicon.ico',(req:any,res:Response)=>{
 });
 
 app.get('/', function(req, res) {
-  console.log(__dirname)
+  console.log(__dirname);
   res.status(200).sendFile(path.join(__dirname, '../index.html'));
 });
 
@@ -127,12 +127,12 @@ app.use(function(err:any, req:any, res:Response, next:NextFunction) {
 const server = app.listen(process.env.WEB_PORT, () => {
   console.log(process.env.NODE_ENV);
   console.log("Server Started");
-})
+});
 
 setInterval(async ()=>{
   const Data = await myCache.take('chat') as userData[];
   if(Data){
-    await chatRep.bulkCreate(Data)
+    await chatRep.bulkCreate(Data);
   }
 },10000);
 
@@ -148,30 +148,30 @@ io.of('/api/v1/chat/io').on('connection',async (socket)=>{
     if(user == undefined) {
       user = await userRep.findOne({
         where:{id:data.userId}
-      })
+      });
       if(!user) return;
       const _user = {
         id:user.id,
         nickName:user.nickName
-      }
+      };
       myCache.set(data.userId,_user);
       user = _user;
     }
     const post = Date.now();
-    console.log((post-pre))
+    console.log((post-pre));
     const room = data.password;
     console.log(`Message from ${user.nickName}: ${data.msg}`);
     socket.join(room);
     const msg = `${user.nickName}: ${data.msg}`;
     socket.to(room).emit('rChat',msg); // 백에서 클라이언트로 rChat으로 emit
 
-    var list = myCache.get('chat') as userData[];
+    let list = myCache.get('chat') as userData[];
     if(list == undefined)
-      myCache.set('chat',[new userData(data)])
+      myCache.set('chat',[new userData(data)]);
     else{
       list=myCache.take('chat') as userData[];
-      list.push(new userData(data))
-      myCache.set('chat',list)
+      list.push(new userData(data));
+      myCache.set('chat',list);
     }
-  })
-})
+  });
+});
