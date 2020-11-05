@@ -153,10 +153,10 @@ order.get('/', util.isLoggedin, async function ( req: Request, res: Response ) {
 order.get('/riders', util.isLoggedin, async function ( req: Request, res: Response ) {
   //신청 배달원 목록 반환
   try {
-    const order = await orderRep.findOne({ where: { id: req.query.orderId } });
+    const order = await orderRep.findOne({ where: { id: req.query.orderId as string } });
     if (!order) return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
     if (parseInt(order.orderStatus) != 0) return res.status(403).json(util.successFalse(null, "배달원 모집이 완료된 주문입니다.", null));
-    const riderlist = myCache.get(req.query.orderId) as any;
+    const riderlist = myCache.get(req.query.orderId as string) as any;
     if (riderlist == undefined) { return res.status(403).json(util.successFalse(null, "배달을 희망하는 배달원이 없습니다.", null)); }
     return res.json(util.successTrue("", riderlist));
   } catch (err) {
@@ -185,7 +185,7 @@ order.post('/rider', util.isLoggedin, async function ( req: Request, res: Respon
       owner:tokenData.nickName,
       ownerId: tokenData.id,
       riderId: rider.riderId,
-      password:crypto.randomBytes(256).toString('hex').substr(100, 15)
+      password:crypto.randomBytes(256).toString('hex').substr(100, 50)
     });
     order.update({
       riderId: rider.riderId,
@@ -229,7 +229,7 @@ order.get('/chat', util.isLoggedin, async function ( req: Request, res: Response
         }
       });
     if (!room) return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
-    return res.json(util.successTrue("",{password:room.password}));
+    return res.json(util.successTrue("",{password:room}));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
@@ -476,7 +476,7 @@ order.post('/apply', util.isLoggedin, util.isRider, async function ( req: Reques
   return res.json(util.successTrue("", riderlist));
 });
 
-order.get('/orderList', util.isLoggedin, async function (req: any, res: Response, next: NextFunction) {
+order.get('/orderList', util.isLoggedin, async function (req: any, res: Response) {
   //현재 주문 중인 주문 내용 받아오기 (소비자)
   const tokenData = req.decoded;
   const reqBody = req.query;
@@ -495,7 +495,7 @@ order.get('/orderList', util.isLoggedin, async function (req: any, res: Response
   }
 });
 
-order.get('/deliverList', util.isLoggedin, util.isRider, async function (req: any, res: Response, next: NextFunction) {
+order.get('/deliverList', util.isLoggedin, util.isRider, async function (req: any, res: Response) {
   //현재 배달 중인 배달 내용 받아오기 (배달원)
   const tokenData = req.decoded;
   const reqBody = req.query;

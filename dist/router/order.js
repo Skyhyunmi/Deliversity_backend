@@ -232,7 +232,7 @@ exports.order.post('/rider', util.isLoggedin, function (req, res) {
                 owner: tokenData.nickName,
                 ownerId: tokenData.id,
                 riderId: rider.riderId,
-                password: crypto.randomBytes(256).toString('hex').substr(100, 15)
+                password: crypto.randomBytes(256).toString('hex').substr(100, 50)
             });
             order.update({
                 riderId: rider.riderId,
@@ -280,7 +280,7 @@ exports.order.get('/chat', util.isLoggedin, function (req, res) {
                 });
             if (!room)
                 return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
-            return res.json(util.successTrue("", { password: room.password }));
+            return res.json(util.successTrue("", { password: room }));
         }
         catch (err) {
             return res.status(403).json(util.successFalse(err, "", null));
@@ -561,7 +561,7 @@ exports.order.post('/apply', util.isLoggedin, util.isRider, function (req, res) 
         return res.json(util.successTrue("", riderlist));
     });
 });
-exports.order.get('/orderList', util.isLoggedin, function (req, res, next) {
+exports.order.get('/orderList', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //현재 주문 중인 주문 내용 받아오기 (소비자)
         const tokenData = req.decoded;
@@ -583,7 +583,7 @@ exports.order.get('/orderList', util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.order.get('/deliverList', util.isLoggedin, util.isRider, function (req, res, next) {
+exports.order.get('/deliverList', util.isLoggedin, util.isRider, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //현재 배달 중인 배달 내용 받아오기 (배달원)
         const tokenData = req.decoded;
