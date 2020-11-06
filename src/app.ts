@@ -87,7 +87,7 @@ app.get('/favicon.ico',(req:any,res:Response)=>{
 });
 
 app.get('/', function(req, res) {
-  console.log(__dirname)
+  console.log(__dirname);
   res.status(200).sendFile(path.join(__dirname, '../index.html'));
 });
 
@@ -136,12 +136,12 @@ app.use(function(err:any, req:any, res:Response, next:NextFunction) {
 const server = app.listen(process.env.WEB_PORT, () => {
   console.log(process.env.NODE_ENV);
   console.log("Server Started");
-})
+});
 
 setInterval(async ()=>{
   const Data = await myCache.take('chat') as userData[];
   if(Data){
-    await chatRep.bulkCreate(Data)
+    await chatRep.bulkCreate(Data);
   }
 },10000);
 
@@ -172,7 +172,7 @@ io.of('/api/v1/chat/io').on('connection',async (socket)=>{
     const msg = `${user.nickName}: ${data[0].text}`;
     socket.to(room).emit('rChat',data); // 백에서 클라이언트로 rChat으로 emit
 
-    var list = myCache.get('chat') as userData[];
+    let list = myCache.get('chat') as userData[];
     if(list == undefined)
       myCache.set('chat',[new userData(data[0])])
     else{
@@ -180,5 +180,5 @@ io.of('/api/v1/chat/io').on('connection',async (socket)=>{
       list.push(new userData(data[0]))
       myCache.set('chat',list)
     }
-  })
-})
+  });
+});
