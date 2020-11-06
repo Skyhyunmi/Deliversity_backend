@@ -8,7 +8,11 @@ import axios from "axios";
 import urlencode from "urlencode";
 import { transporter } from "../config/mail";
 import Cache from "node-cache";
+import * as admin from "firebase-admin";
+
 import dotenv from "dotenv";
+import User from "../models/user";
+import { read } from "fs";
 dotenv.config();
 export const myCache = new Cache();
 
@@ -31,9 +35,9 @@ function makeSignature(urlsub: string, timestamp: string) {
 
 export const auth = Router();
 auth.post("/signup", function (req: Request, res: Response, next: NextFunction) {
-  passport.authenticate("signup", function (
+  passport.authenticate("signup", async function (
     err: any,
-    _user: any,
+    _user: User,
     info: any
   ) {
     if (err) {
@@ -56,12 +60,22 @@ auth.post("/signup", function (req: Request, res: Response, next: NextFunction) 
         createdAt: _user.createdAt,
         updatedAt: _user.updatedAt
       };
+      const fbUser = await admin.auth().createUser({
+        email:user.email,
+        emailVerified:true,
+        phoneNumber:"+82"+user.phone.slice(1),
+        password: _user.password
+      });
+      if(!fbUser) return res.status(403).json(util.successFalse(null, "이메일이 중복되었습니다.", null));
+      _user.update({
+        firebaseUid:fbUser.uid
+      });
       return res.json(util.successTrue("", user));
     }
   })(req, res, next);
 });
 
-auth.post("/login", function (req: Request, res: Response, next: NextFunction) {
+auth.post("/login", async function (req: Request, res: Response, next: NextFunction) {
   passport.authenticate("login", { session: false }, function (
     err: any,
     user: any,
@@ -74,7 +88,7 @@ auth.post("/login", function (req: Request, res: Response, next: NextFunction) {
         .status(403)
         .json(util.successFalse(null, "ID or PW is not valid", user));
     }
-    req.logIn(user, { session: false }, function (err: any) {
+    req.logIn(user, { session: false }, async function (err: any) {
       if (err) return res.status(403).json(util.successFalse(err, "Can't login", null));
       const payload = {
         id: user.id,
@@ -84,12 +98,116 @@ auth.post("/login", function (req: Request, res: Response, next: NextFunction) {
         grade: user.grade,
         loggedAt: new Date(),
       };
+      const uid = user.firebaseUid.toString();
+      let firebaseToken = null;
+      if(uid) firebaseToken = await admin.auth().createCustomToken(uid);
       const authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
         expiresIn: '7d',
       });
-      return res.json(util.successTrue("", { token: authToken, grade: user.grade }));
+      return res.json(util.successTrue("", {firebaseToken:firebaseToken, token: authToken, grade: user.grade }));
     });
   })(req, res, next);
+});
+
+auth.post('/login/google', async function (req: Request, res: Response, next: NextFunction) {
+  const reqBody=req.body;
+  try{
+    const idToken = reqBody.idToken;
+    //토큰 검증
+    const ret = await axios({
+      url:'https://www.googleapis.com/oauth2/v3/tokeninfo',
+      method: "GET",
+      params:{
+        id_token:idToken
+      }
+    });
+    //sub로 user db 검색
+    const user = await userRep.findOne({
+      where:{
+        googleOAuth:ret.data.sub
+      }
+    });
+    if (!user) return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
+    const payload = {
+      id: user.id,
+      userId: user.userId,
+      name: user.name,
+      nickName: user.nickName,
+      grade: user.grade,
+      loggedAt: new Date(),
+    };
+    const uid = user.firebaseUid.toString();
+    const firebaseToken = await admin.auth().createCustomToken(uid);
+    const authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
+      expiresIn: '7d',
+    });
+    return res.json(util.successTrue("", {firebaseToken:firebaseToken, token: authToken, grade: user.grade }));
+  }catch (e) {
+    console.log("?");
+    return res.status(403).json(util.successFalse(null, "Retry.", null));
+  }
+});
+
+auth.post('/login/kakao', async function (req: Request, res: Response, next: NextFunction) {
+  const reqBody=req.body;
+  try{
+    const accessToken = reqBody.accessToken;
+    //토큰 검증
+    const ret = await axios({
+      url:'https://kapi.kakao.com/v1/user/access_token_info',
+      method: "GET",
+      headers:{
+        Authorization: `Bearer ${accessToken}`
+      }
+    });
+    if(!ret) return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
+    //id로 user db 검색
+    const user = await userRep.findOne({
+      where:{
+        kakaoOAuth:ret.data.id
+      }
+    });
+    if (!user) return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
+    const payload = {
+      id: user.id,
+      userId: user.userId,
+      name: user.name,
+      nickName: user.nickName,
+      grade: user.grade,
+      loggedAt: new Date(),
+    };
+    const uid = user.firebaseUid.toString();
+    const firebaseToken = await admin.auth().createCustomToken(uid);
+    const authToken = jwt.sign(payload, process.env.JWT_SECRET as jwt.Secret, {
+      expiresIn: '7d',
+    });
+    return res.json(util.successTrue("", {firebaseToken:firebaseToken, token: authToken, grade: user.grade }));
+  }catch (e) {
+    console.log("?");
+    return res.status(403).json(util.successFalse(null, "Retry.", null));
+  }
+});
+
+auth.post('/login/fcm', async function (req: Request, res: Response, next: NextFunction) {
+  const reqBody=req.body;
+  try{
+    admin.auth().verifyIdToken(reqBody.idToken)
+      .then(async (data)=>{
+        const user = await userRep.findOne({
+          where:{
+            firebaseUid:data.uid
+          }
+        });
+        if(!user) return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
+        user.update({
+          firebaseFCM:reqBody.fcmToken
+        });
+        res.json(util.successTrue("", null));
+      });
+  }catch (e) {
+    console.log("?");
+    return res.status(403).json(util.successFalse(null, "Retry.", null));
+  }
 });
 
 auth.get('/refresh', util.isLoggedin, function (req: Request, res:Response) {

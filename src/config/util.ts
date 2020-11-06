@@ -2,6 +2,7 @@ import { Response, Request, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import * as db from "sequelize";
 import { userRep } from "../models";
+import * as admin from "firebase-admin";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -23,6 +24,27 @@ export function successFalse(err: any, message: string, data: any) {
     errors: err || null,
     data: data,
   };
+}
+
+// middlewares
+export async function isFirebase(req: Request, res: Response, next: NextFunction) { //파베 권한 있나
+  try{
+    admin.auth().verifyIdToken(req.headers['x-firebase-token'] as string)
+      .then(async token =>{
+        const uid = token.uid;
+        const user = await userRep.findOne({where:{
+          firebaseUid:uid,
+          id: req.decoded.id
+        }});
+        if(!user) return res.status(403).json(successFalse(null, "", null));
+        next();
+      })
+      .catch((err)=>{
+        return res.status(403).json(successFalse(err, "", null));
+      });
+  }catch(err) {
+    return res.status(403).json(successFalse(err, "", null));
+  }
 }
 
 // middlewares

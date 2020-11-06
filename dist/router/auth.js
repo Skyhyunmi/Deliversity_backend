@@ -42,6 +42,7 @@ const axios_1 = __importDefault(require("axios"));
 const urlencode_1 = __importDefault(require("urlencode"));
 const mail_1 = require("../config/mail");
 const node_cache_1 = __importDefault(require("node-cache"));
+const admin = __importStar(require("firebase-admin"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 exports.myCache = new node_cache_1.default();
@@ -64,42 +65,99 @@ function makeSignature(urlsub, timestamp) {
 exports.auth = express_1.Router();
 exports.auth.post("/signup", function (req, res, next) {
     passport_1.default.authenticate("signup", function (err, _user, info) {
-        if (err) {
-            return res.status(403).json(util.successFalse(err, "", null));
-        }
-        if (info) {
-            return res.status(403).json(util.successFalse(null, info.message, null));
-        }
-        if (_user) {
-            const user = {
-                id: _user.id,
-                userId: _user.userId,
-                name: _user.name,
-                nickName: _user.nickName,
-                age: _user.age,
-                email: _user.email,
-                phone: _user.phone,
-                addressId: _user.addressId,
-                grade: _user.grade,
-                createdAt: _user.createdAt,
-                updatedAt: _user.updatedAt
-            };
-            return res.json(util.successTrue("", user));
-        }
+        return __awaiter(this, void 0, void 0, function* () {
+            if (err) {
+                return res.status(403).json(util.successFalse(err, "", null));
+            }
+            if (info) {
+                return res.status(403).json(util.successFalse(null, info.message, null));
+            }
+            if (_user) {
+                const user = {
+                    id: _user.id,
+                    userId: _user.userId,
+                    name: _user.name,
+                    nickName: _user.nickName,
+                    age: _user.age,
+                    email: _user.email,
+                    phone: _user.phone,
+                    addressId: _user.addressId,
+                    grade: _user.grade,
+                    createdAt: _user.createdAt,
+                    updatedAt: _user.updatedAt
+                };
+                const fbUser = yield admin.auth().createUser({
+                    email: user.email,
+                    emailVerified: true,
+                    phoneNumber: "+82" + user.phone.slice(1),
+                    password: _user.password
+                });
+                if (!fbUser)
+                    return res.status(403).json(util.successFalse(null, "이메일이 중복되었습니다.", null));
+                _user.update({
+                    firebaseUid: fbUser.uid
+                });
+                return res.json(util.successTrue("", user));
+            }
+        });
     })(req, res, next);
 });
 exports.auth.post("/login", function (req, res, next) {
-    passport_1.default.authenticate("login", { session: false }, function (err, user, info) {
-        if (info === {})
-            return res.status(403).json(util.successFalse(null, info.message, null));
-        if (err || !user) {
-            return res
-                .status(403)
-                .json(util.successFalse(null, "ID or PW is not valid", user));
-        }
-        req.logIn(user, { session: false }, function (err) {
-            if (err)
-                return res.status(403).json(util.successFalse(err, "Can't login", null));
+    return __awaiter(this, void 0, void 0, function* () {
+        passport_1.default.authenticate("login", { session: false }, function (err, user, info) {
+            if (info === {})
+                return res.status(403).json(util.successFalse(null, info.message, null));
+            if (err || !user) {
+                return res
+                    .status(403)
+                    .json(util.successFalse(null, "ID or PW is not valid", user));
+            }
+            req.logIn(user, { session: false }, function (err) {
+                return __awaiter(this, void 0, void 0, function* () {
+                    if (err)
+                        return res.status(403).json(util.successFalse(err, "Can't login", null));
+                    const payload = {
+                        id: user.id,
+                        userId: user.userId,
+                        name: user.name,
+                        nickName: user.nickName,
+                        grade: user.grade,
+                        loggedAt: new Date(),
+                    };
+                    const uid = user.firebaseUid.toString();
+                    let firebaseToken = null;
+                    if (uid)
+                        firebaseToken = yield admin.auth().createCustomToken(uid);
+                    const authToken = jsonwebtoken_1.default.sign(payload, process.env.JWT_SECRET, {
+                        expiresIn: '7d',
+                    });
+                    return res.json(util.successTrue("", { firebaseToken: firebaseToken, token: authToken, grade: user.grade }));
+                });
+            });
+        })(req, res, next);
+    });
+});
+exports.auth.post('/login/google', function (req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const reqBody = req.body;
+        try {
+            const idToken = reqBody.idToken;
+            //토큰 검증
+            const ret = yield axios_1.default({
+                url: 'https://www.googleapis.com/oauth2/v3/tokeninfo',
+                method: "GET",
+                params: {
+                    id_token: idToken
+                }
+            });
+            //sub로 user db 검색
+            const user = yield index_1.userRep.findOne({
+                where: {
+                    googleOAuth: ret.data.sub
+                }
+            });
+            if (!user)
+                return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
             const payload = {
                 id: user.id,
                 userId: user.userId,
@@ -108,12 +166,87 @@ exports.auth.post("/login", function (req, res, next) {
                 grade: user.grade,
                 loggedAt: new Date(),
             };
+            const uid = user.firebaseUid.toString();
+            const firebaseToken = yield admin.auth().createCustomToken(uid);
             const authToken = jsonwebtoken_1.default.sign(payload, process.env.JWT_SECRET, {
                 expiresIn: '7d',
             });
-            return res.json(util.successTrue("", { token: authToken, grade: user.grade }));
-        });
-    })(req, res, next);
+            return res.json(util.successTrue("", { firebaseToken: firebaseToken, token: authToken, grade: user.grade }));
+        }
+        catch (e) {
+            console.log("?");
+            return res.status(403).json(util.successFalse(null, "Retry.", null));
+        }
+    });
+});
+exports.auth.post('/login/kakao', function (req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const reqBody = req.body;
+        try {
+            const accessToken = reqBody.accessToken;
+            //토큰 검증
+            const ret = yield axios_1.default({
+                url: 'https://kapi.kakao.com/v1/user/access_token_info',
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${accessToken}`
+                }
+            });
+            if (!ret)
+                return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
+            //id로 user db 검색
+            const user = yield index_1.userRep.findOne({
+                where: {
+                    kakaoOAuth: ret.data.id
+                }
+            });
+            if (!user)
+                return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
+            const payload = {
+                id: user.id,
+                userId: user.userId,
+                name: user.name,
+                nickName: user.nickName,
+                grade: user.grade,
+                loggedAt: new Date(),
+            };
+            const uid = user.firebaseUid.toString();
+            const firebaseToken = yield admin.auth().createCustomToken(uid);
+            const authToken = jsonwebtoken_1.default.sign(payload, process.env.JWT_SECRET, {
+                expiresIn: '7d',
+            });
+            return res.json(util.successTrue("", { firebaseToken: firebaseToken, token: authToken, grade: user.grade }));
+        }
+        catch (e) {
+            console.log("?");
+            return res.status(403).json(util.successFalse(null, "Retry.", null));
+        }
+    });
+});
+exports.auth.post('/login/fcm', function (req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const reqBody = req.body;
+        try {
+            admin.auth().verifyIdToken(reqBody.idToken)
+                .then((data) => __awaiter(this, void 0, void 0, function* () {
+                const user = yield index_1.userRep.findOne({
+                    where: {
+                        firebaseUid: data.uid
+                    }
+                });
+                if (!user)
+                    return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
+                user.update({
+                    firebaseFCM: reqBody.fcmToken
+                });
+                res.json(util.successTrue("", null));
+            }));
+        }
+        catch (e) {
+            console.log("?");
+            return res.status(403).json(util.successFalse(null, "Retry.", null));
+        }
+    });
 });
 exports.auth.get('/refresh', util.isLoggedin, function (req, res) {
     index_1.userRep.findOne({ where: { userId: req.decoded.userId } }).then(function (user) {

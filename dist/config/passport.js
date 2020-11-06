@@ -38,6 +38,7 @@ const passport_jwt_1 = __importDefault(require("passport-jwt"));
 const index_1 = require("../models/index");
 const crypto = __importStar(require("crypto"));
 const auth_1 = require("../router/auth");
+const axios_1 = __importDefault(require("axios"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const LocalStrategy = passport_local_1.default.Strategy;
@@ -139,6 +140,22 @@ function passportConfig() {
                 const emailVeri = yield emailVerify(reqBody.email);
                 if (emailVeri == 0)
                     return done(null, false, { message: 'E-mail Verification is required.' });
+                const idToken = req.body.idToken;
+                let token = null;
+                //토큰 검증
+                if (idToken) {
+                    const ret = yield axios_1.default({
+                        url: 'https://www.googleapis.com/oauth2/v3/tokeninfo',
+                        method: "GET",
+                        params: {
+                            id_token: idToken
+                        }
+                    });
+                    token = ret.data.sub;
+                    const d_user = yield index_1.userRep.findOne({ where: { googleOAuth: token } });
+                    if (d_user)
+                        done(null, false, { message: 'Firebase email duplicated.' });
+                }
                 const user = yield index_1.userRep.create({
                     userId: userId,
                     password: hashedPw,
@@ -150,7 +167,7 @@ function passportConfig() {
                     phone: reqBody.phone,
                     createdAt: new Date(),
                     updatedAt: null,
-                    googleOAuth: reqBody.googleOAuth || null,
+                    googleOAuth: token || null,
                     kakaoOAuth: reqBody.kakaoOAuth || null
                 });
                 done(null, user);
@@ -164,8 +181,9 @@ function passportConfig() {
     passport_1.default.use('login', new LocalStrategy({
         usernameField: 'id',
         passwordField: 'pw',
-        session: false
-    }, function (id, password, done) {
+        session: false,
+        passReqToCallback: true
+    }, function (req, id, password, done) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const user = yield index_1.userRep.findOne({
@@ -175,6 +193,20 @@ function passportConfig() {
                 });
                 if (!user)
                     return done(null, false, { message: 'ID do not match' });
+                if (user.googleOAuth == null && req.body.idToken) {
+                    const idToken = req.body.idToken;
+                    //토큰 검증
+                    const ret = yield axios_1.default({
+                        url: 'https://www.googleapis.com/oauth2/v3/tokeninfo',
+                        method: "GET",
+                        params: {
+                            id_token: idToken
+                        }
+                    });
+                    user.update({
+                        googleOAuth: ret.data.sub
+                    });
+                }
                 crypto.pbkdf2(password, user.salt, 100000, 64, 'sha512', function (err, key) {
                     if (err) {
                         done(null, false, { message: 'error' });

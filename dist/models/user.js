@@ -75,6 +75,14 @@ __decorate([
 __decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
+], User.prototype, "firebaseUid", void 0);
+__decorate([
+    sequelize_typescript_1.AllowNull(true),
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
+], User.prototype, "firebaseFCM", void 0);
+__decorate([
+    sequelize_typescript_1.AllowNull(true),
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
 ], User.prototype, "kakaoOAuth", void 0);
 __decorate([
     sequelize_typescript_1.AllowNull(true),

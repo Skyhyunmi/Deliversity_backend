@@ -17,21 +17,30 @@ import * as fs from "fs";
 import path from "path";
 import socketio from "socket.io";
 import nCache from "node-cache";
+
+import * as Admin from "firebase-admin"
+const pk = process.env.FB_private_key as string;
+Admin.initializeApp({
+  credential: Admin.credential.cert({
+    projectId: process.env.FB_project_id,
+    clientEmail: process.env.FB_client_email,
+    privateKey: pk.replace(/\\n/g, '\n'),
+  })
+});
+
 import dotenv from "dotenv";
 dotenv.config();
 
 class userData {
   userName!: string;
-  roomId!: number;
   chat?: string;
   gif?: string;
   createdAt!: number;
 
   constructor(data:any){
-    this.userName=data.userName;
-    this.roomId=data.roomId;
-    this.chat=data.chat;
-    this.gif=data.gif;
+    this.userName=data.user._id;
+    this.chat=data.text;
+    // this.gif=data.gif;
     this.createdAt=Date.now();
   }
 }
@@ -54,7 +63,7 @@ db
     throw "error";
   });
 
-const app = express();
+export const app = express();
 
 app.use(logger("dev"));
 app.use(express.json());
@@ -136,7 +145,7 @@ setInterval(async ()=>{
   }
 },10000);
 
-const io = socketio.listen(server,{transports:['websocket']});
+export const io = socketio.listen(server,{transports:['websocket']});
 
 io.of('/api/v1/chat/io').on('connection',async (socket)=>{
   socket.on('disconnect',async (data)=>{ // 클라이언트에서 백으로 chat으로 emit
@@ -144,34 +153,32 @@ io.of('/api/v1/chat/io').on('connection',async (socket)=>{
   });
   socket.on('chat',async (data)=>{ // 클라이언트에서 백으로 chat으로 emit
     const pre = Date.now();
-    let user = myCache.get(data.userId) as any;
+    let user = myCache.get(data[0].user._id) as any;
     if(user == undefined) {
       user = await userRep.findOne({
-        where:{id:data.userId}
-      });
+        where:{id:data[0].user._id}
+      })
       if(!user) return;
       const _user = {
         id:user.id,
         nickName:user.nickName
-      };
-      myCache.set(data.userId,_user);
+      }
+      myCache.set(data[0].user._id,_user);
       user = _user;
     }
     const post = Date.now();
-    console.log((post-pre));
-    const room = data.password;
-    console.log(`Message from ${user.nickName}: ${data.msg}`);
+    const room = data[0].user.password;
     socket.join(room);
-    const msg = `${user.nickName}: ${data.msg}`;
-    socket.to(room).emit('rChat',msg); // 백에서 클라이언트로 rChat으로 emit
+    const msg = `${user.nickName}: ${data[0].text}`;
+    socket.to(room).emit('rChat',data); // 백에서 클라이언트로 rChat으로 emit
 
     let list = myCache.get('chat') as userData[];
     if(list == undefined)
-      myCache.set('chat',[new userData(data)]);
+      myCache.set('chat',[new userData(data[0])])
     else{
       list=myCache.take('chat') as userData[];
-      list.push(new userData(data));
-      myCache.set('chat',list);
+      list.push(new userData(data[0]))
+      myCache.set('chat',list)
     }
   });
 });
