@@ -31,6 +31,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.io = exports.app = void 0;
 const express_1 = __importDefault(require("express"));
 const http_errors_1 = __importDefault(require("http-errors"));
 const morgan_1 = __importDefault(require("morgan"));
@@ -50,14 +51,22 @@ const fs = __importStar(require("fs"));
 const path_1 = __importDefault(require("path"));
 const socket_io_1 = __importDefault(require("socket.io"));
 const node_cache_1 = __importDefault(require("node-cache"));
+const Admin = __importStar(require("firebase-admin"));
+const pk = process.env.FB_private_key;
+Admin.initializeApp({
+    credential: Admin.credential.cert({
+        projectId: process.env.FB_project_id,
+        clientEmail: process.env.FB_client_email,
+        privateKey: pk.replace(/\\n/g, '\n'),
+    })
+});
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 class userData {
     constructor(data) {
-        this.userName = data.userName;
-        this.roomId = data.roomId;
-        this.chat = data.chat;
-        this.gif = data.gif;
+        this.userName = data.user._id;
+        this.chat = data.text;
+        // this.gif=data.gif;
         this.createdAt = Date.now();
     }
 }
@@ -76,33 +85,33 @@ models_1.db
     .catch(() => {
     throw "error";
 });
-const app = express_1.default();
-app.use(morgan_1.default("dev"));
-app.use(express_1.default.json());
-app.use(express_1.default.urlencoded({ extended: false }));
-app.use(cookie_parser_1.default());
-app.use(bodyParser.json());
+exports.app = express_1.default();
+exports.app.use(morgan_1.default("dev"));
+exports.app.use(express_1.default.json());
+exports.app.use(express_1.default.urlencoded({ extended: false }));
+exports.app.use(cookie_parser_1.default());
+exports.app.use(bodyParser.json());
 // app.use(express.static(path.join(__dirname, 'public')));
-app.use(passport_1.default.initialize()); // passport 구동
+exports.app.use(passport_1.default.initialize()); // passport 구동
 passport_2.passportConfig();
-app.use((req, res, next) => {
+exports.app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "content-type, x-access-token");
     res.header("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS");
     next();
 });
 const favicon = fs.readFileSync('favicon.ico');
-app.get('/favicon.ico', (req, res) => {
+exports.app.get('/favicon.ico', (req, res) => {
     res.status(200).end(favicon);
 });
-app.get('/', function (req, res) {
+exports.app.get('/', function (req, res) {
     console.log(__dirname);
     res.status(200).sendFile(path_1.default.join(__dirname, '../index.html'));
 });
-app.get('/socket.io/socket.io.js', (req, res) => {
+exports.app.get('/socket.io/socket.io.js', (req, res) => {
     res.sendFile(path_1.default.resolve(__dirname + '/../node_modules/socket.io-client/dist/socket.io.js'));
 });
-app.get('/socket.io/socket.io.js.map', (req, res) => {
+exports.app.get('/socket.io/socket.io.js.map', (req, res) => {
     res.sendFile(path_1.default.resolve(__dirname + '/../node_modules/socket.io-client/dist/socket.io.js.map'));
 });
 //   이걸 켜게되면 모든 api 요청은 x-initial-token에 INITIAL_TOKEN이 들어있어야 작동함.
@@ -112,23 +121,23 @@ app.get('/socket.io/socket.io.js.map', (req, res) => {
 //   if (token!=process.env.INITIAL_TOKEN) next(createError(404));
 //   else next();
 // })
-app.use("/api/v1/auth", auth_1.auth);
-app.use("/api/v1/test", test_1.test);
-app.use("/api/v1/admin", admin_1.admin);
-app.use("/api/v1/myinfo", myinfo_1.myinfo);
-app.use("/api/v1/order", order_1.order);
-app.use(cors_1.default());
-app.use(function (req, res, next) {
+exports.app.use("/api/v1/auth", auth_1.auth);
+exports.app.use("/api/v1/test", test_1.test);
+exports.app.use("/api/v1/admin", admin_1.admin);
+exports.app.use("/api/v1/myinfo", myinfo_1.myinfo);
+exports.app.use("/api/v1/order", order_1.order);
+exports.app.use(cors_1.default());
+exports.app.use(function (req, res, next) {
     next(http_errors_1.default(404));
 });
-app.use(function (err, req, res, next) {
+exports.app.use(function (err, req, res, next) {
     // error 템플릿에 전달할 데이터 설정
     res.locals.message = err.message;
     res.locals.error = req.app.get('env') === 'development' ? err : {};
     // render the error page
     res.status(err.status || 500).json(util.successFalse(null, "Error", null));
 });
-const server = app.listen(process.env.WEB_PORT, () => {
+const server = exports.app.listen(process.env.WEB_PORT, () => {
     console.log(process.env.NODE_ENV);
     console.log("Server Started");
 });
@@ -138,16 +147,16 @@ setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
         yield models_1.chatRep.bulkCreate(Data);
     }
 }), 10000);
-const io = socket_io_1.default.listen(server, { transports: ['websocket'] });
-io.of('/api/v1/chat/io').on('connection', (socket) => __awaiter(void 0, void 0, void 0, function* () {
+exports.io = socket_io_1.default.listen(server, { transports: ['websocket'] });
+exports.io.of('/api/v1/chat/io').on('connection', (socket) => __awaiter(void 0, void 0, void 0, function* () {
     socket.on('disconnect', (data) => __awaiter(void 0, void 0, void 0, function* () {
     }));
     socket.on('chat', (data) => __awaiter(void 0, void 0, void 0, function* () {
         const pre = Date.now();
-        let user = myCache.get(data.userId);
+        let user = myCache.get(data[0].user._id);
         if (user == undefined) {
             user = yield models_1.userRep.findOne({
-                where: { id: data.userId }
+                where: { id: data[0].user._id }
             });
             if (!user)
                 return;
@@ -155,22 +164,20 @@ io.of('/api/v1/chat/io').on('connection', (socket) => __awaiter(void 0, void 0, 
                 id: user.id,
                 nickName: user.nickName
             };
-            myCache.set(data.userId, _user);
+            myCache.set(data[0].user._id, _user);
             user = _user;
         }
         const post = Date.now();
-        console.log((post - pre));
-        const room = data.password;
-        console.log(`Message from ${user.nickName}: ${data.msg}`);
+        const room = data[0].user.password;
         socket.join(room);
-        const msg = `${user.nickName}: ${data.msg}`;
-        socket.to(room).emit('rChat', msg); // 백에서 클라이언트로 rChat으로 emit
+        const msg = `${user.nickName}: ${data[0].text}`;
+        socket.to(room).emit('rChat', data); // 백에서 클라이언트로 rChat으로 emit
         var list = myCache.get('chat');
         if (list == undefined)
-            myCache.set('chat', [new userData(data)]);
+            myCache.set('chat', [new userData(data[0])]);
         else {
             list = myCache.take('chat');
-            list.push(new userData(data));
+            list.push(new userData(data[0]));
             myCache.set('chat', list);
         }
     }));

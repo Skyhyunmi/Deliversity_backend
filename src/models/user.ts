@@ -80,6 +80,14 @@ export default class User extends Model<User> {
 
   @AllowNull(true)
   @Column(DataType.STRING)
+  firebaseUid!:string;
+
+  @AllowNull(true)
+  @Column(DataType.STRING)
+  firebaseFCM!:string;
+
+  @AllowNull(true)
+  @Column(DataType.STRING)
   kakaoOAuth!:string;
 
   @AllowNull(true)
