@@ -37,9 +37,10 @@ const passport_local_1 = __importDefault(require("passport-local"));
 const passport_jwt_1 = __importDefault(require("passport-jwt"));
 const index_1 = require("../models/index");
 const crypto = __importStar(require("crypto"));
-const auth_1 = require("../router/auth");
+const functions_1 = require("../config/functions");
 const axios_1 = __importDefault(require("axios"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const functions = __importStar(require("./functions"));
 dotenv_1.default.config();
 const LocalStrategy = passport_local_1.default.Strategy;
 const JwtStrategy = passport_jwt_1.default.Strategy;
@@ -47,18 +48,18 @@ const ExtractJwt = passport_jwt_1.default.ExtractJwt;
 function phoneVerify(phone) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const veri = auth_1.myCache.take(phone);
+            const veri = functions_1.myCache.take(phone);
             if (!veri || veri.verify !== 1)
                 return 0;
             const now = Number.parseInt(Date.now().toString());
             const updatedAt = Number.parseInt(veri.updatedAt);
             const remainingTime = (now - updatedAt) / 60000;
             if (remainingTime > 15) { //15분
-                auth_1.myCache.del(phone);
+                functions_1.myCache.del(phone);
                 return 0;
             }
             else {
-                auth_1.myCache.del(phone);
+                functions_1.myCache.del(phone);
                 return 1;
             }
         }
@@ -71,18 +72,18 @@ function phoneVerify(phone) {
 function emailVerify(email) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const veri = auth_1.myCache.take(email);
+            const veri = functions_1.myCache.take(email);
             if (!veri || veri.verify !== 1)
                 return 0;
             const now = Number.parseInt(Date.now().toString());
             const updatedAt = Number.parseInt(veri.updatedAt);
             const remainingTime = (now - updatedAt) / 60000;
             if (remainingTime > 15) { //15분
-                auth_1.myCache.del(email);
+                functions_1.myCache.del(email);
                 return 0;
             }
             else {
-                auth_1.myCache.del(email);
+                functions_1.myCache.del(email);
                 return 1;
             }
         }
@@ -141,20 +142,18 @@ function passportConfig() {
                 if (emailVeri == 0)
                     return done(null, false, { message: 'E-mail Verification is required.' });
                 const idToken = req.body.idToken;
-                let token = null;
-                //토큰 검증
+                let googleToken = null;
                 if (idToken) {
-                    const ret = yield axios_1.default({
-                        url: 'https://www.googleapis.com/oauth2/v3/tokeninfo',
-                        method: "GET",
-                        params: {
-                            id_token: idToken
-                        }
-                    });
-                    token = ret.data.sub;
-                    const d_user = yield index_1.userRep.findOne({ where: { googleOAuth: token } });
-                    if (d_user)
-                        done(null, false, { message: 'Firebase email duplicated.' });
+                    const ret = yield functions.getUserFromGoogleInfo(idToken);
+                    if (ret && !ret.user)
+                        googleToken = ret.id;
+                }
+                const accessToken = req.body.accessToken;
+                let kakaoToken = null;
+                if (accessToken) {
+                    const ret = yield functions.getUserFromKakaoInfo(accessToken);
+                    if (ret && !ret.user)
+                        kakaoToken = ret.id;
                 }
                 const user = yield index_1.userRep.create({
                     userId: userId,
@@ -167,8 +166,8 @@ function passportConfig() {
                     phone: reqBody.phone,
                     createdAt: new Date(),
                     updatedAt: null,
-                    googleOAuth: token || null,
-                    kakaoOAuth: reqBody.kakaoOAuth || null
+                    googleOAuth: googleToken || null,
+                    kakaoOAuth: kakaoToken || null
                 });
                 done(null, user);
             }
