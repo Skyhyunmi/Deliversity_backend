@@ -3,9 +3,10 @@ import passportLocal from "passport-local";
 import passportJwt from "passport-jwt";
 import {userRep} from "../models/index";
 import * as crypto from "crypto";
-import {myCache} from "../router/auth";
+import {myCache} from "../config/functions";
 import axios from "axios";
 import dotenv from "dotenv";
+import * as functions from "./functions";
 dotenv.config();
 
 const LocalStrategy = passportLocal.Strategy;
@@ -100,19 +101,16 @@ export function passportConfig(){
         const emailVeri=await emailVerify(reqBody.email);
         if(emailVeri==0) return done(null, false, { message: 'E-mail Verification is required.' });
         const idToken = req.body.idToken;
-        let token=null;
-        //토큰 검증
+        let googleToken=null;
         if(idToken){
-          const ret = await axios({
-            url:'https://www.googleapis.com/oauth2/v3/tokeninfo',
-            method: "GET",
-            params:{
-              id_token:idToken
-            }
-          });
-          token = ret.data.sub;
-          const d_user = await userRep.findOne({where:{googleOAuth:token}});
-          if(d_user) done(null, false, { message: 'Firebase email duplicated.' });
+          const ret = await functions.getUserFromGoogleInfo(idToken);
+          if(ret && !ret.user) googleToken = ret.id;
+        }
+        const accessToken = req.body.accessToken;
+        let kakaoToken=null;
+        if(accessToken){
+          const ret = await functions.getUserFromKakaoInfo(accessToken);
+          if(ret && !ret.user) kakaoToken = ret.id;
         }
         const user = await userRep.create({
           userId: userId,
@@ -125,8 +123,8 @@ export function passportConfig(){
           phone: reqBody.phone,
           createdAt: new Date(),
           updatedAt: null,
-          googleOAuth:token || null,
-          kakaoOAuth:reqBody.kakaoOAuth || null
+          googleOAuth:googleToken || null,
+          kakaoOAuth:kakaoToken || null
         });
         done(null,user);
       }catch(err){
