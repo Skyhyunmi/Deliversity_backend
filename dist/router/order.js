@@ -40,6 +40,7 @@ const db = __importStar(require("sequelize"));
 const crypto = __importStar(require("crypto"));
 const axios_1 = __importDefault(require("axios"));
 const models_1 = require("../models");
+const admin = __importStar(require("firebase-admin"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 exports.order = express_1.Router();
@@ -53,6 +54,7 @@ exports.order.post('/', util.isLoggedin, function (req, res) {
         let expMinute = reqBody.expMinute;
         let gender = parseInt(reqBody.gender);
         const today = new Date();
+        let registrationToken;
         if (reqBody.reservation === "1") {
             if (!expHour || !expMinute) {
                 return res.status(403).json(util.successFalse(null, "예약 시간 또는 분을 입력하시지 않으셨습니다.", null));
@@ -159,6 +161,46 @@ exports.order.post('/', util.isLoggedin, function (req, res) {
                 reservation: reqBody.reservation
             };
             const order = yield models_1.orderRep.create(data);
+            if (gender >= 1) {
+                const riders = yield models_1.userRep.findAll({ where: { id: { [db.Op.ne]: tokenData.id }, grade: [2, 3], gender: gender } });
+                for (let i = 0; i < riders.length; i++) {
+                    registrationToken = riders[i].firebaseFCM;
+                    console.log(i, '+', riders[i].name);
+                    const message = {
+                        data: {
+                            test: "배달 건이 추가되었습니다, 확인해보세요" + registrationToken
+                        },
+                        token: registrationToken
+                    };
+                    admin.messaging().send(message)
+                        .then((response) => {
+                        console.log('Successfully sent message:', response);
+                    })
+                        .catch((error) => {
+                        console.log('Error sending message:', error);
+                    });
+                }
+            }
+            else {
+                const riders = yield models_1.userRep.findAll({ where: { id: { [db.Op.ne]: tokenData.id }, grade: [2, 3] } });
+                for (let i = 0; i < riders.length; i++) {
+                    registrationToken = riders[i].firebaseFCM;
+                    console.log(i, '+', registrationToken);
+                    const message = {
+                        data: {
+                            test: "배달 건이 추가되었습니다, 확인해보세요"
+                        },
+                        token: registrationToken
+                    };
+                    admin.messaging().send(message)
+                        .then((response) => {
+                        console.log('Successfully sent message:', response);
+                    })
+                        .catch((error) => {
+                        console.log('Error sending message:', error);
+                    });
+                }
+            }
             return res.json(util.successTrue("", order));
         }
         catch (err) {
@@ -216,6 +258,7 @@ exports.order.post('/rider', util.isLoggedin, function (req, res) {
                     id: req.query.orderId
                 }
             });
+            let registrationToken;
             if (!order)
                 return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
             const riderlist = myCache.get(req.query.orderId);
@@ -224,21 +267,44 @@ exports.order.post('/rider', util.isLoggedin, function (req, res) {
             const rider = riderlist.filter(rider => rider.riderId == riderId)[0];
             if (!rider)
                 return res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
-            const room = yield models_1.roomRep.create({
-                orderId: order.id,
-                owner: tokenData.nickName,
-                ownerId: tokenData.id,
-                riderId: rider.riderId,
-                password: crypto.randomBytes(256).toString('hex').substr(100, 50)
-            });
-            order.update({
-                riderId: rider.riderId,
-                extraFee: rider.extraFee,
-                orderStatus: 1,
-                chatId: room.id
-            });
-            myCache.del(req.query.orderId);
-            return res.json(util.successTrue("", order));
+            const rider_fire = yield models_1.userRep.findOne({ where: { id: riderId } });
+            if (!rider_fire)
+                res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
+            else {
+                registrationToken = rider_fire.firebaseFCM;
+            }
+            if (registrationToken == undefined)
+                res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
+            else {
+                const room = yield models_1.roomRep.create({
+                    orderId: order.id,
+                    owner: tokenData.nickName,
+                    ownerId: tokenData.id,
+                    riderId: rider.riderId,
+                    password: crypto.randomBytes(256).toString('hex').substr(100, 50)
+                });
+                order.update({
+                    riderId: rider.riderId,
+                    extraFee: rider.extraFee,
+                    orderStatus: 1,
+                    chatId: room.id
+                });
+                myCache.del(req.query.orderId);
+                const message = {
+                    data: {
+                        test: "배달원으로 선발되었습니다."
+                    },
+                    token: registrationToken
+                };
+                admin.messaging().send(message)
+                    .then((response) => {
+                    console.log('Successfully sent message:', response);
+                })
+                    .catch((error) => {
+                    console.log('Error sending message:', error);
+                });
+                return res.json(util.successTrue("", order));
+            }
         }
         catch (err) {
             return res.status(403).json(util.successFalse(err, "", null));

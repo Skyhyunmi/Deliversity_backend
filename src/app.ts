@@ -19,7 +19,7 @@ import path from "path";
 import socketio from "socket.io";
 import nCache from "node-cache";
 
-import * as Admin from "firebase-admin"
+import * as Admin from "firebase-admin";
 const pk = process.env.FB_private_key as string;
 Admin.initializeApp({
   credential: Admin.credential.cert({
@@ -143,12 +143,12 @@ io.of('/api/v1/chat/io').on('connection',async (socket)=>{
     if(user == undefined) {
       user = await userRep.findOne({
         where:{id:data[0].user._id}
-      })
+      });
       if(!user) return;
       const _user = {
         id:user.id,
         nickName:user.nickName
-      }
+      };
       myCache.set(data[0].user._id,_user);
       user = _user;
     }

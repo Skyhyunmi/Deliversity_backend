@@ -7,6 +7,7 @@ import * as db from "sequelize";
 import * as crypto from "crypto";
 import axios from "axios";
 import { addressRep, orderRep, reviewRep, roomRep, userRep } from "../models";
+import * as admin from "firebase-admin";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -22,6 +23,7 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
   let expMinute = reqBody.expMinute;
   let gender = parseInt(reqBody.gender);
   const today = new Date();
+  let registrationToken;
 
   if (reqBody.reservation === "1") {
     if (!expHour || !expMinute) { return res.status(403).json(util.successFalse(null, "예약 시간 또는 분을 입력하시지 않으셨습니다.", null)); };
@@ -125,6 +127,46 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
       reservation: reqBody.reservation
     };
     const order = await orderRep.create(data);
+    if (gender >= 1) {
+      const riders = await userRep.findAll({ where: { id: { [db.Op.ne]: tokenData.id }, grade: [2, 3], gender: gender } });
+      for (let i = 0; i < riders.length; i++) {
+        registrationToken = riders[i].firebaseFCM;
+        console.log(i, '+', riders[i].name);
+        const message = {
+          data: {
+            test: "배달 건이 추가되었습니다, 확인해보세요" + registrationToken
+          },
+          token: registrationToken
+        };
+        admin.messaging().send(message)
+          .then((response) => {
+            console.log('Successfully sent message:', response);
+          })
+          .catch((error) => {
+            console.log('Error sending message:', error);
+          });
+      }
+    }
+    else {
+      const riders = await userRep.findAll({ where: { id: { [db.Op.ne]: tokenData.id }, grade: [2, 3] } });
+      for (let i = 0; i < riders.length; i++) {
+        registrationToken = riders[i].firebaseFCM;
+        console.log(i, '+', registrationToken);
+        const message = {
+          data: {
+            test: "배달 건이 추가되었습니다, 확인해보세요"
+          },
+          token: registrationToken
+        };
+        admin.messaging().send(message)
+          .then((response) => {
+            console.log('Successfully sent message:', response);
+          })
+          .catch((error) => {
+            console.log('Error sending message:', error);
+          });
+      }
+    }
     return res.json(util.successTrue("", order));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
@@ -171,26 +213,46 @@ order.post('/rider', util.isLoggedin, async function (req: Request, res: Respons
         id: req.query.orderId as string
       }
     });
+    let registrationToken;
     if (!order) return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
     const riderlist = myCache.get(req.query.orderId as string) as classes.Rider[];
     if (riderlist == undefined) return res.status(403).json(util.successFalse(null, "배달을 희망하는 배달원이 없습니다.", null));
     const rider = riderlist.filter(rider => rider.riderId == riderId)[0];
     if (!rider) return res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
-    const room = await roomRep.create({
-      orderId: order.id,
-      owner: tokenData.nickName,
-      ownerId: tokenData.id,
-      riderId: rider.riderId,
-      password: crypto.randomBytes(256).toString('hex').substr(100, 50)
-    });
-    order.update({
-      riderId: rider.riderId,
-      extraFee: rider.extraFee,
-      orderStatus: 1,
-      chatId: room.id
-    });
-    myCache.del(req.query.orderId as string);
-    return res.json(util.successTrue("", order));
+    const rider_fire = await userRep.findOne({ where: { id: riderId } });
+    if (!rider_fire) res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
+    else { registrationToken = rider_fire.firebaseFCM; }
+    if (registrationToken == undefined) res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
+    else {
+      const room = await roomRep.create({
+        orderId: order.id,
+        owner: tokenData.nickName,
+        ownerId: tokenData.id,
+        riderId: rider.riderId,
+        password: crypto.randomBytes(256).toString('hex').substr(100, 50)
+      });
+      order.update({
+        riderId: rider.riderId,
+        extraFee: rider.extraFee,
+        orderStatus: 1,
+        chatId: room.id
+      });
+      myCache.del(req.query.orderId as string);
+      const message = {
+        data: {
+          test: "배달원으로 선발되었습니다."
+        },
+        token: registrationToken
+      };
+      admin.messaging().send(message)
+        .then((response) => {
+          console.log('Successfully sent message:', response);
+        })
+        .catch((error) => {
+          console.log('Error sending message:', error);
+        });
+      return res.json(util.successTrue("", order));
+    }
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
