@@ -1,11 +1,13 @@
 import { NextFunction, Request, Response, Router } from "express";
 import * as functions from "../config/functions";
 import * as util from "../config/util";
-import jwt from "jsonwebtoken";
-import passport from "passport";
+import * as classes from "../config/classes";
 import { userRep } from "../models/index";
 import * as admin from "firebase-admin";
 import User from "../models/user";
+
+import jwt from "jsonwebtoken";
+import passport from "passport";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -104,8 +106,23 @@ auth.post('/login/fcm', util.isLoggedin, async function (req: Request, res: Resp
         const user = await userRep.findOne({where:{firebaseUid:data.uid}});
         if(!user) return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
         user.update({firebaseFCM:reqBody.fcmToken});
-        res.json(util.successTrue("", null));
+        return res.json(util.successTrue("", null));
       });
+  }catch (e) {
+    return res.status(403).json(util.successFalse(null, "Retry.", null));
+  }
+});
+
+auth.post('/logout', util.isLoggedin, async function (req: Request, res: Response) {
+  const reqBody=req.body;
+  const tokenData=req.decoded;
+  try{
+    const user = await userRep.findOne({where:{id: tokenData.id}});
+    if(!user) return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
+    user.update({
+      firebaseFCM:null
+    });
+    return res.json(util.successTrue("", null));
   }catch (e) {
     return res.status(403).json(util.successFalse(null, "Retry.", null));
   }
@@ -116,7 +133,7 @@ auth.get('/refresh', util.isLoggedin, async function (req: Request, res:Response
   if (!user) {
     return res.status(403).json(util.successFalse(null, "Can't refresh the token", { user: user }));
   }
-  const authToken=jwt.sign(Object.assign({},new functions.payLoad(user)), process.env.JWT_SECRET as jwt.Secret, {
+  const authToken=jwt.sign(Object.assign({},new classes.payLoad(user)), process.env.JWT_SECRET as jwt.Secret, {
     expiresIn: '7d',
   });
   return res.json(util.successTrue("", { token: authToken, grade: user.grade }));

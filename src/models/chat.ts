@@ -17,17 +17,20 @@ export default class Chat extends Model<Chat> {
   @Column(DataType.BIGINT)
   id!: number;
 
-  @Column(DataType.BIGINT)
-  roomId!:number;
+  @Column(DataType.STRING)
+  roomId!:string;
 
   @Column(DataType.STRING)
-  userName!:string;
+  userId!:string;
+
+  @Column(DataType.STRING)
+  userNickName!:string;
   
   @Column(DataType.TEXT)
   chat!:string;
   
   @Column(DataType.BLOB)
-  gif!:string;
+  photo!:string;
   
   @CreatedAt
   createdAt!: Date;

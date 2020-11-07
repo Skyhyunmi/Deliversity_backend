@@ -44,9 +44,6 @@ const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 exports.order = express_1.Router();
 const myCache = new node_cache_1.default({ stdTTL: 0, checkperiod: 0 });
-class Rider {
-}
-;
 exports.order.post('/', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //주문 등록

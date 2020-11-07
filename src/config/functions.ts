@@ -1,35 +1,17 @@
 import axios from "axios";
 import {userRep} from "../models/index";
 import * as crypto from "crypto";
-import urlencode from "urlencode";
 import * as admin from "firebase-admin";
 import Cache from "node-cache";
 import User from "../models/user";
 import jwt from "jsonwebtoken";
-import { transporter } from "../config/mail";
+import { transporter } from "./mail";
+import * as classes from "./classes";
 
 import dotenv from "dotenv";
 dotenv.config();
 
 export const myCache = new Cache();
-
-export class payLoad {
-    id!: number;
-    userId!: string;
-    name!: string;
-    nickName!: string;
-    grade!: number;
-    loggedAt!: string;
-
-    constructor(user:User){
-      this.id = user.id;
-      this.userId = user.userId;
-      this.name = user.nickName;
-      this.nickName = user.nickName;
-      this.grade = user.grade;
-      this.loggedAt= new Date().toString();
-    }
-}
 
 function makeSignature(urlsub: string, timestamp: string) {
   const space = " ";
@@ -97,7 +79,7 @@ export async function emailVerify(verify:string){
 export async function getAuthToken(user:User){
   const uid = user.firebaseUid;
   const firebaseToken = await admin.auth().createCustomToken(uid);
-  const authToken=jwt.sign(Object.assign({},new payLoad(user)), process.env.JWT_SECRET as jwt.Secret, {
+  const authToken=jwt.sign(Object.assign({},new classes.payLoad(user)), process.env.JWT_SECRET as jwt.Secret, {
     expiresIn: '7d',
   });
   const payload={
@@ -109,7 +91,7 @@ export async function getAuthToken(user:User){
 
 export async function sendSMS(phone:string){
   const sendFrom = process.env.SEND_FROM;
-  const serviceID = urlencode.encode(process.env.NAVER_SMS_SERVICE_ID as string);
+  const serviceID = encodeURIComponent(process.env.NAVER_SMS_SERVICE_ID as string);
   const timestamp = Date.now().toString();
   const urlsub = `/sms/v2/services/${serviceID}/messages`;
   const signature = makeSignature(urlsub, timestamp);

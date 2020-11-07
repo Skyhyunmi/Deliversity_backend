@@ -31,29 +31,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUserFromKakaoInfo = exports.getUserFromGoogleInfo = exports.smsVerify = exports.sendSMS = exports.getAuthToken = exports.emailVerify = exports.sendEmail = exports.payLoad = exports.myCache = void 0;
+exports.getUserFromKakaoInfo = exports.getUserFromGoogleInfo = exports.smsVerify = exports.sendSMS = exports.getAuthToken = exports.emailVerify = exports.sendEmail = exports.myCache = void 0;
 const axios_1 = __importDefault(require("axios"));
 const index_1 = require("../models/index");
 const crypto = __importStar(require("crypto"));
-const urlencode_1 = __importDefault(require("urlencode"));
 const admin = __importStar(require("firebase-admin"));
 const node_cache_1 = __importDefault(require("node-cache"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const mail_1 = require("../config/mail");
+const mail_1 = require("./mail");
+const classes = __importStar(require("./classes"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 exports.myCache = new node_cache_1.default();
-class payLoad {
-    constructor(user) {
-        this.id = user.id;
-        this.userId = user.userId;
-        this.name = user.nickName;
-        this.nickName = user.nickName;
-        this.grade = user.grade;
-        this.loggedAt = new Date().toString();
-    }
-}
-exports.payLoad = payLoad;
 function makeSignature(urlsub, timestamp) {
     const space = " ";
     const newLine = "\n";
@@ -126,7 +115,7 @@ function getAuthToken(user) {
     return __awaiter(this, void 0, void 0, function* () {
         const uid = user.firebaseUid;
         const firebaseToken = yield admin.auth().createCustomToken(uid);
-        const authToken = jsonwebtoken_1.default.sign(Object.assign({}, new payLoad(user)), process.env.JWT_SECRET, {
+        const authToken = jsonwebtoken_1.default.sign(Object.assign({}, new classes.payLoad(user)), process.env.JWT_SECRET, {
             expiresIn: '7d',
         });
         const payload = {
@@ -140,7 +129,7 @@ exports.getAuthToken = getAuthToken;
 function sendSMS(phone) {
     return __awaiter(this, void 0, void 0, function* () {
         const sendFrom = process.env.SEND_FROM;
-        const serviceID = urlencode_1.default.encode(process.env.NAVER_SMS_SERVICE_ID);
+        const serviceID = encodeURIComponent(process.env.NAVER_SMS_SERVICE_ID);
         const timestamp = Date.now().toString();
         const urlsub = `/sms/v2/services/${serviceID}/messages`;
         const signature = makeSignature(urlsub, timestamp);

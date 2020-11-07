@@ -35,10 +35,11 @@ exports.auth = void 0;
 const express_1 = require("express");
 const functions = __importStar(require("../config/functions"));
 const util = __importStar(require("../config/util"));
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const passport_1 = __importDefault(require("passport"));
+const classes = __importStar(require("../config/classes"));
 const index_1 = require("../models/index");
 const admin = __importStar(require("firebase-admin"));
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const passport_1 = __importDefault(require("passport"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 exports.auth = express_1.Router();
@@ -148,8 +149,26 @@ exports.auth.post('/login/fcm', util.isLoggedin, function (req, res) {
                 if (!user)
                     return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
                 user.update({ firebaseFCM: reqBody.fcmToken });
-                res.json(util.successTrue("", null));
+                return res.json(util.successTrue("", null));
             }));
+        }
+        catch (e) {
+            return res.status(403).json(util.successFalse(null, "Retry.", null));
+        }
+    });
+});
+exports.auth.post('/logout', util.isLoggedin, function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const reqBody = req.body;
+        const tokenData = req.decoded;
+        try {
+            const user = yield index_1.userRep.findOne({ where: { id: tokenData.id } });
+            if (!user)
+                return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
+            user.update({
+                firebaseFCM: null
+            });
+            return res.json(util.successTrue("", null));
         }
         catch (e) {
             return res.status(403).json(util.successFalse(null, "Retry.", null));
@@ -162,7 +181,7 @@ exports.auth.get('/refresh', util.isLoggedin, function (req, res) {
         if (!user) {
             return res.status(403).json(util.successFalse(null, "Can't refresh the token", { user: user }));
         }
-        const authToken = jsonwebtoken_1.default.sign(Object.assign({}, new functions.payLoad(user)), process.env.JWT_SECRET, {
+        const authToken = jsonwebtoken_1.default.sign(Object.assign({}, new classes.payLoad(user)), process.env.JWT_SECRET, {
             expiresIn: '7d',
         });
         return res.json(util.successTrue("", { token: authToken, grade: user.grade }));
