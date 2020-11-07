@@ -15,17 +15,20 @@ __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BIGINT)
 ], Chat.prototype, "id", void 0);
 __decorate([
-    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BIGINT)
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
 ], Chat.prototype, "roomId", void 0);
 __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
-], Chat.prototype, "userName", void 0);
+], Chat.prototype, "userId", void 0);
+__decorate([
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
+], Chat.prototype, "userNickName", void 0);
 __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.TEXT)
 ], Chat.prototype, "chat", void 0);
 __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BLOB)
-], Chat.prototype, "gif", void 0);
+], Chat.prototype, "photo", void 0);
 __decorate([
     sequelize_typescript_1.CreatedAt
 ], Chat.prototype, "createdAt", void 0);

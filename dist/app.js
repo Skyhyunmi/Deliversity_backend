@@ -46,6 +46,7 @@ const myinfo_1 = require("./router/myinfo");
 const order_1 = require("./router/order");
 const passport_2 = require("./config/passport");
 const util = __importStar(require("./config/util"));
+const classes = __importStar(require("./config/classes"));
 const models_1 = require("./models");
 const fs = __importStar(require("fs"));
 const path_1 = __importDefault(require("path"));
@@ -62,14 +63,6 @@ Admin.initializeApp({
 });
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
-class userData {
-    constructor(data) {
-        this.userName = data.user._id;
-        this.chat = data.text;
-        // this.gif=data.gif;
-        this.createdAt = Date.now();
-    }
-}
 const myCache = new node_cache_1.default();
 process.env.NODE_ENV = (process.env.NODE_ENV && (process.env.NODE_ENV)
     .trim().toLowerCase() == 'production') ? 'production' : 'development';
@@ -152,7 +145,6 @@ exports.io.of('/api/v1/chat/io').on('connection', (socket) => __awaiter(void 0, 
     socket.on('disconnect', (data) => __awaiter(void 0, void 0, void 0, function* () {
     }));
     socket.on('chat', (data) => __awaiter(void 0, void 0, void 0, function* () {
-        const pre = Date.now();
         let user = myCache.get(data[0].user._id);
         if (user == undefined) {
             user = yield models_1.userRep.findOne({
@@ -167,17 +159,16 @@ exports.io.of('/api/v1/chat/io').on('connection', (socket) => __awaiter(void 0, 
             myCache.set(data[0].user._id, _user);
             user = _user;
         }
-        const post = Date.now();
-        const room = data[0].user.password;
+        const room = data[0].user.roomId;
+        data[0].user.nickName = user.nickName;
         socket.join(room);
-        const msg = `${user.nickName}: ${data[0].text}`;
         socket.to(room).emit('rChat', data); // 백에서 클라이언트로 rChat으로 emit
         let list = myCache.get('chat');
         if (list == undefined)
-            myCache.set('chat', [new userData(data[0])]);
+            myCache.set('chat', [new classes.userData(data[0], user.nickName)]);
         else {
             list = myCache.take('chat');
-            list.push(new userData(data[0]));
+            list.push(new classes.userData(data[0], user.nickName));
             myCache.set('chat', list);
         }
     }));

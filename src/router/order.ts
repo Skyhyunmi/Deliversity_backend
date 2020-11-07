@@ -1,6 +1,7 @@
 /* eslint-disable no-inner-declarations */
 import { Request, Response, Router } from "express";
 import * as util from "../config/util";
+import * as classes from "../config/classes";
 import NodeCache from "node-cache";
 import * as db from "sequelize";
 import * as crypto from "crypto";
@@ -13,11 +14,6 @@ dotenv.config();
 
 export const order = Router();
 const myCache = new NodeCache({ stdTTL: 0, checkperiod: 0 });
-
-class Rider {
-  riderId!: number;
-  extraFee!: number;
-};
 
 order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
   //주문 등록
@@ -219,7 +215,7 @@ order.post('/rider', util.isLoggedin, async function (req: Request, res: Respons
     });
     let registrationToken;
     if (!order) return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
-    const riderlist = myCache.get(req.query.orderId as string) as Rider[];
+    const riderlist = myCache.get(req.query.orderId as string) as classes.Rider[];
     if (riderlist == undefined) return res.status(403).json(util.successFalse(null, "배달을 희망하는 배달원이 없습니다.", null));
     const rider = riderlist.filter(rider => rider.riderId == riderId)[0];
     if (!rider) return res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
@@ -525,13 +521,13 @@ order.post('/apply', util.isLoggedin, util.isRider, async function (req: Request
   let extraFee;
   extraFee = parseInt(reqBody.extraFee);
   if (!reqBody.extraFee) extraFee = 0;
-  let riderlist = myCache.get(req.query.orderId as string) as Rider[];
+  let riderlist = myCache.get(req.query.orderId as string) as classes.Rider[];
   if (riderlist == undefined) { myCache.set(req.query.orderId as string, [{ riderId: riderId, extraFee: extraFee }]); }
   else {
     const rider = riderlist.filter(rider => rider.riderId == riderId)[0];
     if (rider) return res.status(403).json(util.successFalse(null, "이미 배달 신청한 주문입니다.", null));
 
-    riderlist = myCache.take(req.query.orderId as string) as Rider[];
+    riderlist = myCache.take(req.query.orderId as string) as classes.Rider[];
     riderlist.push({ riderId: riderId, extraFee: extraFee });
     myCache.set(req.query.orderId as string, riderlist);
   }

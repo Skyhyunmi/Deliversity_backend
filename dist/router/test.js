@@ -37,6 +37,8 @@ const util = __importStar(require("../config/util"));
 const axios_1 = __importDefault(require("axios"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
+const admin = __importStar(require("firebase-admin"));
+const models_1 = require("../models");
 exports.test = express_1.Router();
 exports.test.get("/hello", (req, res) => {
     res.json({ string: "hello pm2! nice to meet you!" });
@@ -60,6 +62,33 @@ exports.test.post('/juso', function (req, res) {
         }
         catch (err) {
             console.error(err);
+        }
+    });
+});
+exports.test.post('/noti', util.isLoggedin, function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const reqBody = req.body;
+        const tokenData = req.decoded;
+        const user = yield models_1.userRep.findOne({ where: { id: tokenData.id } });
+        if (!user)
+            return res.status(403).json(util.successFalse(null, "Retry.", null));
+        const registrationToken = user.firebaseFCM;
+        console.log(registrationToken);
+        try {
+            const payload = reqBody.payload;
+            // token: registrationToken
+            // await admin.messaging().sendToDevice(registrationToken,{
+            //   data:{test:"hi"}
+            // })
+            admin.messaging().sendToDevice(registrationToken, payload);
+            // admin.messaging().send(payload)
+            // .then(result=>{
+            //   return res.json(util.successTrue( "", payload.notification));
+            // })
+            return res.json(util.successTrue("", payload.notification));
+        }
+        catch (err) {
+            return res.status(403).json(util.successFalse(err, "Retry.", null));
         }
     });
 });
