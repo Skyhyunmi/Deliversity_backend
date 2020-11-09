@@ -75,6 +75,7 @@ auth.post('/login/google', async function (req: Request, res: Response) {
     const user = await functions.getUserFromGoogleInfo(idToken);
     if (!user) return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
     if (!user.user) return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
+    user.user.update({firebaseFCM:req.body.fcmToken});
     const result = await functions.getAuthToken(user.user);
     return res.json(util.successTrue("", {firebaseToken: result.firebaseToken, token: result.authToken, grade: user.user.grade }));
   }catch (e) {
@@ -90,40 +91,11 @@ auth.post('/login/kakao', async function (req: Request, res: Response) {
     const user = await functions.getUserFromKakaoInfo(accessToken);
     if (!user) return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
     if (!user.user) return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
+    user.user.update({firebaseFCM:req.body.fcmToken});
     const result = await functions.getAuthToken(user.user);
     return res.json(util.successTrue("", {firebaseToken:result.firebaseToken, token: result.authToken, grade: user.user.grade }));
   }catch (e) {
     console.log("Error at login/kakao");
-    return res.status(403).json(util.successFalse(null, "Retry.", null));
-  }
-});
-
-auth.post('/login/fcm', util.isLoggedin, async function (req: Request, res: Response) {
-  const reqBody=req.body;
-  try{
-    admin.auth().verifyIdToken(reqBody.idToken)
-      .then(async (data)=>{
-        const user = await userRep.findOne({where:{firebaseUid:data.uid}});
-        if(!user) return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
-        user.update({firebaseFCM:reqBody.fcmToken});
-        return res.json(util.successTrue("", null));
-      });
-  }catch (e) {
-    return res.status(403).json(util.successFalse(null, "Retry.", null));
-  }
-});
-
-auth.post('/logout', util.isLoggedin, async function (req: Request, res: Response) {
-  const reqBody=req.body;
-  const tokenData=req.decoded;
-  try{
-    const user = await userRep.findOne({where:{id: tokenData.id}});
-    if(!user) return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
-    user.update({
-      firebaseFCM:null
-    });
-    return res.json(util.successTrue("", null));
-  }catch (e) {
     return res.status(403).json(util.successFalse(null, "Retry.", null));
   }
 });
