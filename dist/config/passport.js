@@ -192,6 +192,7 @@ function passportConfig() {
                 });
                 if (!user)
                     return done(null, false, { message: 'ID do not match' });
+                user.update({ firebaseFCM: req.body.fcmToken });
                 if (user.googleOAuth == null && req.body.idToken) {
                     const idToken = req.body.idToken;
                     //토큰 검증
