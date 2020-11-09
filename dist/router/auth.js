@@ -111,6 +111,7 @@ exports.auth.post('/login/google', function (req, res) {
                 return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
             if (!user.user)
                 return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
+            user.user.update({ firebaseFCM: req.body.fcmToken });
             const result = yield functions.getAuthToken(user.user);
             return res.json(util.successTrue("", { firebaseToken: result.firebaseToken, token: result.authToken, grade: user.user.grade }));
         }
@@ -130,47 +131,12 @@ exports.auth.post('/login/kakao', function (req, res) {
                 return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
             if (!user.user)
                 return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
+            user.user.update({ firebaseFCM: req.body.fcmToken });
             const result = yield functions.getAuthToken(user.user);
             return res.json(util.successTrue("", { firebaseToken: result.firebaseToken, token: result.authToken, grade: user.user.grade }));
         }
         catch (e) {
             console.log("Error at login/kakao");
-            return res.status(403).json(util.successFalse(null, "Retry.", null));
-        }
-    });
-});
-exports.auth.post('/login/fcm', util.isLoggedin, function (req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const reqBody = req.body;
-        try {
-            admin.auth().verifyIdToken(reqBody.idToken)
-                .then((data) => __awaiter(this, void 0, void 0, function* () {
-                const user = yield index_1.userRep.findOne({ where: { firebaseUid: data.uid } });
-                if (!user)
-                    return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
-                user.update({ firebaseFCM: reqBody.fcmToken });
-                return res.json(util.successTrue("", null));
-            }));
-        }
-        catch (e) {
-            return res.status(403).json(util.successFalse(null, "Retry.", null));
-        }
-    });
-});
-exports.auth.post('/logout', util.isLoggedin, function (req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const reqBody = req.body;
-        const tokenData = req.decoded;
-        try {
-            const user = yield index_1.userRep.findOne({ where: { id: tokenData.id } });
-            if (!user)
-                return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
-            user.update({
-                firebaseFCM: null
-            });
-            return res.json(util.successTrue("", null));
-        }
-        catch (e) {
             return res.status(403).json(util.successFalse(null, "Retry.", null));
         }
     });
