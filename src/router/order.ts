@@ -1,6 +1,7 @@
 /* eslint-disable no-inner-declarations */
 import { Request, Response, Router } from "express";
 import * as util from "../config/util";
+import * as functions from "../config/functions";
 import * as classes from "../config/classes";
 import NodeCache from "node-cache";
 import * as db from "sequelize";
@@ -58,47 +59,57 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
       return res.status(403).json(util.successFalse(null, "주소를 다시 확인해주세요.", null));
     }
 
-    const from = await axios({
-      url: 'https://dapi.kakao.com/v2/local/geo/transcoord.json',
-      method: "GET",
-      params: {
-        y: address.locX,
-        x: address.locY,
-        input_coord: "WGS84",
-        output_coord: "WCONGNAMUL"
-      },
-      headers: {
-        Authorization: `KakaoAK ${process.env.KAKAO_KEY}`
-      }
-    }) as any;
+    // const from = await axios({
+    //   url: 'https://dapi.kakao.com/v2/local/geo/transcoord.json',
+    //   method: "GET",
+    //   params: {
+    //     y: address.locX,
+    //     x: address.locY,
+    //     input_coord: "WGS84",
+    //     output_coord: "WCONGNAMUL"
+    //   },
+    //   headers: {
+    //     Authorization: `KakaoAK ${process.env.KAKAO_KEY}`
+    //   }
+    // }) as any;
 
-    const to = await axios({
-      url: 'https://dapi.kakao.com/v2/local/geo/transcoord.json',
-      method: "GET",
-      params: {
-        y: coord.data.documents[0].y,
-        x: coord.data.documents[0].x,
-        input_coord: "WGS84",
-        output_coord: "WCONGNAMUL"
-      },
-      headers: {
-        Authorization: `KakaoAK ${process.env.KAKAO_KEY}`
-      }
-    }) as any;
+    // const to = await axios({
+    //   url: 'https://dapi.kakao.com/v2/local/geo/transcoord.json',
+    //   method: "GET",
+    //   params: {
+    //     y: coord.data.documents[0].y,
+    //     x: coord.data.documents[0].x,
+    //     input_coord: "WGS84",
+    //     output_coord: "WCONGNAMUL"
+    //   },
+    //   headers: {
+    //     Authorization: `KakaoAK ${process.env.KAKAO_KEY}`
+    //   }
+    // }) as any;
     // return res.json(util.successTrue("",data.data.documents[0]))
-    const distanceData = await axios({
-      url: 'https://map.kakao.com/route/walkset.json',
-      method: "GET",
-      params: {
-        sX: from.data.documents[0].x,
-        sY: from.data.documents[0].y,
-        eX: to.data.documents[0].x,
-        eY: to.data.documents[0].y,
-        ids: ','
-      }
-    }) as any;
-    const fee = parseInt(distanceData.data.directions[0].length);
-    cost += 550 * Math.floor(fee / 1000 / 0.5);
+    // let distanceData:any;
+    // let fee: any;
+    //  axios({
+    //   url: 'https://map.kakao.com/route/walkset.json',
+    //   method: "GET",
+    //   params: {
+    //     sX: from.data.documents[0].x,
+    //     sY: from.data.documents[0].y,
+    //     eX: to.data.documents[0].x,
+    //     eY: to.data.documents[0].y,
+    //     ids: ','
+    //   }
+    // }).then((data)=>{
+    //   console.log(data.data.directions.length)
+    //   fee = parseInt(data.data.directions.length);
+    // }).catch(()=>{
+      
+    const fee = functions.getDistanceFromLatLonInKm(address.locX,address.locY,coord.data.documents[0].y,coord.data.documents[0].x);
+    // console.log(fee)
+    // const fee = distanceData;
+    // })
+    
+    cost += 550 * Math.floor(fee / 0.5);
 
     const data = {
       userId: tokenData.id,

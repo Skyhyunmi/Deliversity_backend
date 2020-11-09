@@ -31,7 +31,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUserFromKakaoInfo = exports.getUserFromGoogleInfo = exports.smsVerify = exports.sendSMS = exports.getAuthToken = exports.emailVerify = exports.sendEmail = exports.myCache = void 0;
+exports.getDistanceFromLatLonInKm = exports.getUserFromKakaoInfo = exports.getUserFromGoogleInfo = exports.smsVerify = exports.sendSMS = exports.getAuthToken = exports.emailVerify = exports.sendEmail = exports.myCache = void 0;
 const axios_1 = __importDefault(require("axios"));
 const index_1 = require("../models/index");
 const crypto = __importStar(require("crypto"));
@@ -239,3 +239,16 @@ function getUserFromKakaoInfo(accessToken) {
     });
 }
 exports.getUserFromKakaoInfo = getUserFromKakaoInfo;
+function getDistanceFromLatLonInKm(lat1, lng1, lat2, lng2) {
+    function deg2rad(deg) {
+        return deg * (Math.PI / 180);
+    }
+    const R = 6371; // Radius of the earth in km
+    const dLat = deg2rad(parseFloat(lat2) - parseFloat(lat1)); // deg2rad below
+    const dLon = deg2rad(parseFloat(lng2) - parseFloat(lng1));
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(deg2rad(parseFloat(lat1))) * Math.cos(deg2rad(parseFloat(lat2))) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const d = R * c; // Distance in km
+    return d;
+}
+exports.getDistanceFromLatLonInKm = getDistanceFromLatLonInKm;
