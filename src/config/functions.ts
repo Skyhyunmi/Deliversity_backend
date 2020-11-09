@@ -192,3 +192,16 @@ export async function getUserFromKakaoInfo(accessToken:string) {
   };
 }
 
+export function getDistanceFromLatLonInKm(lat1: string,lng1: string,lat2: string,lng2: string) {
+  function deg2rad(deg:number) {
+    return deg * (Math.PI/180);
+  }
+
+  const R = 6371; // Radius of the earth in km
+  const dLat = deg2rad(parseFloat(lat2)-parseFloat(lat1));  // deg2rad below
+  const dLon = deg2rad(parseFloat(lng2)-parseFloat(lng1));
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(parseFloat(lat1))) * Math.cos(deg2rad(parseFloat(lat2))) * Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const d = R * c; // Distance in km
+  return d;
+}
