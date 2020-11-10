@@ -616,12 +616,7 @@ exports.order.post('/apply', util.isLoggedin, util.isRider, function (req, res) 
         if (order.userId == tokenData.id)
             return res.status(403).json(util.successFalse(null, "본인의 주문에 배달원 지원은 불가능합니다.", null));
         const riderId = tokenData.id;
-        const user = yield models_1.userRep.findOne({
-            where: {
-                id: order.userId
-            },
-            order: [['orderStatus', 'ASC'], ['id', 'ASC']]
-        });
+        const user = yield models_1.userRep.findOne({ where: { id: order.userId } });
         if (!user)
             return res.status(403).json(util.successFalse(null, "해당 주문의 주문자가 존재하지 않습니다.", null));
         // eslint-disable-next-line prefer-const

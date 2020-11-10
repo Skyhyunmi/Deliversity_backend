@@ -530,12 +530,7 @@ order.post('/apply', util.isLoggedin, util.isRider, async function (req: Request
   if (orderStatus != 0) return res.status(403).json(util.successFalse(null, "배달원 모집이 끝난 주문입니다.", null));
   if (order.userId == tokenData.id) return res.status(403).json(util.successFalse(null, "본인의 주문에 배달원 지원은 불가능합니다.", null));
   const riderId = tokenData.id;
-  const user = await userRep.findOne({
-    where: {
-      id: order.userId
-    },
-    order: [['orderStatus', 'ASC'], ['id', 'ASC']]
-  });
+  const user = await userRep.findOne({ where: { id: order.userId } });
   if (!user) return res.status(403).json(util.successFalse(null, "해당 주문의 주문자가 존재하지 않습니다.", null));
   // eslint-disable-next-line prefer-const
   registrationToken = user.firebaseFCM;
