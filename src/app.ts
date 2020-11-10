@@ -159,11 +159,11 @@ io.of('/api/v1/chat/io').on('connection',async (socket)=>{
 
     let list = myCache.get('chat') as classes.userData[];
     if(list == undefined)
-      myCache.set('chat',[new classes.userData(data[0],user.nickName)])
+      myCache.set('chat',[new classes.userData(data[0],user.nickName)]);
     else{
       list=myCache.take('chat') as classes.userData[];
-      list.push(new classes.userData(data[0],user.nickName))
-      myCache.set('chat',list)
+      list.push(new classes.userData(data[0],user.nickName));
+      myCache.set('chat',list);
     }
   });
 });

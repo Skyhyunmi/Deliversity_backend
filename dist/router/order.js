@@ -603,6 +603,7 @@ exports.order.post('/apply', util.isLoggedin, util.isRider, function (req, res) 
         const tokenData = req.decoded;
         const reqBody = req.body;
         let orderStatus;
+        let registrationToken;
         // 해당 주문 번호
         const order = yield models_1.orderRep.findOne({ where: { id: req.query.orderId } });
         if (!order)
@@ -615,6 +616,16 @@ exports.order.post('/apply', util.isLoggedin, util.isRider, function (req, res) 
         if (order.userId == tokenData.id)
             return res.status(403).json(util.successFalse(null, "본인의 주문에 배달원 지원은 불가능합니다.", null));
         const riderId = tokenData.id;
+        const user = yield models_1.userRep.findOne({
+            where: {
+                userId: order.userId
+            },
+            order: [['orderStatus', 'ASC'], ['id', 'ASC']]
+        });
+        if (!user)
+            return res.status(403).json(util.successFalse(null, "해당 주문의 주문자가 존재하지 않습니다.", null));
+        // eslint-disable-next-line prefer-const
+        registrationToken = user.firebaseFCM;
         let extraFee;
         extraFee = parseInt(reqBody.extraFee);
         if (!reqBody.extraFee)
@@ -631,6 +642,19 @@ exports.order.post('/apply', util.isLoggedin, util.isRider, function (req, res) 
             riderlist.push({ riderId: riderId, extraFee: extraFee });
             myCache.set(req.query.orderId, riderlist);
         }
+        const message = {
+            data: {
+                test: "추가 배달원이 배정되었습니다."
+            },
+            token: registrationToken
+        };
+        admin.messaging().send(message)
+            .then((response) => {
+            console.log('Successfully sent message:', response);
+        })
+            .catch((error) => {
+            console.log('Error sending message:', error);
+        });
         return res.json(util.successTrue("", riderlist));
     });
 });
