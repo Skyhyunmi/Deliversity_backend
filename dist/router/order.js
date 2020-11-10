@@ -618,7 +618,7 @@ exports.order.post('/apply', util.isLoggedin, util.isRider, function (req, res) 
         const riderId = tokenData.id;
         const user = yield models_1.userRep.findOne({
             where: {
-                userId: order.userId
+                id: order.userId
             },
             order: [['orderStatus', 'ASC'], ['id', 'ASC']]
         });

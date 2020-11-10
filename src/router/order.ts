@@ -103,12 +103,12 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
     //   console.log(data.data.directions.length)
     //   fee = parseInt(data.data.directions.length);
     // }).catch(()=>{
-      
-    const fee = functions.getDistanceFromLatLonInKm(address.locX,address.locY,coord.data.documents[0].y,coord.data.documents[0].x);
+
+    const fee = functions.getDistanceFromLatLonInKm(address.locX, address.locY, coord.data.documents[0].y, coord.data.documents[0].x);
     // console.log(fee)
     // const fee = distanceData;
     // })
-    
+
     cost += 550 * Math.floor(fee / 0.5);
 
     const data = {
@@ -532,7 +532,7 @@ order.post('/apply', util.isLoggedin, util.isRider, async function (req: Request
   const riderId = tokenData.id;
   const user = await userRep.findOne({
     where: {
-      userId: order.userId
+      id: order.userId
     },
     order: [['orderStatus', 'ASC'], ['id', 'ASC']]
   });

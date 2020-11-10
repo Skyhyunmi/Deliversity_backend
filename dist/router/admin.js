@@ -173,7 +173,7 @@ exports.admin.put('/report', util.isLoggedin, util.isAdmin, function (req, res) 
         }
     });
 });
-exports.admin.get('/qnas', util.isLoggedin, /*util.isAdmin,*/ function (req, res) {
+exports.admin.get('/qnas', util.isLoggedin, util.isAdmin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //문의 리스트 반환
         try {
@@ -187,7 +187,7 @@ exports.admin.get('/qnas', util.isLoggedin, /*util.isAdmin,*/ function (req, res
         }
     });
 });
-exports.admin.get('/qna', util.isLoggedin, /*util.isAdmin,*/ function (req, res) {
+exports.admin.get('/qna', util.isLoggedin, util.isAdmin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //문의 상세내용보기
         const qnaId = parseInt(req.query.qnaId);
@@ -203,7 +203,7 @@ exports.admin.get('/qna', util.isLoggedin, /*util.isAdmin,*/ function (req, res)
         }
     });
 });
-exports.admin.put('/qna', util.isLoggedin, /*util.isAdmin,*/ function (req, res) {
+exports.admin.put('/qna', util.isLoggedin, util.isAdmin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //문의 답변 작성
         let registrationToken;
