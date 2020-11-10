@@ -111,7 +111,7 @@ admin.put('/report', util.isLoggedin, util.isAdmin, async function (req: Request
 });
 
 
-admin.get('/qnas', util.isLoggedin, /*util.isAdmin,*/ async function (req: Request, res: Response) {
+admin.get('/qnas', util.isLoggedin, util.isAdmin, async function (req: Request, res: Response) {
   //문의 리스트 반환
   try {
     const lists = await qnaRep.findAll({ where: { status: 0 }, attributes: ['id', 'qnaKind'] });
@@ -122,7 +122,7 @@ admin.get('/qnas', util.isLoggedin, /*util.isAdmin,*/ async function (req: Reque
   }
 });
 
-admin.get('/qna', util.isLoggedin, /*util.isAdmin,*/ async function (req: Request, res: Response) {
+admin.get('/qna', util.isLoggedin, util.isAdmin, async function (req: Request, res: Response) {
   //문의 상세내용보기
   const qnaId = parseInt(req.query.qnaId as string);
   try {
@@ -134,7 +134,7 @@ admin.get('/qna', util.isLoggedin, /*util.isAdmin,*/ async function (req: Reques
   }
 });
 
-admin.put('/qna', util.isLoggedin, /*util.isAdmin,*/ async function (req: Request, res: Response) {
+admin.put('/qna', util.isLoggedin, util.isAdmin, async function (req: Request, res: Response) {
   //문의 답변 작성
   let registrationToken;
   const reqBody = req.body;
