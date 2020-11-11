@@ -39,8 +39,8 @@ export default class Point extends Model<Point> {
     @Column(DataType.BIGINT)
     point!:number;
 
-    @Column(DataType.STRING)
-    status!:string;
+    @Column(DataType.BOOLEAN)
+    status!:boolean;
     
     @CreatedAt
     createdAt!: Date;
@@ -50,5 +50,8 @@ export default class Point extends Model<Point> {
   
     @DeletedAt
     deletedAt!: Date;
+
+    @Column(DataType.DATE)
+    expireAt!: Date;
 }
   
