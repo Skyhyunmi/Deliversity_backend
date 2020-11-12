@@ -151,10 +151,12 @@ exports.io.on('connect', (socket) => __awaiter(void 0, void 0, void 0, function*
         console.log("> user disconnect from: ");
         console.log(roomId);
         socket.disconnect();
+        myCache.del(roomId);
     }));
     socket.on('cnt', (roomId) => __awaiter(void 0, void 0, void 0, function* () {
         console.log("> user connect to: ");
         console.log(roomId);
+        myCache.del(roomId);
         socket.join(roomId);
     }));
     socket.on('chat', (data) => __awaiter(void 0, void 0, void 0, function* () {
