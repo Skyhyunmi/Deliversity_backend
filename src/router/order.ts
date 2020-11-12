@@ -306,10 +306,15 @@ order.get('/chat', util.isLoggedin, async function (req: Request, res: Response)
 
 order.get('/price', util.isLoggedin, async function (req: Request, res: Response) {
   //최종 결제 금액 반환
-  // const tokenData = req.decoded;
-  // const reqBody = req.body;
   try {
-    //작성
+    const orderId = parseInt(req.query.orderId as string);
+    const order = await orderRep.findOne({ where: { id: orderId } });
+    if (!order) return res.json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
+    if (parseInt(order.orderStatus) != 1) return res.json(util.successFalse(null, "현재 배달 과정의 주문이 아닙니다.", null));
+    if (!order.cost) return res.json(util.successFalse(null, "물건 값을 먼저 입력해주세요.", null));
+    const totalCost = order.deliveryFee + order.extraFee + order.cost;
+    order.update({ totalCost: totalCost });
+    return res.json(util.successTrue("", order));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
@@ -317,10 +322,18 @@ order.get('/price', util.isLoggedin, async function (req: Request, res: Response
 
 order.post('/price', util.isLoggedin, util.isRider, async function (req: Request, res: Response) {
   //배달원이 최종 결제 금액 전송
-  // const tokenData = req.decoded;
-  // const reqBody = req.body;
+  const tokenData = req.decoded;
+  const reqBody = req.body;
   try {
-    //작성
+    const orderId = parseInt(req.query.orderId as string);
+    const order = await orderRep.findOne({ where: { id: orderId } });
+    if (!order) return res.json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
+    if (order.riderId != tokenData.id) return res.json(util.successFalse(null, "해당하는 주문의 배달원이 아닙니다.", null));
+    if (parseInt(order.orderStatus) != 1) return res.json(util.successFalse(null, "현재 배달 과정의 주문이 아닙니다.", null));
+    if (order.cost) return res.json(util.successFalse(null, "이미 결제 금액이 등록 되었습니다.", null));
+    const cost = reqBody.cost;
+    order.update({ cost: cost });
+    return res.json(util.successTrue("", order));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
