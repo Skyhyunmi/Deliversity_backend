@@ -89,6 +89,12 @@ __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
 ], User.prototype, "idCard", void 0);
 __decorate([
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
+], User.prototype, "lat", void 0);
+__decorate([
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
+], User.prototype, "lng", void 0);
+__decorate([
     sequelize_typescript_1.CreatedAt
 ], User.prototype, "createdAt", void 0);
 __decorate([

@@ -32,7 +32,7 @@ __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BIGINT)
 ], Point.prototype, "point", void 0);
 __decorate([
-    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BOOLEAN)
 ], Point.prototype, "status", void 0);
 __decorate([
     sequelize_typescript_1.CreatedAt
@@ -43,6 +43,9 @@ __decorate([
 __decorate([
     sequelize_typescript_1.DeletedAt
 ], Point.prototype, "deletedAt", void 0);
+__decorate([
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.DATE)
+], Point.prototype, "expireAt", void 0);
 Point = __decorate([
     sequelize_typescript_1.Table({ timestamps: true })
 ], Point);

@@ -31,7 +31,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDistanceFromLatLonInKm = exports.getUserFromKakaoInfo = exports.getUserFromGoogleInfo = exports.smsVerify = exports.sendSMS = exports.getAuthToken = exports.emailVerify = exports.sendEmail = exports.myCache = void 0;
+exports.getDistanceFromLatLonInKm = exports.getUserFromKakaoInfo = exports.getUserFromGoogleInfo = exports.smsVerify = exports.sendSMS = exports.sendSMStoAdmin = exports.getAuthToken = exports.emailVerify = exports.sendEmail = exports.myCache = void 0;
 const axios_1 = __importDefault(require("axios"));
 const index_1 = require("../models/index");
 const crypto = __importStar(require("crypto"));
@@ -126,6 +126,45 @@ function getAuthToken(user) {
     });
 }
 exports.getAuthToken = getAuthToken;
+function sendSMStoAdmin() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const sendFrom = process.env.SEND_FROM;
+        const serviceID = encodeURIComponent(process.env.NAVER_SMS_SERVICE_ID);
+        const timestamp = Date.now().toString();
+        const urlsub = `/sms/v2/services/${serviceID}/messages`;
+        const signature = makeSignature(urlsub, timestamp);
+        const randomNumber = Math.floor(Math.random() * (999999 - 100000)) + 100000;
+        const data = {
+            "type": "SMS",
+            "contentType": "COMM",
+            "countryCode": "82",
+            "from": sendFrom,
+            "content": `Deliverssity Server Started.`,
+            "messages": [{ "to": sendFrom }]
+        };
+        try {
+            const Token = yield axios_1.default({
+                url: `https://sens.apigw.ntruss.com/sms/v2/services/${serviceID}/messages`,
+                method: "post",
+                headers: {
+                    "Content-Type": "application/json; charset=utf-8",
+                    "x-ncp-apigw-timestamp": timestamp,
+                    "x-ncp-iam-access-key": process.env.NAVER_KEY,
+                    "x-ncp-apigw-signature-v2": signature
+                },
+                data: data
+            });
+            const tokenData = Token.data;
+            if (tokenData.statusCode == "202")
+                return null;
+            return "문자 전송 실패";
+        }
+        catch (e) {
+            return "문자 전송 실패";
+        }
+    });
+}
+exports.sendSMStoAdmin = sendSMStoAdmin;
 function sendSMS(phone) {
     return __awaiter(this, void 0, void 0, function* () {
         const sendFrom = process.env.SEND_FROM;
