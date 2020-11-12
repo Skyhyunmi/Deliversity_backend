@@ -144,11 +144,13 @@ io.on('connect',async (socket:Socket)=>{
     console.log("> user disconnect from: ")
     console.log(roomId)
     socket.disconnect();
+    myCache.del(roomId)
   });
 
   socket.on('cnt',async (roomId: any)=>{ // 클라이언트에서 백으로 chat으로 emit
     console.log("> user connect to: ")
     console.log(roomId)
+    myCache.del(roomId)
     socket.join(roomId);
   });
 
