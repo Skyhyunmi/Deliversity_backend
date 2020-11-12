@@ -391,6 +391,22 @@ exports.myinfo.post('/toUser', util.isLoggedin, util.isRider, function (req, res
         }
     });
 });
+exports.myinfo.post('/currentLocation', util.isLoggedin, util.isRider, function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const tokenData = req.decoded;
+        const reqBody = req.body;
+        try {
+            const user = yield index_1.userRep.findOne({ where: { userId: tokenData.userId } });
+            if (!user)
+                return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
+            user.update({ lat: reqBody.coords.latitude, lng: reqBody.coords.longitude });
+            return res.json(util.successTrue("", null));
+        }
+        catch (err) {
+            return res.status(403).json(util.successFalse(err, "", null));
+        }
+    });
+});
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////                              개발용 API입니다. 나중에는 지워야 합니다.                              ////

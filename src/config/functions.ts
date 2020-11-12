@@ -89,6 +89,43 @@ export async function getAuthToken(user:User){
   return payload;
 }
 
+export async function sendSMStoAdmin(){
+  const sendFrom = process.env.SEND_FROM;
+  const serviceID = encodeURIComponent(process.env.NAVER_SMS_SERVICE_ID as string);
+  const timestamp = Date.now().toString();
+  const urlsub = `/sms/v2/services/${serviceID}/messages`;
+  const signature = makeSignature(urlsub, timestamp);
+  const randomNumber = Math.floor(Math.random() * (999999 - 100000)) + 100000;
+  const data = {
+    "type": "SMS",
+    "contentType": "COMM",
+    "countryCode": "82",
+    "from": sendFrom,
+    "content": `Deliverssity Server Started.`,
+    "messages": [{ "to": sendFrom}]
+  };
+  try {
+    const Token = await axios({
+      url: `https://sens.apigw.ntruss.com/sms/v2/services/${serviceID}/messages`,
+      method: "post", // POST method
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        "x-ncp-apigw-timestamp": timestamp,
+        "x-ncp-iam-access-key": process.env.NAVER_KEY,
+        "x-ncp-apigw-signature-v2": signature
+      }, // "Content-Type": "application/json"
+      data: data
+    });
+    const tokenData = Token.data;
+    if (tokenData.statusCode == "202")
+      return null;
+    return "문자 전송 실패";
+  }
+  catch (e) {
+    return "문자 전송 실패";
+  }
+}
+
 export async function sendSMS(phone:string){
   const sendFrom = process.env.SEND_FROM;
   const serviceID = encodeURIComponent(process.env.NAVER_SMS_SERVICE_ID as string);

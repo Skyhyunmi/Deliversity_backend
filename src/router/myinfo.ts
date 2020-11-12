@@ -318,6 +318,19 @@ myinfo.post('/toUser', util.isLoggedin, util.isRider, async function (req: Reque
   }
 });
 
+myinfo.post('/currentLocation',util.isLoggedin, util.isRider, async function ( req: Request, res: Response ) {
+  const tokenData = req.decoded;
+  const reqBody = req.body;
+  try {
+    const user = await userRep.findOne({where:{userId:tokenData.userId}});
+    if (!user) return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
+    user.update({lat:reqBody.coords.latitude,lng:reqBody.coords.longitude});
+    return res.json(util.successTrue("", null));
+  } catch (err) {
+    return res.status(403).json(util.successFalse(err, "", null));
+  }
+});
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////                              개발용 API입니다. 나중에는 지워야 합니다.                              ////

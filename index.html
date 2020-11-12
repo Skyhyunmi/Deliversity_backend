@@ -6,26 +6,46 @@
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 </head>
 <body>
+
+
+
   <div class="container">
     <h3>Socket.io Chat Example</h3>
+    <label>o:20, r:30 664e4b4a0f8f37dfc636f8296992e08b5639a2f539115e9a51</label>
+    <label>o:26, r:30 e2a17849009523822b65cecfb2249963ac14102524d6eba17b</label>
+    <form id="connect" class="form-horizontal">
+    <div class="form-group">
+      <label for="connect" class="col-sm-2 control-label">Connect</label>
+      <div class="col-sm-10">
+        <input type="text" class="form1-control" id="room" placeholder="Room" value="664e4b4a0f8f37dfc636f8296992e08b5639a2f539115e9a51">
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="col-sm-offset-2 col-sm-10">
+        <button type="submit" class="btn btn-default">Send</button>
+      </div>
+    </div>
+  </form>
+
+  <form id="disconnect" class="form-horizontal">
+  <div class="form1-group">
+    <div class="col-sm-offset-2 col-sm-10">
+      <button type="submit" class="btn btn-default">Disconnect</button>
+    </div>
+  </div>
+</form>
     <!-- <form class="form-inline"> -->
-    <form class="form-horizontal">
+    <form id="send" class="form-horizontal">
       <div class="form-group">
         <label for="name" class="col-sm-2 control-label">Name</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" id="name" placeholder="Name">
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="room" class="col-sm-2 control-label">Room</label>
-        <div class="col-sm-10">
-          <input type="text" class="form-control" id="room" placeholder="Room">
+          <input type="text" class="form-control" id="name" placeholder="Name" value="20">
         </div>
       </div>
       <div class="form-group">
         <label for="msg" class="col-sm-2 control-label">Message</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" id="msg" placeholder="Message">
+          <input type="text" class="form-control" id="msg" placeholder="Message" value="test">
         </div>
       </div>
       <div class="form-group">
@@ -39,29 +59,38 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    // $(function() {
-    //   // 지정 namespace로 접속한다
-    //   var chat = io('http://192.168.219.121:3000/api/v1/chat/io',{transports:['websocket']}),
-    //       news = io('/news');
+    $(function() {
+      // 지정 namespace로 접속한다
+      var chat = io('ws://deliversity.co.kr:81',{transports:['websocket','polling']})
 
-    //   $("form").submit(function(e) {
-    //     e.preventDefault();
-
-    //     // 서버로 자신의 정보를 전송한다.
-    //     chat.emit("chat", [{
-    //       user :{
-    //         _id: parseInt($("#name").val()),
-    //         password: $("#room").val(),
-    //       },
-    //       text: $("#msg").val()
-    //     }]);
-    //     $("#chat").append($('<li>').text($("#name").val()+": "+$("#msg").val()));
-    //   });
-    //   // 서버로부터의 메시지가 수신되면
-    //   chat.on("rChat", function(data) {
-    //     $("#chat").append($('<li>').text(`${data[0].user._id}: ${data[0].text}`));
-    //   });
-    // });
+      $("#connect").submit(function(e) {
+        e.preventDefault();
+        chat.emit('cnt',$("#room").val())
+      });
+      $("#disconnect").submit(function(e) {
+        e.preventDefault();
+        chat.emit('dscnt',$("#room").val())
+      });
+      $("#send").submit(function(e) {
+        e.preventDefault();
+        // 서버로 자신의 정보를 전송한다.
+        chat.emit("chat", [{
+          user :{
+            _id: parseInt($("#name").val()),
+            roomId: $("#room").val(),
+          },
+          text: $("#msg").val()
+        }]);
+        $("#chat").append($('<li>').text("Me : "+$("#msg").val()));
+      });
+      // 서버로부터의 메시지가 수신되면
+      chat.on("rChat", function(data) {
+        $("#chat").append($('<li>').text(`${data[0].user.nickName}: ${data[0].text}`));
+      });
+      // window.onload = setInterval(()=>{
+      //   chat.emit('check',$("#room").val())
+      // },1000)
+    });
   </script>
 </body>
 </html>

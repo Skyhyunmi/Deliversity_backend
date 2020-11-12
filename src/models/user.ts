@@ -94,6 +94,13 @@ export default class User extends Model<User> {
   @Column(DataType.STRING)
   idCard!:string;
 
+  @Column(DataType.STRING)
+  lat!: string;
+
+  // @AllowNull(true)
+  @Column(DataType.STRING)
+  lng!: string;
+
   @CreatedAt
   createdAt!: Date;
 
