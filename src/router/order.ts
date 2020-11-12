@@ -103,12 +103,12 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
     //   console.log(data.data.directions.length)
     //   fee = parseInt(data.data.directions.length);
     // }).catch(()=>{
-      
-    const fee = functions.getDistanceFromLatLonInKm(address.locX,address.locY,coord.data.documents[0].y,coord.data.documents[0].x);
+
+    const fee = functions.getDistanceFromLatLonInKm(address.locX, address.locY, coord.data.documents[0].y, coord.data.documents[0].x);
     // console.log(fee)
     // const fee = distanceData;
     // })
-    
+
     cost += 550 * Math.floor(fee / 0.5);
 
     const data = {
@@ -522,6 +522,7 @@ order.post('/apply', util.isLoggedin, util.isRider, async function (req: Request
   const tokenData = req.decoded;
   const reqBody = req.body;
   let orderStatus;
+  let registrationToken;
   // 해당 주문 번호
   const order = await orderRep.findOne({ where: { id: req.query.orderId as string } });
   if (!order) return res.status(403).json(util.successFalse(null, "주문 건이 없습니다.", null));
@@ -529,6 +530,10 @@ order.post('/apply', util.isLoggedin, util.isRider, async function (req: Request
   if (orderStatus != 0) return res.status(403).json(util.successFalse(null, "배달원 모집이 끝난 주문입니다.", null));
   if (order.userId == tokenData.id) return res.status(403).json(util.successFalse(null, "본인의 주문에 배달원 지원은 불가능합니다.", null));
   const riderId = tokenData.id;
+  const user = await userRep.findOne({ where: { id: order.userId } });
+  if (!user) return res.status(403).json(util.successFalse(null, "해당 주문의 주문자가 존재하지 않습니다.", null));
+  // eslint-disable-next-line prefer-const
+  registrationToken = user.firebaseFCM;
   let extraFee;
   extraFee = parseInt(reqBody.extraFee);
   if (!reqBody.extraFee) extraFee = 0;
@@ -542,6 +547,19 @@ order.post('/apply', util.isLoggedin, util.isRider, async function (req: Request
     riderlist.push({ riderId: riderId, extraFee: extraFee });
     myCache.set(req.query.orderId as string, riderlist);
   }
+  const message = {
+    data: {
+      test: "추가 배달원이 배정되었습니다."
+    },
+    token: registrationToken
+  };
+  admin.messaging().send(message)
+    .then((response) => {
+      console.log('Successfully sent message:', response);
+    })
+    .catch((error) => {
+      console.log('Error sending message:', error);
+    });
   return res.json(util.successTrue("", riderlist));
 });
 

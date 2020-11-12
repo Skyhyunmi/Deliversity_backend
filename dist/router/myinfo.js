@@ -301,6 +301,8 @@ exports.myinfo.post('/report', util.isLoggedin, function (req, res) {
                 return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
             const userId = order.userId;
             const riderId = order.riderId;
+            if (riderId != tokenData.id && userId != tokenData.id)
+                return res.status(403).json(util.successFalse(null, "해당 주문과 관련없는 사람은 신고할 수 없습니다.", null));
             const chatId = order.chatId;
             const report = yield index_1.reportRep.create({
                 userId: userId,
@@ -326,7 +328,7 @@ exports.myinfo.post('/qna', util.isLoggedin, function (req, res) {
         try {
             const qna = yield index_1.qnaRep.create({
                 userId: tokenData.id,
-                qnakind: reqBody.qnakind,
+                qnaKind: reqBody.qnaKind,
                 content: reqBody.content
             });
             return res.json(util.successTrue("", qna));
