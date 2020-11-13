@@ -222,7 +222,9 @@ exports.io.on('connect', (socket) => __awaiter(void 0, void 0, void 0, function*
                 "body": data[0].text,
             },
             data: {
-                type: 'ChatScreen'
+                type: 'chat',
+                roomId: roomId,
+                senderId: data[0].user._id
             }
         };
         console.log(data[0].user.nickName);
