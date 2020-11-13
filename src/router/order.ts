@@ -144,8 +144,14 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
         registrationToken = riders[i].firebaseFCM;
         console.log(i, '+', riders[i].name);
         const message = {
-          data: {
-            test: "배달 건이 추가되었습니다, 확인해보세요" + registrationToken
+          notification:{
+            "title":"배달 건이 추가되었습니다.",
+            "tag": "delivery",
+            "body":order.storeName,
+          },
+          data:{
+            type:'ManageDelivery',
+            //여기에 관련 데이터 넣으면 될듯
           },
           token: registrationToken
         };
@@ -164,8 +170,13 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
         registrationToken = riders[i].firebaseFCM;
         console.log(i, '+', registrationToken);
         const message = {
-          data: {
-            test: "배달 건이 추가되었습니다, 확인해보세요"
+          notification:{
+            "title":"배달 건이 추가되었습니다.",
+            "tag": "delivery",
+            "body":order.storeName,
+          },
+          data:{
+            type:'ManageDelivery'
           },
           token: registrationToken
         };
@@ -250,8 +261,16 @@ order.post('/rider', util.isLoggedin, async function (req: Request, res: Respons
       });
       myCache.del(req.query.orderId as string);
       const message = {
+        notification:{
+          "title":"배달원으로 선발되었습니다.",
+          "body":"확인해보세요.",
+        },
         data: {
-          test: "배달원으로 선발되었습니다."
+          orderId: order.id.toString(),
+          roomId: room.password,
+          userId: room.ownerId.toString(),
+          riderId: room.riderId.toString(),
+          type:'selected'
         },
         token: registrationToken
       };

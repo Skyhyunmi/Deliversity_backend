@@ -217,7 +217,9 @@ io.on('connect',async (socket:Socket)=>{
         // "clickAction":
       },
       data:{
-        type:'ChatScreen'
+        type:'chat',
+        roomId: roomId,
+        senderId: data[0].user._id
       }
     };
     console.log(data[0].user.nickName);
