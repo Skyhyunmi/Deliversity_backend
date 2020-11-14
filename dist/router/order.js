@@ -433,19 +433,12 @@ exports.order.post('/review/user', util.isLoggedin, util.isRider, function (req,
                 where: {
                     id: reqBody.orderId,
                     riderId: tokenData.id,
-                    orderStatus: 3
+                    orderStatus: 3,
+                    reviewedByRider: false
                 }
             });
             if (_order === null)
-                return res.status(403).json(util.successFalse(null, "주문건이 없습니다.", null));
-            const oldReview = yield models_1.reviewRep.findOne({
-                where: {
-                    orderId: reqBody.orderId,
-                    fromId: tokenData.id
-                }
-            });
-            if (oldReview)
-                return res.status(403).json(util.successFalse(null, "리뷰를 작성할 수 없습니다.", null));
+                return res.status(403).json(util.successFalse(null, "주문건이 없거나, 이미 리뷰를 작성했습니다.", null));
             const review = yield models_1.reviewRep.create({
                 orderId: _order === null || _order === void 0 ? void 0 : _order.id,
                 userId: _order === null || _order === void 0 ? void 0 : _order.userId,
@@ -454,6 +447,7 @@ exports.order.post('/review/user', util.isLoggedin, util.isRider, function (req,
                 rating: reqBody.rating,
                 content: reqBody.content
             });
+            _order.update({ reviewedByRider: true });
             return res.json(util.successTrue("", review));
         }
         catch (err) {
@@ -510,19 +504,12 @@ exports.order.post('/review/rider', util.isLoggedin, function (req, res) {
                 where: {
                     id: reqBody.orderId,
                     userId: tokenData.id,
-                    orderStatus: 3
+                    orderStatus: 3,
+                    reviewedByUser: false
                 }
             });
             if (_order === null)
-                return res.status(403).json(util.successFalse(null, "주문건이 없습니다.", null));
-            const oldReview = yield models_1.reviewRep.findOne({
-                where: {
-                    orderId: reqBody.orderId,
-                    fromId: tokenData.id
-                }
-            });
-            if (oldReview)
-                return res.status(403).json(util.successFalse(null, "리뷰를 작성할 수 없습니다.", null));
+                return res.status(403).json(util.successFalse(null, "주문건이 없거나, 이미 리뷰를 작성했습니다.", null));
             const review = yield models_1.reviewRep.create({
                 orderId: _order === null || _order === void 0 ? void 0 : _order.id,
                 userId: _order === null || _order === void 0 ? void 0 : _order.userId,
@@ -531,6 +518,7 @@ exports.order.post('/review/rider', util.isLoggedin, function (req, res) {
                 rating: reqBody.rating,
                 content: reqBody.content
             });
+            _order.update({ reviewedByUser: true });
             return res.json(util.successTrue("", review));
         }
         catch (err) {

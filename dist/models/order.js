@@ -94,6 +94,14 @@ __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BOOLEAN)
 ], Order.prototype, "reservation", void 0);
 __decorate([
+    sequelize_typescript_1.Default(false),
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BOOLEAN)
+], Order.prototype, "reviewedByUser", void 0);
+__decorate([
+    sequelize_typescript_1.Default(false),
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BOOLEAN)
+], Order.prototype, "reviewedByRider", void 0);
+__decorate([
     sequelize_typescript_1.CreatedAt
 ], Order.prototype, "createdAt", void 0);
 __decorate([
