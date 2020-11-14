@@ -28,7 +28,7 @@ __decorate([
 ], Room.prototype, "riderId", void 0);
 __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
-], Room.prototype, "password", void 0);
+], Room.prototype, "roomId", void 0);
 __decorate([
     sequelize_typescript_1.CreatedAt
 ], Room.prototype, "createdAt", void 0);

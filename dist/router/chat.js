@@ -45,7 +45,7 @@ exports.chat.post('/', util.isLoggedin, (req, res) => __awaiter(void 0, void 0, 
         const chatRoom = yield index_1.roomRep.create({
             title: "주문",
             owner: reqBody.userId,
-            password: reqBody.password
+            roomId: reqBody.roomId
         });
         return res.json(util.successTrue("", chatRoom.id));
     }

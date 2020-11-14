@@ -14,7 +14,7 @@ chat.post('/', util.isLoggedin,async (req:Request,res:Response)=>{
     const chatRoom = await roomRep.create({
       title:"주문",
       owner:reqBody.userId,
-      password:reqBody.password
+      roomId:reqBody.roomId
     });
     return res.json(util.successTrue("", chatRoom.id));
   } catch (err) {

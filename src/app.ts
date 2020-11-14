@@ -169,7 +169,7 @@ io.on('connect',async (socket:Socket)=>{
     //
     if(room == undefined) {
       const userRoom = await roomRep.findOne({
-        where:{password: data[0].user.roomId}
+        where:{roomId: data[0].user.roomId}
       });
       if(!userRoom) return;
       const user = await userRep.findOne({
