@@ -251,7 +251,7 @@ order.post('/rider', util.isLoggedin, async function (req: Request, res: Respons
         owner: tokenData.nickName,
         ownerId: tokenData.id,
         riderId: rider.riderId,
-        password: crypto.randomBytes(256).toString('hex').substr(100, 50)
+        roomId: crypto.randomBytes(256).toString('hex').substr(100, 50)
       });
       order.update({
         riderId: rider.riderId,
@@ -267,7 +267,7 @@ order.post('/rider', util.isLoggedin, async function (req: Request, res: Respons
         },
         data: {
           orderId: order.id.toString(),
-          roomId: room.password,
+          roomId: room.roomId,
           userId: room.ownerId.toString(),
           riderId: room.riderId.toString(),
           type:'selected'
@@ -281,7 +281,7 @@ order.post('/rider', util.isLoggedin, async function (req: Request, res: Respons
         .catch((error) => {
           console.log('Error sending message:', error);
         });
-      return res.json(util.successTrue("", order));
+      return res.json(util.successTrue("", {order:order,room:room}));
     }
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
@@ -317,7 +317,7 @@ order.get('/chat', util.isLoggedin, async function (req: Request, res: Response)
         }
       });
     if (!room) return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
-    return res.json(util.successTrue("", { password: room }));
+    return res.json(util.successTrue("", { roomId: room.roomId }));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }

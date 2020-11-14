@@ -30,7 +30,7 @@ export default class Room extends Model<Room> {
   riderId!:number;
 
   @Column(DataType.STRING)
-  password!:string;
+  roomId!:string;
 
   @CreatedAt
   createdAt!: Date;

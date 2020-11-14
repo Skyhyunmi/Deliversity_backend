@@ -173,7 +173,7 @@ exports.io.on('connect', (socket) => __awaiter(void 0, void 0, void 0, function*
         //
         if (room == undefined) {
             const userRoom = yield models_1.roomRep.findOne({
-                where: { password: data[0].user.roomId }
+                where: { roomId: data[0].user.roomId }
             });
             if (!userRoom)
                 return;
