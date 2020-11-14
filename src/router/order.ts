@@ -354,17 +354,11 @@ order.post('/review/user', util.isLoggedin, util.isRider, async function (req: R
       where: {
         id: reqBody.orderId,
         riderId: tokenData.id,
-        orderStatus: 3
+        orderStatus: 3,
+        reviewedByRider: false
       }
     });
-    if (_order === null) return res.status(403).json(util.successFalse(null, "주문건이 없습니다.", null));
-    const oldReview = await reviewRep.findOne({
-      where: {
-        orderId: reqBody.orderId,
-        fromId: tokenData.id
-      }
-    });
-    if (oldReview) return res.status(403).json(util.successFalse(null, "리뷰를 작성할 수 없습니다.", null));
+    if (_order === null) return res.status(403).json(util.successFalse(null, "주문건이 없거나, 이미 리뷰를 작성했습니다.", null));
     const review = await reviewRep.create({
       orderId: _order?.id,
       userId: _order?.userId,
@@ -373,6 +367,7 @@ order.post('/review/user', util.isLoggedin, util.isRider, async function (req: R
       rating: reqBody.rating,
       content: reqBody.content
     });
+    _order.update({reviewedByRider:true});
     return res.json(util.successTrue("", review));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
@@ -423,17 +418,11 @@ order.post('/review/rider', util.isLoggedin, async function (req: Request, res: 
       where: {
         id: reqBody.orderId,
         userId: tokenData.id,
-        orderStatus: 3
+        orderStatus: 3,
+        reviewedByUser: false
       }
     });
-    if (_order === null) return res.status(403).json(util.successFalse(null, "주문건이 없습니다.", null));
-    const oldReview = await reviewRep.findOne({
-      where: {
-        orderId: reqBody.orderId,
-        fromId: tokenData.id
-      }
-    });
-    if (oldReview) return res.status(403).json(util.successFalse(null, "리뷰를 작성할 수 없습니다.", null));
+    if (_order === null) return res.status(403).json(util.successFalse(null, "주문건이 없거나, 이미 리뷰를 작성했습니다.", null));
     const review = await reviewRep.create({
       orderId: _order?.id,
       userId: _order?.userId,
@@ -442,6 +431,7 @@ order.post('/review/rider', util.isLoggedin, async function (req: Request, res: 
       rating: reqBody.rating,
       content: reqBody.content
     });
+    _order.update({reviewedByUser:true});
     return res.json(util.successTrue("", review));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));

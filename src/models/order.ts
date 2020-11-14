@@ -106,6 +106,14 @@ export default class Order extends Model<Order> {
   @Column(DataType.BOOLEAN)
   reservation!: boolean;
 
+  @Default(false)
+  @Column(DataType.BOOLEAN)
+  reviewedByUser!: boolean
+
+  @Default(false)
+  @Column(DataType.BOOLEAN)
+  reviewedByRider!: boolean
+
   @CreatedAt
   createdAt!: Date;
 
