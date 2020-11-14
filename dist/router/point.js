@@ -68,58 +68,5 @@ exports.point.post('/', util.isLoggedin, (req, res) => __awaiter(void 0, void 0,
     });
     return res.json(util.successTrue("", null));
 }));
-exports.point.post('/pay', util.isLoggedin, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const tokenData = req.decoded;
-    const reqBody = req.body;
-    let price = parseInt(reqBody.price);
-    if (!parseInt(reqBody.price) || !parseInt(reqBody.riderId))
-        return res.status(403).json(util.successFalse(null, "Error", null));
-    const user = yield index_1.userRep.findOne({ where: { id: tokenData.id } });
-    if (!user)
-        return res.status(403).json(util.successFalse(null, "Error", null));
-    const rider = yield index_1.userRep.findOne({ where: { id: reqBody.riderId } });
-    if (!rider)
-        return res.status(403).json(util.successFalse(null, "Error", null));
-    const points = yield index_1.pointRep.findAll({ where: {
-            userId: tokenData.id,
-        },
-        order: [['expireAt', 'ASC']]
-    });
-    const sum = points.reduce((sum, cur) => {
-        console.log(cur.point + " " + cur.expireAt);
-        return sum + cur.point;
-    }, 0);
-    // 결제액 부족. 결제창으로 이동
-    if (sum - parseInt(reqBody.price) < 0)
-        return res.status(403).json(util.successFalse(null, "Not enough money", null));
-    points.some((point) => {
-        if (price) {
-            const curPoint = point.point;
-            if (price <= point.point) {
-                point.update({ point: curPoint - price });
-                price = 0;
-                return true;
-            }
-            else {
-                point.update({ point: 0 });
-                point.destroy();
-                price -= curPoint;
-                return false;
-            }
-        }
-        else
-            return true;
-    });
-    const today = new Date();
-    today.setFullYear(today.getFullYear() + 3, today.getMonth(), today.getDay());
-    index_1.pointRep.create({
-        pointKind: 0,
-        status: 0,
-        expireAt: today,
-        userId: reqBody.riderId,
-        point: parseInt(reqBody.price)
-    });
-    return res.json(util.successTrue("", null));
-}));
 // point.post('/withdraw', util.isLoggedin,async (req:Request,res:Response)=>{
 // });

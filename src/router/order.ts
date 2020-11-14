@@ -7,10 +7,11 @@ import NodeCache from "node-cache";
 import * as db from "sequelize";
 import * as crypto from "crypto";
 import axios from "axios";
-import { addressRep, orderRep, reviewRep, roomRep, userRep } from "../models";
+import { addressRep, orderRep, reviewRep, roomRep, userRep, pointRep } from "../models";
 import * as admin from "firebase-admin";
 
 import dotenv from "dotenv";
+import { token } from "morgan";
 dotenv.config();
 
 export const order = Router();
@@ -618,6 +619,82 @@ order.get('/deliverList', util.isLoggedin, util.isRider, async function (req: an
     });
     if (!deliverList) return res.json(util.successFalse(null, "배달 내역이 없습니다", null));
     return res.json(util.successTrue("", deliverList));
+  } catch (err) {
+    return res.status(403).json(util.successFalse(err, "", null));
+  }
+});
+
+order.post('/pay', util.isLoggedin,async (req:Request,res:Response)=>{
+  const tokenData = req.decoded;
+  const reqQuery = req.query;
+  const reqBody = req.body;
+  let price = parseInt(reqBody.price);
+  if(!parseInt(reqBody.price) || !parseInt(reqBody.riderId))
+    return res.status(403).json(util.successFalse(null,"Error", null));
+  const order = await orderRep.findOne({where:{id:reqQuery.orderId as string}});
+  if(!order) return res.status(403).json(util.successFalse(null,"Error", null));
+  const user = await userRep.findOne({where:{id:tokenData.id}});
+  if(!user) return res.status(403).json(util.successFalse(null,"Error", null));
+  const rider = await userRep.findOne({where:{id:reqBody.riderId}});
+  if(!rider) return res.status(403).json(util.successFalse(null,"Error", null));
+  const points = await pointRep.findAll(
+    {where:{
+      userId:tokenData.id,
+    },
+    order: [['expireAt', 'ASC']]
+    });
+  const sum = points.reduce((sum, cur) => {
+    console.log(cur.point+" "+cur.expireAt);
+    return sum + cur.point;
+  }, 0);
+    // 결제액 부족. 결제창으로 이동
+  if(sum-parseInt(reqBody.price) < 0) 
+    return res.status(403).json(util.successFalse(null,"Not enough money", null));
+        
+  points.some((point)=>{
+    if(price){
+      const curPoint = point.point;
+      if(price<=point.point){
+        point.update({point:curPoint-price});
+        price=0;
+        return true;
+      }
+      else {
+        point.update({point:0});
+        point.destroy();
+        price-=curPoint;
+        return false;
+      }
+    }
+    else return true;
+  });
+  const today = new Date();
+  today.setFullYear(today.getFullYear()+3,today.getMonth(),today.getDay());
+  pointRep.create({
+    pointKind: 0,
+    status:0,
+    expireAt:today,
+    userId:reqBody.riderId,
+    point: parseInt(reqBody.price)
+  });
+  order.update({orderStatus:2});
+  return res.json(util.successTrue("",null));
+});
+
+order.get('/complete', util.isLoggedin, util.isRider, async function (req: any, res: Response) {
+  // ordetStatus:2 인 상태에서 배달원이 배달 완료 버튼 누르면 3으로 변경
+  // 허위로 누르게 되면 신고
+  const tokenData = req.decoded;
+  const reqBody = req.query;
+  try {
+    const order = await orderRep.findOne({where:{
+      id: req.query.orderId,
+      riderId: tokenData.riderId,
+      orderStatus: 2
+    }});
+    if (!order) return res.json(util.successFalse(null, "주문 내역이 없거나 배달 완료 처리할 수 없습니다.", null));
+    order.update({orderStatus:3});
+    return res.json(util.successTrue("", order));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
