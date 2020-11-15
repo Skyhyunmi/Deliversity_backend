@@ -55,7 +55,7 @@ exports.order.post('/', util.isLoggedin, function (req, res) {
         let expMinute = reqBody.expMinute;
         let gender = parseInt(reqBody.gender);
         const today = new Date();
-        let registrationToken;
+        const registrationToken = [];
         if (reqBody.reservation === "1") {
             if (!expHour || !expMinute) {
                 return res.status(403).json(util.successFalse(null, "예약 시간 또는 분을 입력하시지 않으셨습니다.", null));
@@ -170,56 +170,59 @@ exports.order.post('/', util.isLoggedin, function (req, res) {
                 reservation: reqBody.reservation
             };
             const order = yield models_1.orderRep.create(data);
+            let riders;
             if (gender >= 1) {
-                const riders = yield models_1.userRep.findAll({ where: { id: { [db.Op.ne]: tokenData.id }, grade: [2, 3], gender: gender } });
-                for (let i = 0; i < riders.length; i++) {
-                    registrationToken = riders[i].firebaseFCM;
-                    console.log(i, '+', riders[i].name);
-                    const message = {
-                        notification: {
-                            "title": "배달 건이 추가되었습니다.",
-                            "tag": "delivery",
-                            "body": order.storeName,
-                        },
-                        data: {
-                            type: 'ManageDelivery',
-                        },
-                        token: registrationToken
-                    };
-                    admin.messaging().send(message)
-                        .then((response) => {
-                        console.log('Successfully sent message:', response);
-                    })
-                        .catch((error) => {
-                        console.log('Error sending message:', error);
-                    });
+                riders = yield models_1.userRep.findAll({ where: { id: { [db.Op.ne]: tokenData.id }, grade: [2, 3], gender: gender } });
+            }
+            else
+                riders = yield models_1.userRep.findAll({ where: { id: { [db.Op.ne]: tokenData.id }, grade: [2, 3] } });
+            for (let i = 0; i < riders.length; i++) {
+                if (riders[i].firebaseFCM != null) {
+                    registrationToken.push(riders[i].firebaseFCM);
+                    console.log(i, ': ', riders[i].name + " FCM: " + riders[i].firebaseFCM);
                 }
             }
-            else {
-                const riders = yield models_1.userRep.findAll({ where: { id: { [db.Op.ne]: tokenData.id }, grade: [2, 3] } });
-                for (let i = 0; i < riders.length; i++) {
-                    registrationToken = riders[i].firebaseFCM;
-                    console.log(i, '+', registrationToken);
-                    const message = {
-                        notification: {
-                            "title": "배달 건이 추가되었습니다.",
-                            "tag": "delivery",
-                            "body": order.storeName,
-                        },
-                        data: {
-                            type: 'ManageDelivery'
-                        },
-                        token: registrationToken
-                    };
-                    admin.messaging().send(message)
-                        .then((response) => {
-                        console.log('Successfully sent message:', response);
-                    })
-                        .catch((error) => {
-                        console.log('Error sending message:', error);
-                    });
-                }
-            }
+            admin.messaging().sendMulticast({
+                notification: {
+                    "title": "배달 건이 추가되었습니다.",
+                    "body": order.storeName,
+                },
+                data: {
+                    type: 'ManageDelivery',
+                },
+                tokens: registrationToken
+            })
+                .then((response) => {
+                console.log('Successfully sent message:', response);
+            })
+                .catch((error) => {
+                console.log('Error sending message:', error);
+            });
+            // else {
+            //   const riders = await userRep.findAll({ where: { id: { [db.Op.ne]: tokenData.id }, grade: [2, 3] } });
+            //   for (let i = 0; i < riders.length; i++) {
+            //     registrationToken = riders[i].firebaseFCM;
+            //     console.log(i, '+', registrationToken);
+            //     const message = {
+            //       notification:{
+            //         "title":"배달 건이 추가되었습니다.",
+            //         "tag": "deliversity",
+            //         "body":order.storeName,
+            //       },
+            //       data:{
+            //         type:'ManageDelivery'
+            //       },
+            //       token: registrationToken
+            //     };
+            //     admin.messaging().send(message)
+            //       .then((response) => {
+            //         console.log('Successfully sent message:', response);
+            //       })
+            //       .catch((error) => {
+            //         console.log('Error sending message:', error);
+            //       });
+            //   }
+            // }
             return res.json(util.successTrue("", order));
         }
         catch (err) {

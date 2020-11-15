@@ -11,7 +11,7 @@ dotenv.config();
 // const WGS84 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +units=degrees"; //경위도
 
 export const myinfo = Router();
-myinfo.get('/', util.isLoggedin, util.isAdmin, async function (req: Request, res: Response) {
+myinfo.get('/', util.isLoggedin, async function (req: Request, res: Response) {
   //본인 정보 반환
   const tokenData = req.decoded;
   try {

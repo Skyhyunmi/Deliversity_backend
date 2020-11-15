@@ -18,7 +18,7 @@ import * as classes from "./config/classes";
 import { chatRep, db, roomRep, userRep } from "./models";
 import * as fs from "fs";
 import path from "path";
-import { Server, Socket } from "socket.io";
+import SocketIO from "socket.io";
 import nCache from "node-cache";
 
 import * as Admin from "firebase-admin";
@@ -137,13 +137,15 @@ setInterval(async ()=>{
   }
 },5000);
 
-export const io = new Server(server,{transports:['websocket','polling']});
-
-io.on('connect',async (socket:Socket)=>{
+export const io = SocketIO.listen(server,
+  {transports:['websocket','polling'],
+    'pingTimeout': 10000*60*10, 'pingInterval': 10000*60*7
+  });
+io.on('connect',async (socket:SocketIO.Socket)=>{
   socket.on('dscnt',async (roomId: any)=>{ // 클라이언트에서 백으로 chat으로 emit
     console.log("> user disconnect from: ");
     console.log(roomId);
-    socket.disconnect();
+    socket.leave(roomId);
     myCache.del(roomId);
   });
 
@@ -156,7 +158,7 @@ io.on('connect',async (socket:Socket)=>{
 
   socket.on('chat',async (data: any[])=>{ // 클라이언트에서 백으로 chat으로 emit
     let room = myCache.get(data[0].user.roomId) as any;
-
+    console.log(data);
     // 이 부분은 테스트용.
     if(data[0].user.roomId == "664e4b4a0f8f37dfc636f8296992e08b5639a2f539115e9a51"){
       room = {
@@ -207,7 +209,7 @@ io.on('connect',async (socket:Socket)=>{
     }
     console.log("> userText:");
     console.log(data[0].text);
-    socket.to(roomId).emit('rChat',data); // 백에서 클라이언트로 rChat으로 emit
+    socket.to(roomId).broadcast.emit('rChat',data); // 백에서 클라이언트로 rChat으로 emit
 
     const message = {
       notification:{
@@ -217,9 +219,9 @@ io.on('connect',async (socket:Socket)=>{
         // "clickAction":
       },
       data:{
-        type:'chat',
+        type:'Chat',
         roomId: roomId,
-        senderId: data[0].user._id
+        senderId: data[0].user._id.toString()
       }
     };
     console.log(data[0].user.nickName);
