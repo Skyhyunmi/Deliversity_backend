@@ -52,7 +52,7 @@ const classes = __importStar(require("./config/classes"));
 const models_1 = require("./models");
 const fs = __importStar(require("fs"));
 const path_1 = __importDefault(require("path"));
-const socket_io_1 = require("socket.io");
+const socket_io_1 = __importDefault(require("socket.io"));
 const node_cache_1 = __importDefault(require("node-cache"));
 const Admin = __importStar(require("firebase-admin"));
 const pk = process.env.FB_private_key;
@@ -145,12 +145,14 @@ setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
         yield models_1.chatRep.bulkCreate(Data);
     }
 }), 5000);
-exports.io = new socket_io_1.Server(server, { transports: ['websocket', 'polling'] });
+exports.io = socket_io_1.default.listen(server, { transports: ['websocket', 'polling'],
+    'pingTimeout': 10000 * 60 * 10, 'pingInterval': 10000 * 60 * 7
+});
 exports.io.on('connect', (socket) => __awaiter(void 0, void 0, void 0, function* () {
     socket.on('dscnt', (roomId) => __awaiter(void 0, void 0, void 0, function* () {
         console.log("> user disconnect from: ");
         console.log(roomId);
-        socket.disconnect();
+        socket.leave(roomId);
         myCache.del(roomId);
     }));
     socket.on('cnt', (roomId) => __awaiter(void 0, void 0, void 0, function* () {
@@ -161,6 +163,7 @@ exports.io.on('connect', (socket) => __awaiter(void 0, void 0, void 0, function*
     }));
     socket.on('chat', (data) => __awaiter(void 0, void 0, void 0, function* () {
         let room = myCache.get(data[0].user.roomId);
+        console.log(data);
         // 이 부분은 테스트용.
         if (data[0].user.roomId == "664e4b4a0f8f37dfc636f8296992e08b5639a2f539115e9a51") {
             room = {
@@ -214,7 +217,7 @@ exports.io.on('connect', (socket) => __awaiter(void 0, void 0, void 0, function*
         }
         console.log("> userText:");
         console.log(data[0].text);
-        socket.to(roomId).emit('rChat', data); // 백에서 클라이언트로 rChat으로 emit
+        socket.to(roomId).broadcast.emit('rChat', data); // 백에서 클라이언트로 rChat으로 emit
         const message = {
             notification: {
                 "title": data[0].user.nickName,
@@ -222,9 +225,9 @@ exports.io.on('connect', (socket) => __awaiter(void 0, void 0, void 0, function*
                 "body": data[0].text,
             },
             data: {
-                type: 'chat',
+                type: 'Chat',
                 roomId: roomId,
-                senderId: data[0].user._id
+                senderId: data[0].user._id.toString()
             }
         };
         console.log(data[0].user.nickName);
