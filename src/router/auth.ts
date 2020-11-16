@@ -19,7 +19,7 @@ auth.post("/signup", function (req: Request, res: Response, next: NextFunction) 
       return res.status(403).json(util.successFalse(err, "", null));
     }
     if (info) {
-      return res.status(403).json(util.successFalse(null, info.message, null));
+      return res.status(403).json(util.successFalse(null, "회원가입을 실패했습니다.", null));
     }
     if (_user) {
       const user = {
@@ -56,12 +56,12 @@ auth.post("/login", async function (req: Request, res: Response, next: NextFunct
     info: any
   ) {
     if (info === {})
-      return res.status(403).json(util.successFalse(null, info.message, null));
+      return res.status(403).json(util.successFalse(null, "ID or PW is not valid", null));
     if (err || !user) {
       return res.status(403).json(util.successFalse(null, "ID or PW is not valid", user));
     }
     req.logIn(user, { session: false }, async function (err: any) {
-      if (err) return res.status(403).json(util.successFalse(err, "Can't login", null));
+      if (err) return res.status(403).json(util.successFalse(err, "로그인을 실패했습니다.", null));
       const result = await functions.getAuthToken(user);
       return res.json(util.successTrue("", {firebaseToken:result.firebaseToken, token: result.authToken, grade: user.grade }));
     });
@@ -116,7 +116,7 @@ auth.post("/sms",/*util.isLoggedin,*/async function (req: Request, res: Response
   const reqBody = req.body;
   const phone = reqBody.phone;
   const result = await functions.sendSMS(phone);
-  if (result == null) return res.json(util.successTrue("", null));
+  if (result == null) return res.json(util.successTrue("문자 전송 성공", null));
   return res.status(403).json(util.successFalse(null, result, null));
 });
 
@@ -125,7 +125,7 @@ auth.post("/sms/verification", async function (req: Request, res: Response) {
   const verify = reqBody.verify;
   const phone = reqBody.phone;
   const result = await functions.smsVerify(phone,verify);
-  if(result==null) return res.json(util.successTrue("Matched.", null));
+  if(result==null) return res.json(util.successTrue("전화번호 인증 성공", null));
   else return res.status(403).json(util.successFalse(null,result,null));
 });
 
@@ -133,13 +133,13 @@ auth.post("/email",/*util.isLoggedin,*/async function (req: Request, res: Respon
   const reqBody = req.body;
   const email = reqBody.email;
   const result = await functions.sendEmail(email,req.get('host') as string);
-  if(result == null) return res.json(util.successTrue('Sent Auth Email', null));
+  if(result == null) return res.json(util.successTrue('이메일 전송 성공', null));
   else return res.status(403).json(util.successFalse("",result,""));
 });
 
 auth.get('/email/verification', async (req:Request, res) => {
   const email_number = req.query.email_number as string;
   const result = await functions.emailVerify(email_number);
-  if(result == null)  return res.json(util.successTrue("Matched", null));
+  if(result == null)  return res.json(util.successTrue("이메일 인증 성공", null));
   else return res.status(403).json(util.successFalse(null,result,null));
 });

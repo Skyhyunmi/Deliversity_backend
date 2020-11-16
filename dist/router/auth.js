@@ -50,7 +50,7 @@ exports.auth.post("/signup", function (req, res, next) {
                 return res.status(403).json(util.successFalse(err, "", null));
             }
             if (info) {
-                return res.status(403).json(util.successFalse(null, info.message, null));
+                return res.status(403).json(util.successFalse(null, "회원가입을 실패했습니다.", null));
             }
             if (_user) {
                 const user = {
@@ -86,14 +86,14 @@ exports.auth.post("/login", function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         passport_1.default.authenticate("login", { session: false }, function (err, user, info) {
             if (info === {})
-                return res.status(403).json(util.successFalse(null, info.message, null));
+                return res.status(403).json(util.successFalse(null, "ID or PW is not valid", null));
             if (err || !user) {
                 return res.status(403).json(util.successFalse(null, "ID or PW is not valid", user));
             }
             req.logIn(user, { session: false }, function (err) {
                 return __awaiter(this, void 0, void 0, function* () {
                     if (err)
-                        return res.status(403).json(util.successFalse(err, "Can't login", null));
+                        return res.status(403).json(util.successFalse(err, "로그인을 실패했습니다.", null));
                     const result = yield functions.getAuthToken(user);
                     return res.json(util.successTrue("", { firebaseToken: result.firebaseToken, token: result.authToken, grade: user.grade }));
                 });
@@ -159,7 +159,7 @@ exports.auth.post("/sms", /*util.isLoggedin,*/ function (req, res) {
         const phone = reqBody.phone;
         const result = yield functions.sendSMS(phone);
         if (result == null)
-            return res.json(util.successTrue("", null));
+            return res.json(util.successTrue("문자 전송 성공", null));
         return res.status(403).json(util.successFalse(null, result, null));
     });
 });
@@ -170,7 +170,7 @@ exports.auth.post("/sms/verification", function (req, res) {
         const phone = reqBody.phone;
         const result = yield functions.smsVerify(phone, verify);
         if (result == null)
-            return res.json(util.successTrue("Matched.", null));
+            return res.json(util.successTrue("전화번호 인증 성공", null));
         else
             return res.status(403).json(util.successFalse(null, result, null));
     });
@@ -181,7 +181,7 @@ exports.auth.post("/email", /*util.isLoggedin,*/ function (req, res) {
         const email = reqBody.email;
         const result = yield functions.sendEmail(email, req.get('host'));
         if (result == null)
-            return res.json(util.successTrue('Sent Auth Email', null));
+            return res.json(util.successTrue('이메일 전송 성공', null));
         else
             return res.status(403).json(util.successFalse("", result, ""));
     });
@@ -190,7 +190,7 @@ exports.auth.get('/email/verification', (req, res) => __awaiter(void 0, void 0, 
     const email_number = req.query.email_number;
     const result = yield functions.emailVerify(email_number);
     if (result == null)
-        return res.json(util.successTrue("Matched", null));
+        return res.json(util.successTrue("이메일 인증 성공", null));
     else
         return res.status(403).json(util.successFalse(null, result, null));
 }));

@@ -39,14 +39,11 @@ export default class Order extends Model<Order> {
   @Column(DataType.STRING)
   detailAddress!: string;
 
-  // @AllowNull(true)
-  // @ForeignKey(()=>{Address})
   @Column(DataType.STRING)
-  locX!: string;
+  lat!: string;
 
-  // @AllowNull(true)
   @Column(DataType.STRING)
-  locY!: string;
+  lng!: string;
 
   @AllowNull(true)
   @Column(DataType.BIGINT)
@@ -65,10 +62,10 @@ export default class Order extends Model<Order> {
   storeName!: string;
 
   @Column(DataType.STRING)
-  storeX!: string;
+  storeLat!: string;
 
   @Column(DataType.STRING)
-  storeY!: string;
+  storeLng!: string;
 
   @AllowNull(true)
   @Column(DataType.STRING)

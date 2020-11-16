@@ -21,7 +21,7 @@ point.get('/', util.isLoggedin, async (req:Request,res:Response)=>{
   const point = await pointRep.findAll({where:{userId:tokenData.id,status:false}});
   const sum = point.reduce((sum, cur) => sum + cur.point, 0);
   console.log(sum);
-  if(sum<0) return res.status(403).json(util.successFalse(null,"Error", null));
+  if(sum<0) return res.status(403).json(util.successFalse(null,"포인트 반환 실패", null));
   return res.json(util.successTrue("",{point:sum.toString()}));
 });
 
@@ -30,7 +30,7 @@ point.post('/', util.isLoggedin,async (req:Request,res:Response)=>{
   const tokenData = req.decoded;
   //결제 검증 프로세스 있어야함.
   const user = await userRep.findOne({where:{id:tokenData.id}});
-  if(!user) return res.status(403).json(util.successFalse(null,"Error", null));
+  if(!user) return res.status(403).json(util.successFalse(null,"포인트 충전 실패", null));
   const today = new Date();
   today.setFullYear(today.getFullYear()+3,today.getMonth(),today.getDay());
   const newPoint = await pointRep.create({

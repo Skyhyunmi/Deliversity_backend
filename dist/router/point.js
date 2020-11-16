@@ -47,7 +47,7 @@ exports.point.get('/', util.isLoggedin, (req, res) => __awaiter(void 0, void 0, 
     const sum = point.reduce((sum, cur) => sum + cur.point, 0);
     console.log(sum);
     if (sum < 0)
-        return res.status(403).json(util.successFalse(null, "Error", null));
+        return res.status(403).json(util.successFalse(null, "포인트 반환 실패", null));
     return res.json(util.successTrue("", { point: sum.toString() }));
 }));
 exports.point.post('/', util.isLoggedin, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -56,7 +56,7 @@ exports.point.post('/', util.isLoggedin, (req, res) => __awaiter(void 0, void 0,
     //결제 검증 프로세스 있어야함.
     const user = yield index_1.userRep.findOne({ where: { id: tokenData.id } });
     if (!user)
-        return res.status(403).json(util.successFalse(null, "Error", null));
+        return res.status(403).json(util.successFalse(null, "포인트 충전 실패", null));
     const today = new Date();
     today.setFullYear(today.getFullYear() + 3, today.getMonth(), today.getDay());
     const newPoint = yield index_1.pointRep.create({

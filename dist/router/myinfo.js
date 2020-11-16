@@ -103,7 +103,7 @@ exports.myinfo.put('/', util.isLoggedin, function (req, res) {
                     }
                 });
                 if (nickExist)
-                    return res.status(403).json(util.successFalse(null, "nickName duplicated.", null));
+                    return res.status(403).json(util.successFalse(null, "닉네임이 중복되었습니다.", null));
             }
             _user.update({
                 password: hashedPw ? hashedPw : _user.password,
@@ -280,8 +280,8 @@ exports.myinfo.delete('/address', util.isLoggedin, function (req, res) {
                 }
             });
             if (!address)
-                return res.json(util.successFalse(null, "Deletion Failure.", null));
-            address.destroy().then(() => res.json(util.successTrue("Deletion Success.", null)));
+                return res.json(util.successFalse(null, "주소 삭제 실패", null));
+            address.destroy().then(() => res.json(util.successTrue("주소 삭제 실패", null)));
         }
         catch (err) {
             return res.status(403).json(util.successFalse(err, "", null));
