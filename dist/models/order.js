@@ -31,10 +31,10 @@ __decorate([
 ], Order.prototype, "detailAddress", void 0);
 __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
-], Order.prototype, "locX", void 0);
+], Order.prototype, "lat", void 0);
 __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
-], Order.prototype, "locY", void 0);
+], Order.prototype, "lng", void 0);
 __decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BIGINT)
@@ -53,10 +53,10 @@ __decorate([
 ], Order.prototype, "storeName", void 0);
 __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
-], Order.prototype, "storeX", void 0);
+], Order.prototype, "storeLat", void 0);
 __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
-], Order.prototype, "storeY", void 0);
+], Order.prototype, "storeLng", void 0);
 __decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)

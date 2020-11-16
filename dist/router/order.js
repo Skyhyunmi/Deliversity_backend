@@ -39,7 +39,6 @@ const functions = __importStar(require("../config/functions"));
 const node_cache_1 = __importDefault(require("node-cache"));
 const db = __importStar(require("sequelize"));
 const crypto = __importStar(require("crypto"));
-const axios_1 = __importDefault(require("axios"));
 const models_1 = require("../models");
 const admin = __importStar(require("firebase-admin"));
 const dotenv_1 = __importDefault(require("dotenv"));
@@ -53,7 +52,7 @@ exports.order.post('/', util.isLoggedin, function (req, res) {
         const reqBody = req.body;
         let expHour = reqBody.expHour;
         let expMinute = reqBody.expMinute;
-        let gender = parseInt(reqBody.gender);
+        let gender = reqBody.gender == true ? 1 : 0;
         const today = new Date();
         const registrationToken = [];
         if (reqBody.reservation === "1") {
@@ -70,15 +69,18 @@ exports.order.post('/', util.isLoggedin, function (req, res) {
             today.setHours(today.getHours() + 1);
         }
         try {
+            const user = yield models_1.userRep.findOne({ where: { id: tokenData.id } });
+            if (!user)
+                return res.status(403).json(util.successFalse(null, "준회원은 동성 배달을 이용할 수 없습니다.", null));
             if (gender >= 1) {
-                const user = yield models_1.userRep.findOne({ where: { id: tokenData.id, grade: [2, 3] } });
-                if (!user)
+                if (user.grade < 2)
                     return res.status(403).json(util.successFalse(null, "준회원은 동성 배달을 이용할 수 없습니다.", null));
-                gender = user.gender;
+                else
+                    gender = user.gender;
             }
             const address = yield models_1.addressRep.findOne({
                 where: {
-                    userid: tokenData.id,
+                    id: parseInt(user.addressId),
                 }
             });
             if (!address)
@@ -86,82 +88,27 @@ exports.order.post('/', util.isLoggedin, function (req, res) {
             let cost = 3000;
             if (reqBody.hotDeal === "1")
                 cost = 4000;
-            const coord = yield axios_1.default({
-                url: `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(reqBody.storeAddress)}`,
-                method: 'get',
-                headers: { Authorization: `KakaoAK ${process.env.KAKAO_KEY}` }
-            });
-            if (coord.data.documents[0] === undefined) {
-                // coord.data.documents[0].y = 37.5674160, coord.data.documents[0].x = 126.9663050;
-                return res.status(403).json(util.successFalse(null, "주소를 다시 확인해주세요.", null));
-            }
-            // const from = await axios({
-            //   url: 'https://dapi.kakao.com/v2/local/geo/transcoord.json',
-            //   method: "GET",
-            //   params: {
-            //     y: address.locX,
-            //     x: address.locY,
-            //     input_coord: "WGS84",
-            //     output_coord: "WCONGNAMUL"
-            //   },
-            //   headers: {
-            //     Authorization: `KakaoAK ${process.env.KAKAO_KEY}`
-            //   }
-            // }) as any;
-            // const to = await axios({
-            //   url: 'https://dapi.kakao.com/v2/local/geo/transcoord.json',
-            //   method: "GET",
-            //   params: {
-            //     y: coord.data.documents[0].y,
-            //     x: coord.data.documents[0].x,
-            //     input_coord: "WGS84",
-            //     output_coord: "WCONGNAMUL"
-            //   },
-            //   headers: {
-            //     Authorization: `KakaoAK ${process.env.KAKAO_KEY}`
-            //   }
-            // }) as any;
-            // return res.json(util.successTrue("",data.data.documents[0]))
-            // let distanceData:any;
-            // let fee: any;
-            //  axios({
-            //   url: 'https://map.kakao.com/route/walkset.json',
-            //   method: "GET",
-            //   params: {
-            //     sX: from.data.documents[0].x,
-            //     sY: from.data.documents[0].y,
-            //     eX: to.data.documents[0].x,
-            //     eY: to.data.documents[0].y,
-            //     ids: ','
-            //   }
-            // }).then((data)=>{
-            //   console.log(data.data.directions.length)
-            //   fee = parseInt(data.data.directions.length);
-            // }).catch(()=>{
-            const fee = functions.getDistanceFromLatLonInKm(address.locX, address.locY, coord.data.documents[0].y, coord.data.documents[0].x);
-            // console.log(fee)
-            // const fee = distanceData;
-            // })
-            cost += 550 * Math.floor(fee / 0.5);
+            const fee = functions.getDistanceFromLatLonInKm(reqBody.userLat, reqBody.userLng, reqBody.storeLat, reqBody.storeLng) - 1;
+            console.log(reqBody.userLat, reqBody.userLng, reqBody.storeLat, reqBody.storeLng);
+            if (fee > 0)
+                cost += Math.round((550 * fee / 0.5) / 100) * 100;
+            console.log(fee);
             const data = {
                 userId: tokenData.id,
                 gender: gender,
                 address: address.address,
                 detailAddress: address.detailAddress,
-                locX: address.locX,
-                locY: address.locY,
-                // store 쪽 구현 아직 안되어서
+                lat: reqBody.userLat,
+                lng: reqBody.userLng,
                 storeName: reqBody.storeName,
-                storeX: coord.data.documents[0].y,
-                storeY: coord.data.documents[0].x,
+                storeLat: reqBody.storeLat,
+                storeLng: reqBody.storeLng,
                 storeAddress: reqBody.storeAddress,
                 storeDetailAddress: reqBody.storeDetailAddress,
                 chatId: reqBody.chatId ? reqBody.chatId : null,
-                // 이거 계산하는거 추가하기 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
                 expArrivalTime: today,
                 orderStatus: 0,
                 hotDeal: reqBody.hotDeal === "1" ? true : false,
-                // hotDeal 계산된 금액(소비자한테 알려줘야함)
                 totalCost: 0,
                 cost: 0,
                 content: reqBody.content,
@@ -198,31 +145,6 @@ exports.order.post('/', util.isLoggedin, function (req, res) {
                 .catch((error) => {
                 console.log('Error sending message:', error);
             });
-            // else {
-            //   const riders = await userRep.findAll({ where: { id: { [db.Op.ne]: tokenData.id }, grade: [2, 3] } });
-            //   for (let i = 0; i < riders.length; i++) {
-            //     registrationToken = riders[i].firebaseFCM;
-            //     console.log(i, '+', registrationToken);
-            //     const message = {
-            //       notification:{
-            //         "title":"배달 건이 추가되었습니다.",
-            //         "tag": "deliversity",
-            //         "body":order.storeName,
-            //       },
-            //       data:{
-            //         type:'ManageDelivery'
-            //       },
-            //       token: registrationToken
-            //     };
-            //     admin.messaging().send(message)
-            //       .then((response) => {
-            //         console.log('Successfully sent message:', response);
-            //       })
-            //       .catch((error) => {
-            //         console.log('Error sending message:', error);
-            //       });
-            //   }
-            // }
             return res.json(util.successTrue("", order));
         }
         catch (err) {
@@ -454,7 +376,7 @@ exports.order.post('/review/user', util.isLoggedin, util.isRider, function (req,
             return res.json(util.successTrue("", review));
         }
         catch (err) {
-            return res.status(403).json(util.successFalse(err, "", null));
+            return res.status(403).json(util.successFalse(err, "주문건이 없거나, 이미 리뷰를 작성했습니다.", null));
         }
     });
 });
@@ -493,7 +415,7 @@ exports.order.get('/review/user', util.isLoggedin, util.isRider, function (req, 
             }));
         }
         catch (err) {
-            return res.status(403).json(util.successFalse(err, "", null));
+            return res.status(403).json(util.successFalse(err, "사용자가 없거나 권한이 없습니다.", null));
         }
     });
 });
@@ -525,7 +447,7 @@ exports.order.post('/review/rider', util.isLoggedin, function (req, res) {
             return res.json(util.successTrue("", review));
         }
         catch (err) {
-            return res.status(403).json(util.successFalse(err, "", null));
+            return res.status(403).json(util.successFalse(err, "주문건이 없거나, 이미 리뷰를 작성했습니다.", null));
         }
     });
 });
@@ -564,7 +486,7 @@ exports.order.get('/review/rider', util.isLoggedin, function (req, res) {
             }));
         }
         catch (err) {
-            return res.status(403).json(util.successFalse(err, "", null));
+            return res.status(403).json(util.successFalse(err, "사용자가 없거나 권한이 없습니다.", null));
         }
     });
 });
@@ -592,7 +514,7 @@ exports.order.get('/orders', util.isLoggedin, util.isRider, function (req, res) 
             return res.json(util.successTrue("", { length: orders.length, orders: orders }));
         }
         catch (err) {
-            return res.status(403).json(util.successFalse(err, "", null));
+            return res.status(403).json(util.successFalse(err, "사용자가 없거나 권한이 없습니다.", null));
         }
     });
 });
@@ -622,7 +544,7 @@ exports.order.get('/setDelivered', util.isLoggedin, util.isRider, function (req,
             return res.json(util.successTrue("", order));
         }
         catch (err) {
-            return res.status(403).json(util.successFalse(err, "", null));
+            return res.status(403).json(util.successFalse(err, "주문이 없습니다.", null));
         }
     });
 });
@@ -700,7 +622,7 @@ exports.order.get('/orderList', util.isLoggedin, function (req, res) {
             return res.json(util.successTrue("", orderList));
         }
         catch (err) {
-            return res.status(403).json(util.successFalse(err, "", null));
+            return res.status(403).json(util.successFalse(err, "주문 내역이 없습니다", null));
         }
     });
 });
@@ -722,7 +644,7 @@ exports.order.get('/deliverList', util.isLoggedin, util.isRider, function (req, 
             return res.json(util.successTrue("", deliverList));
         }
         catch (err) {
-            return res.status(403).json(util.successFalse(err, "", null));
+            return res.status(403).json(util.successFalse(err, "배달 내역이 없습니다", null));
         }
     });
 });
@@ -732,16 +654,16 @@ exports.order.post('/pay', util.isLoggedin, (req, res) => __awaiter(void 0, void
     const reqBody = req.body;
     let price = parseInt(reqBody.price);
     if (!parseInt(reqBody.price) || !parseInt(reqBody.riderId))
-        return res.status(403).json(util.successFalse(null, "Error", null));
-    const order = yield models_1.orderRep.findOne({ where: { id: reqQuery.orderId } });
+        return res.status(403).json(util.successFalse(null, "정상적인 접근이 아닙니다.", null));
+    const order = yield models_1.orderRep.findOne({ where: { id: reqQuery.orderId, orderStatus: 1, userId: tokenData.id } });
     if (!order)
-        return res.status(403).json(util.successFalse(null, "Error", null));
+        return res.status(403).json(util.successFalse(null, "주문이 없습니다.", null));
     const user = yield models_1.userRep.findOne({ where: { id: tokenData.id } });
     if (!user)
-        return res.status(403).json(util.successFalse(null, "Error", null));
+        return res.status(403).json(util.successFalse(null, "사용자를 찾을 수 없습니다.", null));
     const rider = yield models_1.userRep.findOne({ where: { id: reqBody.riderId } });
     if (!rider)
-        return res.status(403).json(util.successFalse(null, "Error", null));
+        return res.status(403).json(util.successFalse(null, "배달원을 찾을 수 없습니다.", null));
     const points = yield models_1.pointRep.findAll({ where: {
             userId: tokenData.id,
         },
@@ -753,7 +675,7 @@ exports.order.post('/pay', util.isLoggedin, (req, res) => __awaiter(void 0, void
     }, 0);
     // 결제액 부족. 결제창으로 이동
     if (sum - parseInt(reqBody.price) < 0)
-        return res.status(403).json(util.successFalse(null, "Not enough money", null));
+        return res.status(403).json(util.successFalse(null, "잔액이 부족합니다.", null));
     points.some((point) => {
         if (price) {
             const curPoint = point.point;
@@ -802,7 +724,7 @@ exports.order.get('/complete', util.isLoggedin, util.isRider, function (req, res
             return res.json(util.successTrue("", order));
         }
         catch (err) {
-            return res.status(403).json(util.successFalse(err, "", null));
+            return res.status(403).json(util.successFalse(err, "주문 내역이 없거나 배달 완료 처리할 수 없습니다.", null));
         }
     });
 });
