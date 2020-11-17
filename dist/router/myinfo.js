@@ -280,7 +280,7 @@ exports.myinfo.delete('/address', util.isLoggedin, function (req, res) {
                 }
             });
             if (!address)
-                return res.json(util.successFalse(null, "주소 삭제 실패", null));
+                return res.status(403).json(util.successFalse(null, "주소 삭제 실패", null));
             address.destroy().then(() => res.json(util.successTrue("주소 삭제 실패", null)));
         }
         catch (err) {

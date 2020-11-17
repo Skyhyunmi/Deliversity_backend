@@ -3,6 +3,7 @@ import * as util from "../config/util";
 import { userRep, addressRep, qnaRep, reportRep, orderRep } from "../models/index";
 import * as crypto from "crypto";
 import dotenv from "dotenv";
+import * as admin from "firebase-admin";
 import axios from "axios";
 dotenv.config();
 
@@ -224,7 +225,7 @@ myinfo.delete('/address', util.isLoggedin, async function (req: Request, res: Re
         id: reqBody.addressId
       }
     });
-    if (!address) return res.json(util.successFalse(null, "주소 삭제 실패", null));
+    if (!address) return res.status(403).json(util.successFalse(null, "주소 삭제 실패", null));
     address.destroy().then(() => res.json(util.successTrue("주소 삭제 실패", null)));
 
   } catch (err) {
