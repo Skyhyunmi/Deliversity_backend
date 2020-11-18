@@ -11,25 +11,30 @@
     "dev": "nodemon --exec ts-node --files src/app.ts",
     "lint": "eslint src/**/*.ts",
     "start": "node dist/app.js",
-    "test": "jest --forceExit"
+    "test": "JEST_ENV=test jest --forceExit"
   },
   "jest": {
-    "transform": {
-      "^.+\\.ts$": "ts-jest"
-    },
-    "testRegex": "\\.test\\.ts$",
-    "moduleFileExtensions": [
-      "ts",
-      "js"
+    "bail": 0,
+    "setupFilesAfterEnv": [
+      "./test/jest.setup.ts"
     ],
+    "globalSetup": "./test/global.setup.ts",
+    "globalTeardown": "./test/global.teardown.ts",
     "globals": {
       "ts-jest": {
         "diagnostics": true
       }
+    },
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
+    "testRegex": "\\.test\\.ts$",
+    "transform": {
+      "^.+\\.ts$": "ts-jest"
     }
   },
   "dependencies": {
-    "@types/socket.io": "^2.1.11",
     "axios": "^0.20.0",
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
@@ -70,6 +75,8 @@
     "@types/passport-local": "^1.0.33",
     "@types/proj4": "^2.5.0",
     "@types/sequelize": "^4.28.9",
+    "@types/socket.io": "^2.1.11",
+    "@types/socket.io-client": "^1.4.34",
     "@types/supertest": "^2.0.10",
     "@types/validator": "^13.1.0",
     "@typescript-eslint/eslint-plugin": "^4.3.0",

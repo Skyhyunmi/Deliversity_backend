@@ -35,7 +35,7 @@ exports.admin = void 0;
 const express_1 = require("express");
 const util = __importStar(require("../config/util"));
 const index_1 = require("../models/index");
-const alert = __importStar(require("firebase-admin"));
+const Admin = __importStar(require("firebase-admin"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 exports.admin = express_1.Router();
@@ -56,7 +56,8 @@ exports.admin.get('/uploads', util.isLoggedin, util.isAdmin, function (req, res)
 exports.admin.get('/upload', util.isLoggedin, util.isAdmin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //상세내용 반환
-        const id = parseInt(req.query.id);
+        const reqQuery = req.query;
+        const id = parseInt(reqQuery.id);
         try {
             const user = yield index_1.userRep.findOne({ where: { id: id } });
             if (!user) {
@@ -80,12 +81,13 @@ exports.admin.get('/upload', util.isLoggedin, util.isAdmin, function (req, res) 
 exports.admin.put('/upload', util.isLoggedin, util.isAdmin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //민증인증 처리
+        const reqQuery = req.query;
         let registrationToken;
         const reqBody = req.body;
-        const id = parseInt(req.query.id);
+        const id = parseInt(reqQuery.id);
         const result = parseInt(reqBody.result);
         try {
-            const user = yield index_1.userRep.findOne({ where: { id: id }, attributes: ['id', 'grade'] });
+            let user = yield index_1.userRep.findOne({ where: { id: id }, attributes: ['id', 'grade'] });
             if (!user) {
                 return res.status(403).json(util.successFalse(null, "해당하는 유저가 없습니다.", null));
             }
@@ -97,23 +99,28 @@ exports.admin.put('/upload', util.isLoggedin, util.isAdmin, function (req, res) 
             }
             // 통과
             if (result == 1) {
-                user.update({ grade: 2 });
+                user = yield user.update({ grade: 2 });
                 registrationToken = user.firebaseFCM;
-                const message = {
-                    data: {
-                        test: "인증이 완료되었습니다." + registrationToken
-                    },
-                    token: registrationToken
-                };
-                alert.messaging().send(message)
-                    .then((response) => {
-                    console.log('Successfully sent message:', response);
-                })
-                    .catch((error) => {
-                    console.log('Error sending message:', error);
-                });
+                if (registrationToken) {
+                    const message = {
+                        data: {
+                            test: "인증이 완료되었습니다." + registrationToken
+                        },
+                        token: registrationToken
+                    };
+                    Admin.messaging().send(message)
+                        .then((response) => {
+                        console.log('Successfully sent message:', response);
+                    })
+                        .catch((error) => {
+                        console.log('Error sending message:', error);
+                    });
+                }
+                //토큰 없을 경우 또는 메시지 전송 실패 시 문자 전송?
+                return res.json(util.successTrue("", user));
             }
-            return res.json(util.successTrue("", user));
+            user = yield user.update({ grade: 0 });
+            return res.status(403).json(util.successFalse(null, "승인거절", null));
         }
         catch (err) {
             return res.status(403).json(util.successFalse(err, "", null));
@@ -125,8 +132,6 @@ exports.admin.get('/reports', util.isLoggedin, util.isAdmin, function (req, res)
         //신고 리스트 반환
         try {
             const lists = yield index_1.reportRep.findAll({ where: { status: 0 }, attributes: ['id', 'orderId', 'reportKind', 'fromId'] });
-            if (!lists)
-                return res.status(403).json(util.successFalse(null, "현재 처리를 기다리는 신고가 없습니다.", null));
             return res.json(util.successTrue("", lists));
         }
         catch (err) {
@@ -137,7 +142,8 @@ exports.admin.get('/reports', util.isLoggedin, util.isAdmin, function (req, res)
 exports.admin.get('/report', util.isLoggedin, util.isAdmin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //신고 상세내용보기
-        const reportId = parseInt(req.query.reportId);
+        const reqQuery = req.query;
+        const reportId = parseInt(reqQuery.reportId);
         try {
             const report = yield index_1.reportRep.findOne({ where: { id: reportId }, attributes: ['id', 'reportKind', 'orderId', 'userId', 'riderId', 'fromId', 'content'] });
             if (!report) {
@@ -153,9 +159,9 @@ exports.admin.get('/report', util.isLoggedin, util.isAdmin, function (req, res) 
 exports.admin.put('/report', util.isLoggedin, util.isAdmin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //신고 답변 작성
-        let registrationToken;
+        const reqQuery = req.query;
         const reqBody = req.body;
-        const reportId = parseInt(req.query.reportId);
+        const reportId = parseInt(reqQuery.reportId);
         const answer = reqBody.answer;
         try {
             const answered_report = yield index_1.reportRep.findOne({ where: { id: reportId } });
@@ -178,8 +184,6 @@ exports.admin.get('/qnas', util.isLoggedin, util.isAdmin, function (req, res) {
         //문의 리스트 반환
         try {
             const lists = yield index_1.qnaRep.findAll({ where: { status: 0 }, attributes: ['id', 'qnaKind'] });
-            if (!lists)
-                return res.status(403).json(util.successFalse(null, "현재 처리를 기다리는 문의가 없습니다.", null));
             return res.json(util.successTrue("", lists));
         }
         catch (err) {
@@ -190,7 +194,8 @@ exports.admin.get('/qnas', util.isLoggedin, util.isAdmin, function (req, res) {
 exports.admin.get('/qna', util.isLoggedin, util.isAdmin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //문의 상세내용보기
-        const qnaId = parseInt(req.query.qnaId);
+        const reqQuery = req.query;
+        const qnaId = parseInt(reqQuery.qnaId);
         try {
             const question = yield index_1.qnaRep.findOne({ where: { id: qnaId } });
             if (!question) {
@@ -206,9 +211,9 @@ exports.admin.get('/qna', util.isLoggedin, util.isAdmin, function (req, res) {
 exports.admin.put('/qna', util.isLoggedin, util.isAdmin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //문의 답변 작성
-        let registrationToken;
+        const reqQuery = req.query;
         const reqBody = req.body;
-        const qnaId = parseInt(req.query.qnaId);
+        const qnaId = parseInt(reqQuery.qnaId);
         const answer = reqBody.answer;
         try {
             const answered_qna = yield index_1.qnaRep.findOne({ where: { id: qnaId } });

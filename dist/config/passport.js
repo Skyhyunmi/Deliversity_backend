@@ -40,6 +40,7 @@ const crypto = __importStar(require("crypto"));
 const functions_1 = require("../config/functions");
 const axios_1 = __importDefault(require("axios"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const admin = __importStar(require("firebase-admin"));
 const functions = __importStar(require("./functions"));
 dotenv_1.default.config();
 const LocalStrategy = passport_local_1.default.Strategy;
@@ -52,7 +53,7 @@ function phoneVerify(phone) {
             if (!veri || veri.verify !== 1)
                 return 0;
             const now = Number.parseInt(Date.now().toString());
-            const updatedAt = Number.parseInt(veri.updatedAt);
+            const updatedAt = veri.updatedAt;
             const remainingTime = (now - updatedAt) / 60000;
             if (remainingTime > 15) { //15분
                 functions_1.myCache.del(phone);
@@ -76,7 +77,7 @@ function emailVerify(email) {
             if (!veri || veri.verify !== 1)
                 return 0;
             const now = Number.parseInt(Date.now().toString());
-            const updatedAt = Number.parseInt(veri.updatedAt);
+            const updatedAt = veri.updatedAt;
             const remainingTime = (now - updatedAt) / 60000;
             if (remainingTime > 15) { //15분
                 functions_1.myCache.del(email);
@@ -155,6 +156,14 @@ function passportConfig() {
                     if (ret && !ret.user)
                         kakaoToken = ret.id;
                 }
+                const fbUser = yield admin.auth().createUser({
+                    email: reqBody.email,
+                    emailVerified: true,
+                    phoneNumber: "+82" + reqBody.phone.slice(1),
+                    password: hashedPw
+                });
+                if (!fbUser)
+                    return done(null, false, { message: 'firebase Account is already exists.' });
                 const user = yield index_1.userRep.create({
                     userId: userId,
                     password: hashedPw,
@@ -167,7 +176,8 @@ function passportConfig() {
                     createdAt: new Date(),
                     updatedAt: null,
                     googleOAuth: googleToken || null,
-                    kakaoOAuth: kakaoToken || null
+                    kakaoOAuth: kakaoToken || null,
+                    firebaseUid: fbUser.uid
                 });
                 done(null, user);
             }
@@ -228,13 +238,12 @@ function passportConfig() {
         jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
         secretOrKey: process.env.JWT_SECRET
     }, function (jwtToken, done) {
-        index_1.userRep.findOne({ where: { userId: jwtToken.userId } }).then((user) => {
-            if (user) {
-                return done(undefined, user, jwtToken);
-            }
-            else {
+        return __awaiter(this, void 0, void 0, function* () {
+            const user = yield index_1.userRep.findOne({ where: { userId: jwtToken.userId } });
+            if (!user)
                 return done(undefined, false);
-            }
+            else
+                return done(undefined, user, jwtToken);
         });
     }));
 }

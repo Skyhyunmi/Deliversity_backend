@@ -1,17 +1,13 @@
 import {
-  AllowNull,
-  Unique,
   Table,
   Column,
   Model,
   PrimaryKey,
   AutoIncrement,
   DataType,
-  Comment,
   CreatedAt,
   UpdatedAt,
   DeletedAt,
-  Default//, ForeignKey
 } from "sequelize-typescript";
   
   @Table({ timestamps: true })

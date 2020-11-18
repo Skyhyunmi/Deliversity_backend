@@ -1,13 +1,11 @@
 import {
   AllowNull,
-  Unique,
   Table,
   Column,
   Model,
   PrimaryKey,
   AutoIncrement,
   DataType,
-  Comment,
   CreatedAt,
   UpdatedAt,
   DeletedAt,

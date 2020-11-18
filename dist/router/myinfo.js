@@ -281,7 +281,7 @@ exports.myinfo.delete('/address', util.isLoggedin, function (req, res) {
             });
             if (!address)
                 return res.status(403).json(util.successFalse(null, "주소 삭제 실패", null));
-            address.destroy().then(() => res.json(util.successTrue("주소 삭제 실패", null)));
+            address.destroy().then(() => res.json(util.successTrue("주소 삭제 성공", null)));
         }
         catch (err) {
             return res.status(403).json(util.successFalse(err, "", null));

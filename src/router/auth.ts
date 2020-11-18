@@ -5,7 +5,6 @@ import * as classes from "../config/classes";
 import { userRep } from "../models/index";
 import * as admin from "firebase-admin";
 import User from "../models/user";
-
 import jwt from "jsonwebtoken";
 import passport from "passport";
 
@@ -19,7 +18,7 @@ auth.post("/signup", function (req: Request, res: Response, next: NextFunction) 
       return res.status(403).json(util.successFalse(err, "", null));
     }
     if (info) {
-      return res.status(403).json(util.successFalse(null, "회원가입을 실패했습니다.", null));
+      return res.status(403).json(util.successFalse(null, info, null));
     }
     if (_user) {
       const user = {
@@ -35,16 +34,6 @@ auth.post("/signup", function (req: Request, res: Response, next: NextFunction) 
         createdAt: _user.createdAt,
         updatedAt: _user.updatedAt
       };
-      const fbUser = await admin.auth().createUser({
-        email:user.email,
-        emailVerified:true,
-        phoneNumber:"+82"+user.phone.slice(1),
-        password: _user.password
-      });
-      if(!fbUser) return res.status(403).json(util.successFalse(null, "이메일이 중복되었습니다.", null));
-      _user.update({
-        firebaseUid:fbUser.uid
-      });
       return res.json(util.successTrue("", user));
     }
   })(req, res, next);
@@ -58,7 +47,7 @@ auth.post("/login", async function (req: Request, res: Response, next: NextFunct
     if (info === {})
       return res.status(403).json(util.successFalse(null, "ID or PW is not valid", null));
     if (err || !user) {
-      return res.status(403).json(util.successFalse(null, "ID or PW is not valid", user));
+      return res.status(403).json(util.successFalse(null, err, null));
     }
     req.logIn(user, { session: false }, async function (err: any) {
       if (err) return res.status(403).json(util.successFalse(err, "로그인을 실패했습니다.", null));
@@ -79,7 +68,7 @@ auth.post('/login/google', async function (req: Request, res: Response) {
     const result = await functions.getAuthToken(user.user);
     return res.json(util.successTrue("", {firebaseToken: result.firebaseToken, token: result.authToken, grade: user.user.grade }));
   }catch (e) {
-    console.log("Error at login/google");
+    console.log(e);
     return res.status(403).json(util.successFalse(null, "Retry.", null));
   }
 });
@@ -138,8 +127,18 @@ auth.post("/email",/*util.isLoggedin,*/async function (req: Request, res: Respon
 });
 
 auth.get('/email/verification', async (req:Request, res) => {
-  const email_number = req.query.email_number as string;
+  const reqQuery = req.query;
+  const email_number = reqQuery.email_number as string;
   const result = await functions.emailVerify(email_number);
   if(result == null)  return res.json(util.successTrue("이메일 인증 성공", null));
   else return res.status(403).json(util.successFalse(null,result,null));
+});
+
+auth.delete("/release", util.isLoggedin, async function (req: Request, res: Response) {
+  const tokenData = req.decoded;
+  const user = await userRep.findOne({where:{id: tokenData.id}});
+  if (!user) return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
+  await admin.auth().deleteUser(user.firebaseUid);
+  await user.destroy({force: true});
+  return res.json(util.successTrue("사용자 삭제 완료", null));
 });

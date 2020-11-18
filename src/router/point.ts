@@ -1,13 +1,6 @@
-import { NextFunction, Request, Response, Router } from "express";
-import * as functions from "../config/functions";
+import {  Request, Response, Router } from "express";
 import * as util from "../config/util";
-import { orderRep, pointRep, userRep } from "../models/index";
-import db from 'sequelize';
-import * as admin from "firebase-admin";
-import User from "../models/user";
-
-import jwt from "jsonwebtoken";
-import passport from "passport";
+import {  pointRep, userRep } from "../models/index";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -33,7 +26,7 @@ point.post('/', util.isLoggedin,async (req:Request,res:Response)=>{
   if(!user) return res.status(403).json(util.successFalse(null,"포인트 충전 실패", null));
   const today = new Date();
   today.setFullYear(today.getFullYear()+3,today.getMonth(),today.getDay());
-  const newPoint = await pointRep.create({
+  await pointRep.create({
     point:reqBody.point,
     pointKind: 0,
     userId: tokenData.id,

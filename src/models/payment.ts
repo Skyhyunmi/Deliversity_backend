@@ -1,22 +1,17 @@
 import {
   AllowNull,
-  Unique,
   Table,
   Column,
   Model,
   PrimaryKey,
   AutoIncrement,
   DataType,
-  Comment,
   CreatedAt,
   UpdatedAt,
-  DeletedAt,
-  Default,//, ForeignKey
   ForeignKey
 } from "sequelize-typescript";
 import Order from "../models/order";
 import User from "../models/user";
-
 
   @Table({ timestamps: true })
 export default class Payment extends Model<Payment> {

@@ -15,7 +15,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 export const db = new Sequelize(
-  process.env.DB_NAME as string,
+  process.env.JEST_ENV === 'test' ?process.env.TEST_DB_NAME as string: process.env.DB_NAME as string,
   process.env.DB_USER as string,
   process.env.DB_PASS,
   {

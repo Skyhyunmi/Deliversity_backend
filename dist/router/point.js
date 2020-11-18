@@ -59,7 +59,7 @@ exports.point.post('/', util.isLoggedin, (req, res) => __awaiter(void 0, void 0,
         return res.status(403).json(util.successFalse(null, "포인트 충전 실패", null));
     const today = new Date();
     today.setFullYear(today.getFullYear() + 3, today.getMonth(), today.getDay());
-    const newPoint = yield index_1.pointRep.create({
+    yield index_1.pointRep.create({
         point: reqBody.point,
         pointKind: 0,
         userId: tokenData.id,

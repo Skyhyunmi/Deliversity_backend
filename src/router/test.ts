@@ -27,7 +27,7 @@ test.post('/juso',async function ( req: Request, res: Response ) {
       url:`https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(reqBody.address)}`,
       method:'get',
       headers:{Authorization: `KakaoAK ${process.env.KAKAO_KEY}`}
-    }) as any;
+    });
     return res.json(util.successTrue("",coord.data.documents[0]));
   }catch(err){
     console.error(err);
@@ -49,7 +49,7 @@ test.post('/noti',util.isLoggedin, async function ( req: Request, res: Response 
     // await admin.messaging().sendToDevice(registrationToken,{
     //   data:{test:"hi"}
     // })
-    admin.messaging().sendToDevice(registrationToken,payload);
+    await admin.messaging().sendToDevice(registrationToken,payload);
     // admin.messaging().send(payload)
     // .then(result=>{
     //   return res.json(util.successTrue( "", payload.notification));

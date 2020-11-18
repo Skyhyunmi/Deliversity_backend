@@ -14,12 +14,10 @@ import { point } from "./router/point";
 import {passportConfig} from './config/passport';
 import * as util from "./config/util";
 import * as functions from "./config/functions";
-import * as classes from "./config/classes";
-import { chatRep, db, roomRep, userRep } from "./models";
+import { db } from "./models";
 import * as fs from "fs";
 import path from "path";
-import SocketIO from "socket.io";
-import nCache from "node-cache";
+import chatServer from "./chatServer";
 
 import * as Admin from "firebase-admin";
 const pk = process.env.FB_private_key as string;
@@ -33,8 +31,6 @@ Admin.initializeApp({
 
 import dotenv from "dotenv";
 dotenv.config();
-
-const myCache = new nCache();
 
 process.env.NODE_ENV = ( process.env.NODE_ENV && ( process.env.NODE_ENV )
   .trim().toLowerCase() == 'production' ) ? 'production' : 'development';
@@ -75,7 +71,7 @@ app.get('/favicon.ico',(req:any,res:Response)=>{
   res.status(200).end(favicon);
 });
 
-app.get('/', function(req, res) {
+app.get('/chat', function(req, res) {
   console.log(__dirname);
   res.status(200).sendFile(path.join(__dirname, '../index.html'));
 });
@@ -122,162 +118,12 @@ app.use(function(err:any, req:any, res:Response, next:NextFunction) {
   // render the error page
   res.status(err.status || 500).json(util.successFalse(null,"Error",null));
 });
-
-const server = app.listen(process.env.WEB_PORT, () => {
-  if(process.env.NODE_ENV == 'production')
-    functions.sendSMStoAdmin();
-  console.log(process.env.NODE_ENV);
-  console.log("Server Started");
-});
-
-setInterval(async ()=>{
-  const Data = await myCache.take('chat') as classes.userData[];
-  if(Data){
-    await chatRep.bulkCreate(Data);
-  }
-},5000);
-
-export const io = SocketIO.listen(server,
-  {transports:['websocket','polling'],
-    'pingTimeout': 10000*60*10, 'pingInterval': 10000*60*7
+if (process.env.JEST_ENV !== 'test') {
+  const server = app.listen(process.env.WEB_PORT, () => {
+    if(process.env.NODE_ENV == 'production')
+      functions.sendSMStoAdmin();
+    console.log(process.env.NODE_ENV);
+    console.log("Server Started");
   });
-io.on('connect',async (socket:SocketIO.Socket)=>{
-  socket.on('dscnt',async (roomId: any)=>{ // 클라이언트에서 백으로 chat으로 emit
-    console.log("> user disconnect from: ");
-    console.log(roomId);
-    socket.leave(roomId);
-    myCache.del(roomId);
-  });
-
-  socket.on('cnt',async (roomId: any)=>{ // 클라이언트에서 백으로 chat으로 emit
-    console.log("> user connect to: ");
-    console.log(roomId);
-    myCache.del(roomId);
-    socket.join(roomId);
-  });
-
-  socket.on('chat',async (data: any[])=>{ // 클라이언트에서 백으로 chat으로 emit
-    let room = myCache.get(data[0].user.roomId) as any;
-    console.log(data);
-    // 이 부분은 테스트용.
-    if(data[0].user.roomId == "664e4b4a0f8f37dfc636f8296992e08b5639a2f539115e9a51"){
-      room = {
-        ownerId:data[0].user._id,
-        ownerNickName:"owner",
-        riderNickName:"rider",
-      };
-    }
-    else 
-    //
-    if(room == undefined) {
-      const userRoom = await roomRep.findOne({
-        where:{roomId: data[0].user.roomId}
-      });
-      if(!userRoom) return;
-      const user = await userRep.findOne({
-        where:{id:userRoom.ownerId}
-      });
-      if(!user) return;
-      const rider = await userRep.findOne({
-        where:{id:userRoom.riderId}
-      });
-      if(!rider) return;
-      const _room = {
-        ownerId:user.id,
-        ownerNickName:user.nickName,
-        ownerFCM: user.firebaseFCM,
-        riderNickName:rider.nickName,
-        riderFCM: rider.firebaseFCM,
-      };
-      myCache.set(data[0].user.roomId,_room);
-      room=_room;
-    }
-    // 나중에 완성되면 지울 것
-    const roomId = data[0].user.roomId;
-    socket.join(roomId);
-    //
-    let fcm;
-    if(parseInt(data[0].user._id) == parseInt(room.ownerId)){
-      data[0].user.nickName = room.ownerNickName;
-      fcm = room.riderFCM;
-      console.log("rider fcm: ",fcm);
-    }
-    else {
-      data[0].user.nickName = room.riderNickName;
-      fcm = room.ownerFCM;
-      console.log("owner fcm: ",fcm);
-    }
-    console.log("> userText:");
-    console.log(data[0].text);
-    socket.to(roomId).broadcast.emit('rChat',data); // 백에서 클라이언트로 rChat으로 emit
-
-    const message = {
-      notification:{
-        "title":data[0].user.nickName,
-        "tag":data[0].user.nickName,
-        "body":data[0].text,
-        // "clickAction":
-      },
-      data:{
-        type:'Chat',
-        roomId: roomId,
-        senderId: data[0].user._id.toString()
-      }
-    };
-    console.log(data[0].user.nickName);
-    Admin.messaging().sendToDevice(fcm, message)
-      .then(async (response) => {
-        console.log(response.results[0]);
-        if(response.results[0].error){
-          if(parseInt(data[0].user._id) == parseInt(room.ownerId)){
-            const rider = await userRep.findOne({
-              where:{nickName:room.riderNickName}
-            });
-            if(!rider) return;
-            room.riderFCM = rider.firebaseFCM;
-            await Admin.messaging().sendToDevice(room.riderFCM, message);
-            myCache.set(data[0].user.roomId,room);
-          }
-          else{
-            const owner = await userRep.findOne({
-              where:{nickName:room.ownerNickName}
-            });
-            if(!owner) return;
-            room.ownerFCM = owner.firebaseFCM;
-            await Admin.messaging().sendToDevice(room.ownerFCM, message);
-            myCache.set(data[0].user.roomId,room);
-          }
-          
-        }
-      })
-      .catch(async (error) => {
-        console.log('Error sending message:', error);
-        if(parseInt(data[0].user._id) == parseInt(room.ownerId)){
-          const rider = await userRep.findOne({
-            where:{nickName:room.riderNickName}
-          });
-          if(!rider) return;
-          room.riderFCM = rider.firebaseFCM;
-          await Admin.messaging().sendToDevice(room.riderFCM, message);
-          myCache.set(data[0].user.roomId,room);
-        }
-        else{
-          const owner = await userRep.findOne({
-            where:{nickName:room.ownerNickName}
-          });
-          if(!owner) return;
-          room.ownerFCM = owner.firebaseFCM;
-          await Admin.messaging().sendToDevice(room.ownerFCM, message);
-          myCache.set(data[0].user.roomId,room);
-        }
-      });
-    let list = myCache.get('chat') as classes.userData[];
-    if(list == undefined)
-      myCache.set('chat',[new classes.userData(data[0],data[0].user.nickName)]);
-    else{
-      list=myCache.take('chat') as classes.userData[];
-      list.push(new classes.userData(data[0],data[0].user.nickName));
-      myCache.set('chat',list);
-    }
-  });
-});
+  chatServer(server);
+}
