@@ -59,7 +59,7 @@ process.env.NODE_ENV = (process.env.NODE_ENV && (process.env.NODE_ENV)
 // authenticate -> Open connection
 // sync -> make table if not exist
 models_1.db
-    // /* <- 여기를 통해 토글
+    /* <- 여기를 통해 토글
     .sync() //make table if not exist
     /*/
     .authenticate() //Open connection
