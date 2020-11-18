@@ -103,7 +103,7 @@ describe('인증 테스트', ()=>{
         done();
     })
 
-    it.only('이메일 인증번호 검증을 한다.',async (done)=>{
+    it('이메일 인증번호 검증을 한다.',async (done)=>{
         const email_number = crypto.randomBytes(256).toString('hex').substr(100, 50);
         const email="test@test.ac.kr";
         myCache.del(email);

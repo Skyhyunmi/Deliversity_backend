@@ -7,6 +7,10 @@ sudo: required
 
 services:
   - docker
+  - mysql
+
+before_install:
+  - mysql -e 'CRATE DATABASE innodb'
 
 script:
   - npm run lint

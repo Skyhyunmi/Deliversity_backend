@@ -43,21 +43,19 @@ describe('관리자 테스트',()=>{
         expect(res.status).toBe(200)
     })
 
-    it('신분증 인증을 승인한다.', (done)=>{
-        request(app)
+    it('신분증 인증을 승인한다.', async (done)=>{
+        const user = await request(app)
         .post('/api/v1/myinfo/upload')
         .set('x-access-token', userToken)
         .send({idCard:"test"})
-        .then(()=>{
-            request(app)
-            .put(`/api/v1/admin/upload?id=${userParsedData.id}`)
-            .set('x-access-token', adminToken)
-            .send({result:"1"})
-            .then(res=>{
-                expect(res.status).toBe(200)
-                done();
-            })
-        })
+
+        const res = await request(app)
+        .put(`/api/v1/admin/upload?id=${userParsedData.id}`)
+        .set('x-access-token', adminToken)
+        .send({result:"1"})
+        console.log(res.body)
+        expect(res.status).toBe(200)
+        done();
     })
 
     it('신고 리스트를 반환한다.',async () =>{

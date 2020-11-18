@@ -105,7 +105,7 @@ exports.myinfo.put('/', util.isLoggedin, function (req, res) {
                 if (nickExist)
                     return res.status(403).json(util.successFalse(null, "닉네임이 중복되었습니다.", null));
             }
-            _user.update({
+            yield _user.update({
                 password: hashedPw ? hashedPw : _user.password,
                 salt: salt ? salt : _user.salt,
                 nickName: reqBody.nickName ? reqBody.nickName : _user.nickName
@@ -171,7 +171,7 @@ exports.myinfo.put('/address/set', util.isLoggedin, function (req, res) {
             });
             if (!address)
                 return res.status(403).json(util.successFalse(null, "해당 하는 주소가 없습니다.", null));
-            user.update({
+            yield user.update({
                 addressId: reqBody.addressId
             });
             return res.json(util.successTrue("", address));
@@ -227,7 +227,7 @@ exports.myinfo.post('/address', util.isLoggedin, function (req, res) {
                 locY: coord.data.documents[0].x
             });
             if (reqBody.setDefault == "1") {
-                index_1.userRep.update({
+                yield index_1.userRep.update({
                     addressId: address.id
                 }, {
                     where: {
@@ -256,7 +256,7 @@ exports.myinfo.put('/address', util.isLoggedin, function (req, res) {
             });
             if (!old)
                 return res.status(403).json(util.successFalse(null, "해당 하는 주소가 없습니다.", null));
-            old.update({
+            yield old.update({
                 detailAddress: reqBody.detailAddress ? reqBody.detailAddress : old.detailAddress,
             });
             return res.json(util.successTrue("", old));
@@ -350,7 +350,7 @@ exports.myinfo.post('/upload', util.isLoggedin, function (req, res) {
                 return res.status(403).json(util.successFalse(null, "이미 신분확인이 완료되었습니다.", null));
             if (user.grade == 1)
                 return res.status(403).json(util.successFalse(null, "신분 확인 대기중입니다.", null));
-            user.update({
+            yield user.update({
                 grade: 1,
                 idCard: reqBody.idCard
             });
@@ -368,7 +368,7 @@ exports.myinfo.post('/toRider', util.isLoggedin, util.isUser, function (req, res
             const user = yield index_1.userRep.findOne({ where: { userId: tokenData.userId } });
             if (!user)
                 return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
-            user.update({ grade: 3 });
+            yield user.update({ grade: 3 });
             return res.json(util.successTrue("", { grade: user.grade }));
         }
         catch (err) {
@@ -383,7 +383,7 @@ exports.myinfo.post('/toUser', util.isLoggedin, util.isRider, function (req, res
             const user = yield index_1.userRep.findOne({ where: { userId: tokenData.userId } });
             if (!user)
                 return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
-            user.update({ grade: 2 });
+            yield user.update({ grade: 2 });
             return res.json(util.successTrue("", { grade: user.grade }));
         }
         catch (err) {
@@ -399,7 +399,7 @@ exports.myinfo.post('/currentLocation', util.isLoggedin, util.isRider, function 
             const user = yield index_1.userRep.findOne({ where: { userId: tokenData.userId } });
             if (!user)
                 return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
-            user.update({ lat: reqBody.coords.latitude, lng: reqBody.coords.longitude });
+            yield user.update({ lat: reqBody.coords.latitude, lng: reqBody.coords.longitude });
             return res.json(util.successTrue("", null));
         }
         catch (err) {
@@ -424,7 +424,7 @@ exports.myinfo.get('/grade', util.isLoggedin, function (req, res) {
                 return res.status(403).json(util.successFalse(null, "파라미터가 부족합니다.", null));
             if (parseInt(reqQuery.grade) >= 4)
                 return res.json(util.successTrue(`4이상으로 올라 갈 수 없습니다.`, null));
-            user.update({ grade: reqQuery.grade });
+            yield user.update({ grade: reqQuery.grade });
             return res.json(util.successTrue("", { grade: user.grade }));
         }
         catch (err) {

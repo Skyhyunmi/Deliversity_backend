@@ -67,7 +67,7 @@ myinfo.put('/', util.isLoggedin, async function (req: Request, res: Response) {
       });
       if (nickExist) return res.status(403).json(util.successFalse(null, "닉네임이 중복되었습니다.", null));
     }
-    _user.update({
+    await _user.update({
       password: hashedPw ? hashedPw : _user.password,
       salt: salt ? salt : _user.salt,
       nickName: reqBody.nickName ? reqBody.nickName : _user.nickName
@@ -127,7 +127,7 @@ myinfo.put('/address/set', util.isLoggedin, async function (req: Request, res: R
     });
     if (!address) return res.status(403).json(util.successFalse(null, "해당 하는 주소가 없습니다.", null));
 
-    user.update({
+    await user.update({
       addressId: reqBody.addressId
     });
     return res.json(util.successTrue("", address));
@@ -177,7 +177,7 @@ myinfo.post('/address', util.isLoggedin, async function (req: Request, res: Resp
       locY: coord.data.documents[0].x
     });
     if (reqBody.setDefault == "1") {
-      userRep.update({
+      await userRep.update({
         addressId: address.id
       }, {
         where: {
@@ -203,7 +203,7 @@ myinfo.put('/address', util.isLoggedin, async function (req: Request, res: Respo
       }
     });
     if (!old) return res.status(403).json(util.successFalse(null, "해당 하는 주소가 없습니다.", null));
-    old.update({
+    await old.update({
       detailAddress: reqBody.detailAddress ? reqBody.detailAddress : old.detailAddress,
     });
     return res.json(util.successTrue("", old));
@@ -284,7 +284,7 @@ myinfo.post('/upload', util.isLoggedin, async function (req: Request, res: Respo
     if (!user) return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
     if (user.grade > 1) return res.status(403).json(util.successFalse(null, "이미 신분확인이 완료되었습니다.", null));
     if (user.grade == 1) return res.status(403).json(util.successFalse(null, "신분 확인 대기중입니다.", null));
-    user.update({
+    await user.update({
       grade: 1,
       idCard: reqBody.idCard
     });
@@ -299,7 +299,7 @@ myinfo.post('/toRider', util.isLoggedin, util.isUser, async function (req: Reque
   try {
     const user = await userRep.findOne({ where: { userId: tokenData.userId } });
     if (!user) return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
-    user.update({ grade: 3 });
+    await user.update({ grade: 3 });
     return res.json(util.successTrue("", { grade: user.grade }));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
@@ -311,7 +311,7 @@ myinfo.post('/toUser', util.isLoggedin, util.isRider, async function (req: Reque
   try {
     const user = await userRep.findOne({ where: { userId: tokenData.userId } });
     if (!user) return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
-    user.update({ grade: 2 });
+    await user.update({ grade: 2 });
     return res.json(util.successTrue("", { grade: user.grade }));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
@@ -324,7 +324,7 @@ myinfo.post('/currentLocation',util.isLoggedin, util.isRider, async function ( r
   try {
     const user = await userRep.findOne({where:{userId:tokenData.userId}});
     if (!user) return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
-    user.update({lat:reqBody.coords.latitude,lng:reqBody.coords.longitude});
+    await user.update({lat:reqBody.coords.latitude,lng:reqBody.coords.longitude});
     return res.json(util.successTrue("", null));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
@@ -344,7 +344,7 @@ myinfo.get('/grade', util.isLoggedin, async function (req: Request, res: Respons
     if (!user) return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
     if (reqQuery.grade == null || reqQuery.grade == "") return res.status(403).json(util.successFalse(null, "파라미터가 부족합니다.", null));
     if (parseInt(reqQuery.grade as string) >= 4) return res.json(util.successTrue(`4이상으로 올라 갈 수 없습니다.`, null));
-    user.update({ grade: reqQuery.grade });
+    await user.update({ grade: reqQuery.grade });
     return res.json(util.successTrue("", { grade: user.grade }));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));

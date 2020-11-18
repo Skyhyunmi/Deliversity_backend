@@ -241,7 +241,7 @@ exports.order.post('/rider', util.isLoggedin, function (req, res) {
                     riderId: rider.riderId,
                     roomId: crypto.randomBytes(256).toString('hex').substr(100, 50)
                 });
-                order.update({
+                yield order.update({
                     riderId: rider.riderId,
                     extraFee: rider.extraFee,
                     orderStatus: 1,
@@ -353,7 +353,7 @@ exports.order.post('/price', util.isLoggedin, util.isRider, function (req, res) 
                 return res.status(403).json(util.successFalse(null, "이미 결제 금액이 등록 되었습니다.", null));
             const cost = parseInt(reqBody.cost);
             const totalCost = order.deliveryFee + order.extraFee + cost;
-            order.update({ cost: cost, totalCost: totalCost });
+            yield order.update({ cost: cost, totalCost: totalCost });
             return res.json(util.successTrue("", order));
         }
         catch (err) {
@@ -385,7 +385,7 @@ exports.order.post('/review/user', util.isLoggedin, util.isRider, function (req,
                 rating: reqBody.rating,
                 content: reqBody.content
             });
-            _order.update({ reviewedByRider: true });
+            yield _order.update({ reviewedByRider: true });
             return res.json(util.successTrue("", review));
         }
         catch (err) {
@@ -456,7 +456,7 @@ exports.order.post('/review/rider', util.isLoggedin, function (req, res) {
                 rating: reqBody.rating,
                 content: reqBody.content
             });
-            _order.update({ reviewedByUser: true });
+            yield _order.update({ reviewedByUser: true });
             return res.json(util.successTrue("", review));
         }
         catch (err) {
@@ -551,7 +551,7 @@ exports.order.get('/setDelivered', util.isLoggedin, util.isRider, function (req,
             });
             if (!order)
                 return res.status(403).json(util.successFalse(null, "주문이 없습니다.", null));
-            order === null || order === void 0 ? void 0 : order.update({
+            yield order.update({
                 orderStatus: 3
             });
             return res.json(util.successTrue("", order));
@@ -689,34 +689,34 @@ exports.order.post('/pay', util.isLoggedin, (req, res) => __awaiter(void 0, void
     // 결제액 부족. 결제창으로 이동
     if (sum - price < 0)
         return res.status(403).json(util.successFalse(null, "잔액이 부족합니다.", null));
-    points.some((point) => {
+    points.some((point) => __awaiter(void 0, void 0, void 0, function* () {
         if (price) {
             const curPoint = point.point;
             if (price <= point.point) {
-                point.update({ point: curPoint - price });
+                yield point.update({ point: curPoint - price });
                 price = 0;
                 return true;
             }
             else {
-                point.update({ point: 0 });
-                point.destroy();
+                yield point.update({ point: 0 });
+                yield point.destroy();
                 price -= curPoint;
                 return false;
             }
         }
         else
             return true;
-    });
+    }));
     const today = new Date();
     today.setFullYear(today.getFullYear() + 3, today.getMonth(), today.getDay());
-    models_1.pointRep.create({
+    yield models_1.pointRep.create({
         pointKind: 0,
         status: 0,
         expireAt: today,
         userId: reqBody.riderId,
         point: parseInt(reqBody.price)
     });
-    order.update({ orderStatus: 2 });
+    yield order.update({ orderStatus: 2 });
     return res.json(util.successTrue("", null));
 }));
 exports.order.get('/complete', util.isLoggedin, util.isRider, function (req, res) {
@@ -733,7 +733,7 @@ exports.order.get('/complete', util.isLoggedin, util.isRider, function (req, res
                 } });
             if (!order)
                 return res.status(403).json(util.successFalse(null, "주문 내역이 없거나 배달 완료 처리할 수 없습니다.", null));
-            order.update({ orderStatus: 3 });
+            yield order.update({ orderStatus: 3 });
             return res.json(util.successTrue("", order));
         }
         catch (err) {

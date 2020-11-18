@@ -18,7 +18,7 @@ const chat_1 = __importDefault(require("./chat"));
 const room_1 = __importDefault(require("./room"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
-exports.db = new sequelize_typescript_1.Sequelize(process.env.JEST_ENV === 'test' ? process.env.TEST_DB_NAME : process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASS, {
+exports.db = new sequelize_typescript_1.Sequelize(process.env.JEST_ENV === 'test' ? process.env.TEST_DB_NAME : process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASS ? process.env.DB_PASS : '', {
     host: process.env.DB_HOST,
     port: Number.parseInt(process.env.DB_PORT),
     dialect: "mysql",

@@ -61,8 +61,7 @@ describe('회원정보 테스트', ()=>{
             .set('x-access-token', userToken)
             .send({
                 address:"서울 강남구 도산대로55길 26",
-                detailAddress:"3층",
-                setDefault:"1"
+                detailAddress:"3층"
             })
             expect(newAddress.body.data.address).toBe("서울 강남구 도산대로55길 26")
 

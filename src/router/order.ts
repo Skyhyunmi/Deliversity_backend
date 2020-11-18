@@ -185,7 +185,7 @@ order.post('/rider', util.isLoggedin, async function (req: Request, res: Respons
         riderId: rider.riderId,
         roomId: crypto.randomBytes(256).toString('hex').substr(100, 50)
       });
-      order.update({
+      await order.update({
         riderId: rider.riderId,
         extraFee: rider.extraFee,
         orderStatus: 1,
@@ -283,7 +283,7 @@ order.post('/price', util.isLoggedin, util.isRider, async function (req: Request
     if (order.totalCost) return res.status(403).json(util.successFalse(null, "이미 결제 금액이 등록 되었습니다.", null));
     const cost = parseInt(reqBody.cost);
     const totalCost = order.deliveryFee + order.extraFee + cost;
-    order.update({ cost: cost, totalCost: totalCost });
+    await order.update({ cost: cost, totalCost: totalCost });
     return res.json(util.successTrue("", order));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
@@ -312,7 +312,7 @@ order.post('/review/user', util.isLoggedin, util.isRider, async function (req: R
       rating: reqBody.rating,
       content: reqBody.content
     });
-    _order.update({reviewedByRider:true});
+    await _order.update({reviewedByRider:true});
     return res.json(util.successTrue("", review));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "주문건이 없거나, 이미 리뷰를 작성했습니다.", null));
@@ -376,7 +376,7 @@ order.post('/review/rider', util.isLoggedin, async function (req: Request, res: 
       rating: reqBody.rating,
       content: reqBody.content
     });
-    _order.update({reviewedByUser:true});
+    await _order.update({reviewedByUser:true});
     return res.json(util.successTrue("", review));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "주문건이 없거나, 이미 리뷰를 작성했습니다.", null));
@@ -461,7 +461,7 @@ order.get('/setDelivered', util.isLoggedin, util.isRider, async function (req: R
       }
     });
     if (!order) return res.status(403).json(util.successFalse(null, "주문이 없습니다.", null));
-    order?.update({
+    await order.update({
       orderStatus: 3
     });
     return res.json(util.successTrue("", order));
@@ -582,17 +582,17 @@ order.post('/pay', util.isLoggedin,async (req:Request,res:Response)=>{
   if(sum-price < 0) 
     return res.status(403).json(util.successFalse(null,"잔액이 부족합니다.", null));
         
-  points.some((point)=>{
+  points.some(async (point)=>{
     if(price){
       const curPoint = point.point;
       if(price<=point.point){
-        point.update({point:curPoint-price});
+        await point.update({point:curPoint-price});
         price=0;
         return true;
       }
       else {
-        point.update({point:0});
-        point.destroy();
+        await point.update({point:0});
+        await point.destroy();
         price-=curPoint;
         return false;
       }
@@ -601,14 +601,14 @@ order.post('/pay', util.isLoggedin,async (req:Request,res:Response)=>{
   });
   const today = new Date();
   today.setFullYear(today.getFullYear()+3,today.getMonth(),today.getDay());
-  pointRep.create({
+  await pointRep.create({
     pointKind: 0,
     status:0,
     expireAt:today,
     userId:reqBody.riderId,
     point: parseInt(reqBody.price)
   });
-  order.update({orderStatus:2});
+  await order.update({orderStatus:2});
   return res.json(util.successTrue("",null));
 });
 
@@ -624,7 +624,7 @@ order.get('/complete', util.isLoggedin, util.isRider, async function (req: Reque
       orderStatus: 2
     }});
     if (!order) return res.status(403).json(util.successFalse(null, "주문 내역이 없거나 배달 완료 처리할 수 없습니다.", null));
-    order.update({orderStatus:3});
+    await order.update({orderStatus:3});
     return res.json(util.successTrue("", order));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "주문 내역이 없거나 배달 완료 처리할 수 없습니다.", null));
