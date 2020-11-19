@@ -110,7 +110,7 @@ admin.put('/report', util.isLoggedin, util.isAdmin, async function (req: Request
     const answered_report = await reportRep.findOne({ where: { id: reportId } });
     if (!answered_report) { return res.status(403).json(util.successFalse(null, "해당하는 문의가 없습니다.", null)); }
     if (answered_report.status) { return res.status(403).json(util.successFalse(null, "이미 처리된 문의입니다.", null)); }
-    answered_report.update({ answer: answer, status: true });
+    await answered_report.update({ answer: answer, status: true });
     return res.json(util.successTrue("", answered_report));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
@@ -151,7 +151,7 @@ admin.put('/qna', util.isLoggedin, util.isAdmin, async function (req: Request, r
     const answered_qna = await qnaRep.findOne({ where: { id: qnaId } });
     if (!answered_qna) { return res.status(403).json(util.successFalse(null, "해당하는 문의가 없습니다.", null)); }
     if (answered_qna.status) { return res.status(403).json(util.successFalse(null, "이미 처리된 문의입니다.", null)); }
-    answered_qna.update({ answer: answer, status: true });
+    await answered_qna.update({ answer: answer, status: true });
     return res.json(util.successTrue("", answered_qna));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));

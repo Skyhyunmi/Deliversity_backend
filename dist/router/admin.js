@@ -171,7 +171,7 @@ exports.admin.put('/report', util.isLoggedin, util.isAdmin, function (req, res) 
             if (answered_report.status) {
                 return res.status(403).json(util.successFalse(null, "이미 처리된 문의입니다.", null));
             }
-            answered_report.update({ answer: answer, status: true });
+            yield answered_report.update({ answer: answer, status: true });
             return res.json(util.successTrue("", answered_report));
         }
         catch (err) {
@@ -223,7 +223,7 @@ exports.admin.put('/qna', util.isLoggedin, util.isAdmin, function (req, res) {
             if (answered_qna.status) {
                 return res.status(403).json(util.successFalse(null, "이미 처리된 문의입니다.", null));
             }
-            answered_qna.update({ answer: answer, status: true });
+            yield answered_qna.update({ answer: answer, status: true });
             return res.json(util.successTrue("", answered_qna));
         }
         catch (err) {

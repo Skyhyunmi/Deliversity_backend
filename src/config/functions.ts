@@ -199,12 +199,15 @@ export async function getUserFromGoogleInfo(idToken:string) {
     }
   });
   if(!ret) return null;
-  return {id:ret.data.sub, 
-    user: await userRep.findOne({
-      where:{
-        googleOAuth:ret.data.sub
-      }
-    })
+  const user = await userRep.findOne({
+    where:{
+      googleOAuth:ret.data.sub
+    }
+  });
+  if(!user) return null;
+  return {
+    id:ret.data.sub, 
+    user: user
   };
 }
 
@@ -217,12 +220,15 @@ export async function getUserFromKakaoInfo(accessToken:string) {
     }
   });
   if(!ret) return null;
-  return {id:ret.data.id,
-    user: await userRep.findOne({
-      where:{
-        kakaoOAuth:ret.data.id
-      }
-    })
+  const user = await userRep.findOne({
+    where:{
+      kakaoOAuth:ret.data.id
+    }
+  });
+  if(!user) return null;
+  return {
+    id:ret.data.id,
+    user: user
   };
 }
 

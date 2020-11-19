@@ -64,7 +64,7 @@ auth.post('/login/google', async function (req: Request, res: Response) {
     const user = await functions.getUserFromGoogleInfo(idToken);
     if (!user) return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
     if (!user.user) return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
-    user.user.update({firebaseFCM:req.body.fcmToken});
+    await user.user.update({firebaseFCM:req.body.fcmToken});
     const result = await functions.getAuthToken(user.user);
     return res.json(util.successTrue("", {firebaseToken: result.firebaseToken, token: result.authToken, grade: user.user.grade }));
   }catch (e) {
@@ -80,7 +80,7 @@ auth.post('/login/kakao', async function (req: Request, res: Response) {
     const user = await functions.getUserFromKakaoInfo(accessToken);
     if (!user) return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
     if (!user.user) return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
-    user.user.update({firebaseFCM:req.body.fcmToken});
+    await user.user.update({firebaseFCM:req.body.fcmToken});
     const result = await functions.getAuthToken(user.user);
     return res.json(util.successTrue("", {firebaseToken:result.firebaseToken, token: result.authToken, grade: user.user.grade }));
   }catch (e) {

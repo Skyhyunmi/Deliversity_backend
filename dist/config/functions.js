@@ -246,11 +246,16 @@ function getUserFromGoogleInfo(idToken) {
         });
         if (!ret)
             return null;
-        return { id: ret.data.sub, user: yield index_1.userRep.findOne({
-                where: {
-                    googleOAuth: ret.data.sub
-                }
-            })
+        const user = yield index_1.userRep.findOne({
+            where: {
+                googleOAuth: ret.data.sub
+            }
+        });
+        if (!user)
+            return null;
+        return {
+            id: ret.data.sub,
+            user: user
         };
     });
 }
@@ -266,11 +271,16 @@ function getUserFromKakaoInfo(accessToken) {
         });
         if (!ret)
             return null;
-        return { id: ret.data.id, user: yield index_1.userRep.findOne({
-                where: {
-                    kakaoOAuth: ret.data.id
-                }
-            })
+        const user = yield index_1.userRep.findOne({
+            where: {
+                kakaoOAuth: ret.data.id
+            }
+        });
+        if (!user)
+            return null;
+        return {
+            id: ret.data.id,
+            user: user
         };
     });
 }
