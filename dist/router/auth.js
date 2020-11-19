@@ -100,7 +100,7 @@ exports.auth.post('/login/google', function (req, res) {
                 return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
             if (!user.user)
                 return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
-            user.user.update({ firebaseFCM: req.body.fcmToken });
+            yield user.user.update({ firebaseFCM: req.body.fcmToken });
             const result = yield functions.getAuthToken(user.user);
             return res.json(util.successTrue("", { firebaseToken: result.firebaseToken, token: result.authToken, grade: user.user.grade }));
         }
@@ -120,7 +120,7 @@ exports.auth.post('/login/kakao', function (req, res) {
                 return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
             if (!user.user)
                 return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
-            user.user.update({ firebaseFCM: req.body.fcmToken });
+            yield user.user.update({ firebaseFCM: req.body.fcmToken });
             const result = yield functions.getAuthToken(user.user);
             return res.json(util.successTrue("", { firebaseToken: result.firebaseToken, token: result.authToken, grade: user.user.grade }));
         }

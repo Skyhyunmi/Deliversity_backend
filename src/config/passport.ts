@@ -136,9 +136,9 @@ export function passportConfig(){
           kakaoOAuth:kakaoToken || null,
           firebaseUid:fbUser.uid
         });
-        done(null,user);
+        return done(null,user);
       }catch(err){
-        done(err);
+        return done(err);
       };
     }
     ));
@@ -159,7 +159,7 @@ export function passportConfig(){
           }
         });
         if (!user) return done(null, false, { message: 'ID do not match' });
-        user.update({firebaseFCM:req.body.fcmToken});
+        await user.update({firebaseFCM:req.body.fcmToken});
         if(user.googleOAuth == null && req.body.idToken){
           const idToken = req.body.idToken;
           //토큰 검증
@@ -170,13 +170,13 @@ export function passportConfig(){
               id_token:idToken
             }
           });
-          user.update({
+          await user.update({
             googleOAuth:ret.data.sub
           });
         }
         crypto.pbkdf2(password, user.salt, 100000, 64, 'sha512', function (err:Error | null, key:Buffer) {
           if (err) {
-            done(null, false, { message: 'error' });
+            return done(null, false, { message: 'error' });
           }
           if (user.password === key.toString('base64')) {
             return done(null, user);
@@ -185,7 +185,7 @@ export function passportConfig(){
           }
         });
       } catch (err) {
-        done(err);
+        return done(err);
       }
     })
   );
