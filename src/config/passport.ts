@@ -6,7 +6,9 @@ import * as crypto from "crypto";
 import {myCache} from "../config/functions";
 import axios from "axios";
 import dotenv from "dotenv";
+import * as admin from "firebase-admin";
 import * as functions from "./functions";
+import * as classes from "./classes";
 dotenv.config();
 
 const LocalStrategy = passportLocal.Strategy;
@@ -16,10 +18,10 @@ const ExtractJwt = passportJwt.ExtractJwt;
 
 async function phoneVerify(phone:string){
   try{
-    const veri = myCache.take(phone) as any;
+    const veri = myCache.take(phone) as classes.Veri;
     if(!veri||veri.verify!==1) return 0;
     const now = Number.parseInt(Date.now().toString());
-    const updatedAt = Number.parseInt(veri.updatedAt);
+    const updatedAt = veri.updatedAt as number;
     const remainingTime = (now-updatedAt)/60000;
     if(remainingTime>15){ //15분
       myCache.del(phone);
@@ -37,10 +39,10 @@ async function phoneVerify(phone:string){
 
 async function emailVerify(email:string){
   try{
-    const veri = myCache.take(email) as any;
+    const veri = myCache.take(email) as classes.Veri;
     if(!veri || veri.verify!==1) return 0;
     const now = Number.parseInt(Date.now().toString());
-    const updatedAt = Number.parseInt(veri.updatedAt);
+    const updatedAt = veri.updatedAt as number;
     const remainingTime = (now-updatedAt)/60000;
     if(remainingTime>15){ //15분
       myCache.del(email);
@@ -112,6 +114,13 @@ export function passportConfig(){
           const ret = await functions.getUserFromKakaoInfo(accessToken);
           if(ret && !ret.user) kakaoToken = ret.id;
         }
+        const fbUser = await admin.auth().createUser({
+          email:reqBody.email,
+          emailVerified:true,
+          phoneNumber:"+82"+reqBody.phone.slice(1),
+          password:hashedPw
+        });
+        if(!fbUser) return done(null, false, { message: 'firebase Account is already exists.' });
         const user = await userRep.create({
           userId: userId,
           password: hashedPw,
@@ -124,7 +133,8 @@ export function passportConfig(){
           createdAt: new Date(),
           updatedAt: null,
           googleOAuth:googleToken || null,
-          kakaoOAuth:kakaoToken || null
+          kakaoOAuth:kakaoToken || null,
+          firebaseUid:fbUser.uid
         });
         done(null,user);
       }catch(err){
@@ -184,13 +194,11 @@ export function passportConfig(){
     {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKey: process.env.JWT_SECRET
-    }, function (jwtToken, done) {
-      userRep.findOne({where:{ userId: jwtToken.userId }}).then((user: any) =>{
-        if (user) {
-          return done(undefined, user , jwtToken);
-        } else {
-          return done(undefined, false);
-        }
-      });
-    }));
+    },
+    async function (jwtToken, done) {
+      const user = await userRep.findOne({where:{ userId: jwtToken.userId }});
+      if(!user) return done(undefined, false);
+      else return done(undefined, user , jwtToken);
+    })
+  );
 };

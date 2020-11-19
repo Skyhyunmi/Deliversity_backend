@@ -61,9 +61,7 @@ function makeSignature(urlsub, timestamp) {
 }
 function sendEmail(email, suburl) {
     return __awaiter(this, void 0, void 0, function* () {
-        const key_one = crypto.randomBytes(256).toString('hex').substr(100, 5);
-        const key_two = crypto.randomBytes(256).toString('base64').substr(50, 5);
-        const email_number = key_one + key_two;
+        const email_number = crypto.randomBytes(256).toString('hex').substr(100, 20);
         try {
             const user = yield index_1.userRep.findOne({ where: { email: email } });
             if (user)
@@ -96,7 +94,7 @@ function emailVerify(verify) {
                 return "Not Matched.";
             }
             const now = Number.parseInt(Date.now().toString());
-            const created = Number.parseInt(veri.createdAt);
+            const created = veri.createdAt;
             const remainingTime = (now - created) / 60000;
             if (remainingTime > 15) {
                 exports.myCache.del(verify);
@@ -133,7 +131,6 @@ function sendSMStoAdmin() {
         const timestamp = Date.now().toString();
         const urlsub = `/sms/v2/services/${serviceID}/messages`;
         const signature = makeSignature(urlsub, timestamp);
-        const randomNumber = Math.floor(Math.random() * (999999 - 100000)) + 100000;
         const data = {
             "type": "SMS",
             "contentType": "COMM",
@@ -223,7 +220,7 @@ function smsVerify(phone, verify) {
                 return "Not Matched.";
             }
             const now = Number.parseInt(Date.now().toString());
-            const created = Number.parseInt(veri.createdAt);
+            const created = veri.createdAt;
             const remainingTime = (now - created) / 60000;
             if (remainingTime > 15) { //15분
                 exports.myCache.del(phone);

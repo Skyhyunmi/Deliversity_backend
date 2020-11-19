@@ -1,14 +1,11 @@
-import { ALL } from "dns";
 import {
   AllowNull,
-  Unique,
   Table,
   Column,
   Model,
   PrimaryKey,
   AutoIncrement,
   DataType,
-  Comment,
   CreatedAt,
   UpdatedAt,
   DeletedAt,

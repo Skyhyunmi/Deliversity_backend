@@ -70,6 +70,6 @@
   "exclude": [
     "node_modules",
     "dist",
-    "before_deploy"
+    "test"
   ]
 }

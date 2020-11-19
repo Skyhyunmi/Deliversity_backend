@@ -80,7 +80,7 @@ exports.test.post('/noti', util.isLoggedin, function (req, res) {
             // await admin.messaging().sendToDevice(registrationToken,{
             //   data:{test:"hi"}
             // })
-            admin.messaging().sendToDevice(registrationToken, payload);
+            yield admin.messaging().sendToDevice(registrationToken, payload);
             // admin.messaging().send(payload)
             // .then(result=>{
             //   return res.json(util.successTrue( "", payload.notification));

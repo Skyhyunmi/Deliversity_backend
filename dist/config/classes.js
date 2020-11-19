@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Rider = exports.payLoad = exports.userData = void 0;
+exports.Veri = exports.Rider = exports.payLoad = exports.userData = void 0;
 class userData {
     constructor(data, userNickName) {
         this.userId = data.user._id;
@@ -27,3 +27,6 @@ class Rider {
 }
 exports.Rider = Rider;
 ;
+class Veri {
+}
+exports.Veri = Veri;

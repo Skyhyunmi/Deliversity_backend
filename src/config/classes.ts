@@ -40,3 +40,11 @@ export class Rider {
     riderId!: number;
     extraFee!: number;
 };
+
+export class Veri {
+  email?:string;
+  number?:string;
+  createdAt!:number;
+  updatedAt?:number;
+  verify?:number;
+}

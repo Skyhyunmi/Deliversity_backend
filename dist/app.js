@@ -18,20 +18,11 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.io = exports.app = void 0;
+exports.app = void 0;
 const express_1 = __importDefault(require("express"));
 const http_errors_1 = __importDefault(require("http-errors"));
 const morgan_1 = __importDefault(require("morgan"));
@@ -48,12 +39,10 @@ const point_1 = require("./router/point");
 const passport_2 = require("./config/passport");
 const util = __importStar(require("./config/util"));
 const functions = __importStar(require("./config/functions"));
-const classes = __importStar(require("./config/classes"));
 const models_1 = require("./models");
 const fs = __importStar(require("fs"));
 const path_1 = __importDefault(require("path"));
-const socket_io_1 = __importDefault(require("socket.io"));
-const node_cache_1 = __importDefault(require("node-cache"));
+const chatServer_1 = __importDefault(require("./chatServer"));
 const Admin = __importStar(require("firebase-admin"));
 const pk = process.env.FB_private_key;
 Admin.initializeApp({
@@ -65,7 +54,6 @@ Admin.initializeApp({
 });
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
-const myCache = new node_cache_1.default();
 process.env.NODE_ENV = (process.env.NODE_ENV && (process.env.NODE_ENV)
     .trim().toLowerCase() == 'production') ? 'production' : 'development';
 // authenticate -> Open connection
@@ -99,7 +87,7 @@ const favicon = fs.readFileSync('favicon.ico');
 exports.app.get('/favicon.ico', (req, res) => {
     res.status(200).end(favicon);
 });
-exports.app.get('/', function (req, res) {
+exports.app.get('/chat', function (req, res) {
     console.log(__dirname);
     res.status(200).sendFile(path_1.default.join(__dirname, '../index.html'));
 });
@@ -133,160 +121,12 @@ exports.app.use(function (err, req, res, next) {
     // render the error page
     res.status(err.status || 500).json(util.successFalse(null, "Error", null));
 });
-const server = exports.app.listen(process.env.WEB_PORT, () => {
-    if (process.env.NODE_ENV == 'production')
-        functions.sendSMStoAdmin();
-    console.log(process.env.NODE_ENV);
-    console.log("Server Started");
-});
-setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
-    const Data = yield myCache.take('chat');
-    if (Data) {
-        yield models_1.chatRep.bulkCreate(Data);
-    }
-}), 5000);
-exports.io = socket_io_1.default.listen(server, { transports: ['websocket', 'polling'],
-    'pingTimeout': 10000 * 60 * 10, 'pingInterval': 10000 * 60 * 7
-});
-exports.io.on('connect', (socket) => __awaiter(void 0, void 0, void 0, function* () {
-    socket.on('dscnt', (roomId) => __awaiter(void 0, void 0, void 0, function* () {
-        console.log("> user disconnect from: ");
-        console.log(roomId);
-        socket.leave(roomId);
-        myCache.del(roomId);
-    }));
-    socket.on('cnt', (roomId) => __awaiter(void 0, void 0, void 0, function* () {
-        console.log("> user connect to: ");
-        console.log(roomId);
-        myCache.del(roomId);
-        socket.join(roomId);
-    }));
-    socket.on('chat', (data) => __awaiter(void 0, void 0, void 0, function* () {
-        let room = myCache.get(data[0].user.roomId);
-        console.log(data);
-        // 이 부분은 테스트용.
-        if (data[0].user.roomId == "664e4b4a0f8f37dfc636f8296992e08b5639a2f539115e9a51") {
-            room = {
-                ownerId: data[0].user._id,
-                ownerNickName: "owner",
-                riderNickName: "rider",
-            };
-        }
-        else 
-        //
-        if (room == undefined) {
-            const userRoom = yield models_1.roomRep.findOne({
-                where: { roomId: data[0].user.roomId }
-            });
-            if (!userRoom)
-                return;
-            const user = yield models_1.userRep.findOne({
-                where: { id: userRoom.ownerId }
-            });
-            if (!user)
-                return;
-            const rider = yield models_1.userRep.findOne({
-                where: { id: userRoom.riderId }
-            });
-            if (!rider)
-                return;
-            const _room = {
-                ownerId: user.id,
-                ownerNickName: user.nickName,
-                ownerFCM: user.firebaseFCM,
-                riderNickName: rider.nickName,
-                riderFCM: rider.firebaseFCM,
-            };
-            myCache.set(data[0].user.roomId, _room);
-            room = _room;
-        }
-        // 나중에 완성되면 지울 것
-        const roomId = data[0].user.roomId;
-        socket.join(roomId);
-        //
-        let fcm;
-        if (parseInt(data[0].user._id) == parseInt(room.ownerId)) {
-            data[0].user.nickName = room.ownerNickName;
-            fcm = room.riderFCM;
-            console.log("rider fcm: ", fcm);
-        }
-        else {
-            data[0].user.nickName = room.riderNickName;
-            fcm = room.ownerFCM;
-            console.log("owner fcm: ", fcm);
-        }
-        console.log("> userText:");
-        console.log(data[0].text);
-        socket.to(roomId).broadcast.emit('rChat', data); // 백에서 클라이언트로 rChat으로 emit
-        const message = {
-            notification: {
-                "title": data[0].user.nickName,
-                "tag": data[0].user.nickName,
-                "body": data[0].text,
-            },
-            data: {
-                type: 'Chat',
-                roomId: roomId,
-                senderId: data[0].user._id.toString()
-            }
-        };
-        console.log(data[0].user.nickName);
-        Admin.messaging().sendToDevice(fcm, message)
-            .then((response) => __awaiter(void 0, void 0, void 0, function* () {
-            console.log(response.results[0]);
-            if (response.results[0].error) {
-                if (parseInt(data[0].user._id) == parseInt(room.ownerId)) {
-                    const rider = yield models_1.userRep.findOne({
-                        where: { nickName: room.riderNickName }
-                    });
-                    if (!rider)
-                        return;
-                    room.riderFCM = rider.firebaseFCM;
-                    yield Admin.messaging().sendToDevice(room.riderFCM, message);
-                    myCache.set(data[0].user.roomId, room);
-                }
-                else {
-                    const owner = yield models_1.userRep.findOne({
-                        where: { nickName: room.ownerNickName }
-                    });
-                    if (!owner)
-                        return;
-                    room.ownerFCM = owner.firebaseFCM;
-                    yield Admin.messaging().sendToDevice(room.ownerFCM, message);
-                    myCache.set(data[0].user.roomId, room);
-                }
-            }
-        }))
-            .catch((error) => __awaiter(void 0, void 0, void 0, function* () {
-            console.log('Error sending message:', error);
-            if (parseInt(data[0].user._id) == parseInt(room.ownerId)) {
-                const rider = yield models_1.userRep.findOne({
-                    where: { nickName: room.riderNickName }
-                });
-                if (!rider)
-                    return;
-                room.riderFCM = rider.firebaseFCM;
-                yield Admin.messaging().sendToDevice(room.riderFCM, message);
-                myCache.set(data[0].user.roomId, room);
-            }
-            else {
-                const owner = yield models_1.userRep.findOne({
-                    where: { nickName: room.ownerNickName }
-                });
-                if (!owner)
-                    return;
-                room.ownerFCM = owner.firebaseFCM;
-                yield Admin.messaging().sendToDevice(room.ownerFCM, message);
-                myCache.set(data[0].user.roomId, room);
-            }
-        }));
-        let list = myCache.get('chat');
-        if (list == undefined)
-            myCache.set('chat', [new classes.userData(data[0], data[0].user.nickName)]);
-        else {
-            list = myCache.take('chat');
-            list.push(new classes.userData(data[0], data[0].user.nickName));
-            myCache.set('chat', list);
-        }
-    }));
-}));
+if (process.env.JEST_ENV !== 'test') {
+    const server = exports.app.listen(process.env.WEB_PORT, () => {
+        if (process.env.NODE_ENV == 'production')
+            functions.sendSMStoAdmin();
+        console.log(process.env.NODE_ENV);
+        console.log("Server Started");
+    });
+    chatServer_1.default(server);
+}
