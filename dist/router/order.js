@@ -677,7 +677,8 @@ exports.order.post('/pay', util.isLoggedin, (req, res) => __awaiter(void 0, void
     const rider = yield models_1.userRep.findOne({ where: { id: reqBody.riderId } });
     if (!rider)
         return res.status(403).json(util.successFalse(null, "배달원을 찾을 수 없습니다.", null));
-    const points = yield models_1.pointRep.findAll({ where: {
+    const points = yield models_1.pointRep.findAll({
+        where: {
             userId: tokenData.id,
         },
         order: [['expireAt', 'ASC']]
@@ -726,11 +727,13 @@ exports.order.get('/complete', util.isLoggedin, util.isRider, function (req, res
         const tokenData = req.decoded;
         const reqQuery = req.query;
         try {
-            const order = yield models_1.orderRep.findOne({ where: {
+            const order = yield models_1.orderRep.findOne({
+                where: {
                     id: reqQuery.orderId,
-                    riderId: tokenData.riderId,
+                    riderId: tokenData.userId,
                     orderStatus: 2
-                } });
+                }
+            });
             if (!order)
                 return res.status(403).json(util.successFalse(null, "주문 내역이 없거나 배달 완료 처리할 수 없습니다.", null));
             yield order.update({ orderStatus: 3 });

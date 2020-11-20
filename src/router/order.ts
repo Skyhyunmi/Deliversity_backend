@@ -20,9 +20,9 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
   const reqBody = req.body;
   let expHour = reqBody.expHour;
   let expMinute = reqBody.expMinute;
-  let gender = reqBody.gender==true?1:0;
+  let gender = reqBody.gender == true ? 1 : 0;
   const today = new Date();
-  const registrationToken=[];
+  const registrationToken = [];
 
   if (reqBody.reservation === "1") {
     if (!expHour || !expMinute) { return res.status(403).json(util.successFalse(null, "예약 시간 또는 분을 입력하시지 않으셨습니다.", null)); };
@@ -32,10 +32,10 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
   }
   else { today.setHours(today.getHours() + 1); }
   try {
-    const user = await userRep.findOne({ where: { id: tokenData.id} });
+    const user = await userRep.findOne({ where: { id: tokenData.id } });
     if (!user) return res.status(403).json(util.successFalse(null, "준회원은 동성 배달을 이용할 수 없습니다.", null));
-    if(gender >=1){
-      if(user.grade <2) return res.status(403).json(util.successFalse(null, "준회원은 동성 배달을 이용할 수 없습니다.", null));
+    if (gender >= 1) {
+      if (user.grade < 2) return res.status(403).json(util.successFalse(null, "준회원은 동성 배달을 이용할 수 없습니다.", null));
       else gender = user.gender;
     }
     const address = await addressRep.findOne({
@@ -47,12 +47,12 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
     let deliveryFee = 3000;
     if (reqBody.hotDeal === "1") deliveryFee = 4000;
 
-    const fee = functions.getDistanceFromLatLonInKm(reqBody.userLat,reqBody.userLng,
-      reqBody.storeLat,reqBody.storeLng)-1;
+    const fee = functions.getDistanceFromLatLonInKm(reqBody.userLat, reqBody.userLng,
+      reqBody.storeLat, reqBody.storeLng) - 1;
 
-    console.log(reqBody.userLat,reqBody.userLng,
-      reqBody.storeLat,reqBody.storeLng);
-    if(fee>0) deliveryFee += Math.round((550 * fee / 0.5)/100)*100;
+    console.log(reqBody.userLat, reqBody.userLng,
+      reqBody.storeLat, reqBody.storeLng);
+    if (fee > 0) deliveryFee += Math.round((550 * fee / 0.5) / 100) * 100;
     console.log(fee);
     const data = {
       userId: tokenData.id,
@@ -80,34 +80,34 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
     const order = await orderRep.create(data);
     let riders;
     if (gender >= 1) {
-      riders = await userRep.findAll({ where: { id: { [db.Op.ne]: tokenData.id }, grade: [2, 3], gender: gender } }); 
+      riders = await userRep.findAll({ where: { id: { [db.Op.ne]: tokenData.id }, grade: [2, 3], gender: gender } });
     }
     else riders = await userRep.findAll({ where: { id: { [db.Op.ne]: tokenData.id }, grade: [2, 3] } });
-    
+
     for (let i = 0; i < riders.length; i++) {
-      if(riders[i].firebaseFCM != null){
+      if (riders[i].firebaseFCM != null) {
         //배달원의 위동 경도 존재 여부 확인
-        if(riders[i].lat != null){
+        if (riders[i].lat != null) {
           //직선 거리 계산
-          const distance = functions.getDistanceFromLatLonInKm(riders[i].lat,riders[i].lng,reqBody.userLat,reqBody.userLng);
-          if(distance < 100) {//1.5km 미만의 위치에 존재하는 배달원에게 푸시 메시지 전송
+          const distance = functions.getDistanceFromLatLonInKm(riders[i].lat, riders[i].lng, reqBody.userLat, reqBody.userLng);
+          if (distance < 100) {//1.5km 미만의 위치에 존재하는 배달원에게 푸시 메시지 전송
             registrationToken.push(riders[i].firebaseFCM);
-            console.log(i, ': ', riders[i].name+" FCM: " + riders[i].firebaseFCM);
+            console.log(i, ': ', riders[i].name + " FCM: " + riders[i].firebaseFCM);
           }
         }
         else {//개발용으로 위도 경도 데이터 없는 배달원에게도 푸시 메시지 전송
           registrationToken.push(riders[i].firebaseFCM);
-          console.log(i, ': ', riders[i].name+" FCM: " + riders[i].firebaseFCM);
+          console.log(i, ': ', riders[i].name + " FCM: " + riders[i].firebaseFCM);
         }
       }
     }
     admin.messaging().sendMulticast({
-      notification:{
-        "title":"배달 건이 추가되었습니다.",
-        "body":order.storeName,
+      notification: {
+        "title": "배달 건이 추가되었습니다.",
+        "body": order.storeName,
       },
-      data:{
-        type:'ManageDelivery',
+      data: {
+        type: 'ManageDelivery',
         //여기에 관련 데이터 넣으면 될듯
       },
       tokens: registrationToken
@@ -193,16 +193,16 @@ order.post('/rider', util.isLoggedin, async function (req: Request, res: Respons
       });
       myCache.del(reqQuery.orderId as string);
       const message = {
-        notification:{
-          "title":"배달원으로 선발되었습니다.",
-          "body":"확인해보세요.",
+        notification: {
+          "title": "배달원으로 선발되었습니다.",
+          "body": "확인해보세요.",
         },
         data: {
           orderId: order.id.toString(),
           roomId: room.roomId,
           userId: room.ownerId.toString(),
           riderId: room.riderId.toString(),
-          type:'selected'
+          type: 'selected'
         },
         token: registrationToken
       };
@@ -213,7 +213,7 @@ order.post('/rider', util.isLoggedin, async function (req: Request, res: Respons
         .catch((error) => {
           console.log('Error sending message:', error);
         });
-      return res.json(util.successTrue("", {order:order,room:room}));
+      return res.json(util.successTrue("", { order: order, room: room }));
     }
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
@@ -277,7 +277,7 @@ order.post('/price', util.isLoggedin, util.isRider, async function (req: Request
   const reqBody = req.body;
   try {
     const orderId = parseInt(reqQuery.orderId as string);
-    const order = await orderRep.findOne({ where: { id: orderId, orderStatus:1 } });
+    const order = await orderRep.findOne({ where: { id: orderId, orderStatus: 1 } });
     if (!order) return res.status(403).json(util.successFalse(null, "해당하는 주문이 없거나 이미 처리되었습니다.", null));
     if (order.riderId != tokenData.id) return res.status(403).json(util.successFalse(null, "해당하는 주문의 배달원이 아닙니다.", null));
     if (order.totalCost) return res.status(403).json(util.successFalse(null, "이미 결제 금액이 등록 되었습니다.", null));
@@ -312,7 +312,7 @@ order.post('/review/user', util.isLoggedin, util.isRider, async function (req: R
       rating: reqBody.rating,
       content: reqBody.content
     });
-    await _order.update({reviewedByRider:true});
+    await _order.update({ reviewedByRider: true });
     return res.json(util.successTrue("", review));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "주문건이 없거나, 이미 리뷰를 작성했습니다.", null));
@@ -376,7 +376,7 @@ order.post('/review/rider', util.isLoggedin, async function (req: Request, res: 
       rating: reqBody.rating,
       content: reqBody.content
     });
-    await _order.update({reviewedByUser:true});
+    await _order.update({ reviewedByUser: true });
     return res.json(util.successTrue("", review));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "주문건이 없거나, 이미 리뷰를 작성했습니다.", null));
@@ -555,61 +555,62 @@ order.get('/deliverList', util.isLoggedin, util.isRider, async function (req: Re
   }
 });
 
-order.post('/pay', util.isLoggedin,async (req:Request,res:Response)=>{
+order.post('/pay', util.isLoggedin, async (req: Request, res: Response) => {
   const tokenData = req.decoded;
   const reqQuery = req.query;
   const reqBody = req.body;
-  if(!parseInt(reqBody.riderId))
-    return res.status(403).json(util.successFalse(null,"정상적인 접근이 아닙니다.", null));
-  const order = await orderRep.findOne({where:{id:reqQuery.orderId as string,orderStatus:1,userId:tokenData.id}});
-  if(!order) return res.status(403).json(util.successFalse(null,"주문이 없습니다.", null));
+  if (!parseInt(reqBody.riderId))
+    return res.status(403).json(util.successFalse(null, "정상적인 접근이 아닙니다.", null));
+  const order = await orderRep.findOne({ where: { id: reqQuery.orderId as string, orderStatus: 1, userId: tokenData.id } });
+  if (!order) return res.status(403).json(util.successFalse(null, "주문이 없습니다.", null));
   let price = order.totalCost;
-  const user = await userRep.findOne({where:{id:tokenData.id}});
-  if(!user) return res.status(403).json(util.successFalse(null,"사용자를 찾을 수 없습니다.", null));
-  const rider = await userRep.findOne({where:{id:reqBody.riderId}});
-  if(!rider) return res.status(403).json(util.successFalse(null,"배달원을 찾을 수 없습니다.", null));
+  const user = await userRep.findOne({ where: { id: tokenData.id } });
+  if (!user) return res.status(403).json(util.successFalse(null, "사용자를 찾을 수 없습니다.", null));
+  const rider = await userRep.findOne({ where: { id: reqBody.riderId } });
+  if (!rider) return res.status(403).json(util.successFalse(null, "배달원을 찾을 수 없습니다.", null));
   const points = await pointRep.findAll(
-    {where:{
-      userId:tokenData.id,
-    },
-    order: [['expireAt', 'ASC']]
+    {
+      where: {
+        userId: tokenData.id,
+      },
+      order: [['expireAt', 'ASC']]
     });
   const sum = points.reduce((sum, cur) => {
-    console.log(cur.point+" "+cur.expireAt);
+    console.log(cur.point + " " + cur.expireAt);
     return sum + cur.point;
   }, 0);
-    // 결제액 부족. 결제창으로 이동
-  if(sum-price < 0) 
-    return res.status(403).json(util.successFalse(null,"잔액이 부족합니다.", null));
-        
-  points.some(async (point)=>{
-    if(price){
+  // 결제액 부족. 결제창으로 이동
+  if (sum - price < 0)
+    return res.status(403).json(util.successFalse(null, "잔액이 부족합니다.", null));
+
+  points.some(async (point) => {
+    if (price) {
       const curPoint = point.point;
-      if(price<=point.point){
-        await point.update({point:curPoint-price});
-        price=0;
+      if (price <= point.point) {
+        await point.update({ point: curPoint - price });
+        price = 0;
         return true;
       }
       else {
-        await point.update({point:0});
+        await point.update({ point: 0 });
         await point.destroy();
-        price-=curPoint;
+        price -= curPoint;
         return false;
       }
     }
     else return true;
   });
   const today = new Date();
-  today.setFullYear(today.getFullYear()+3,today.getMonth(),today.getDay());
+  today.setFullYear(today.getFullYear() + 3, today.getMonth(), today.getDay());
   await pointRep.create({
     pointKind: 0,
-    status:0,
-    expireAt:today,
-    userId:reqBody.riderId,
+    status: 0,
+    expireAt: today,
+    userId: reqBody.riderId,
     point: parseInt(reqBody.price)
   });
-  await order.update({orderStatus:2});
-  return res.json(util.successTrue("",null));
+  await order.update({ orderStatus: 2 });
+  return res.json(util.successTrue("", null));
 });
 
 order.get('/complete', util.isLoggedin, util.isRider, async function (req: Request, res: Response) {
@@ -618,13 +619,15 @@ order.get('/complete', util.isLoggedin, util.isRider, async function (req: Reque
   const tokenData = req.decoded;
   const reqQuery = req.query;
   try {
-    const order = await orderRep.findOne({where:{
-      id: reqQuery.orderId as string,
-      riderId: tokenData.riderId,
-      orderStatus: 2
-    }});
+    const order = await orderRep.findOne({
+      where: {
+        id: reqQuery.orderId as string,
+        riderId: tokenData.userId,
+        orderStatus: 2
+      }
+    });
     if (!order) return res.status(403).json(util.successFalse(null, "주문 내역이 없거나 배달 완료 처리할 수 없습니다.", null));
-    await order.update({orderStatus:3});
+    await order.update({ orderStatus: 3 });
     return res.json(util.successTrue("", order));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "주문 내역이 없거나 배달 완료 처리할 수 없습니다.", null));
