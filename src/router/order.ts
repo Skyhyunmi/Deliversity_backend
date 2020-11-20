@@ -622,7 +622,7 @@ order.get('/complete', util.isLoggedin, util.isRider, async function (req: Reque
     const order = await orderRep.findOne({
       where: {
         id: reqQuery.orderId as string,
-        riderId: tokenData.userId,
+        riderId: tokenData.id,
         orderStatus: 2
       }
     });

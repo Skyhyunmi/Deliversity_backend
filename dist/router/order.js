@@ -730,7 +730,7 @@ exports.order.get('/complete', util.isLoggedin, util.isRider, function (req, res
             const order = yield models_1.orderRep.findOne({
                 where: {
                     id: reqQuery.orderId,
-                    riderId: tokenData.userId,
+                    riderId: tokenData.id,
                     orderStatus: 2
                 }
             });
