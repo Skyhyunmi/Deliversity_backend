@@ -39,7 +39,7 @@ point.post('/', util.isLoggedin, async (req: Request, res: Response) => {
   const { access_token } = getToken.data.response;
   const url = "https://api.iamport.kr/payments/" + imp_uid;
   const getPaymentData = await Axios({
-    url: "https://api.iamport.kr/payments/" + imp_uid + "?_token=" + access_token,
+    url: "https://api.iamport.kr/payments/" + imp_uid,
     method: "get",
     headers: { "Authorization": access_token }
   });
