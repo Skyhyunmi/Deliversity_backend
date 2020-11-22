@@ -43,7 +43,7 @@ point.post('/', util.isLoggedin, async (req: Request, res: Response) => {
     method: "get",
     headers: { "Authorization": access_token }
   });
-  const paymentData = getPaymentData.data.response; // 조회한 결제 정보
+  const paymentData = getPaymentData.data.response;
   const amountToBePaid = parseInt(reqBody.point);
   const { amount, apply_num, status } = paymentData;
   if (amountToBePaid == amount) {
