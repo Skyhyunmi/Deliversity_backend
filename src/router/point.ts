@@ -39,13 +39,13 @@ point.post('/', util.isLoggedin, async (req: Request, res: Response) => {
   const { access_token } = getToken.data.response;
   const url = "https://api.iamport.kr/payments/" + imp_uid;
   const getPaymentData = await Axios({
-    url: "https://api.iamport.kr/payments/" + imp_uid + "?_token=" + process.env._TOKEN,
+    url: "https://api.iamport.kr/payments/" + imp_uid,
     method: "get",
     headers: { "Authorization": access_token }
   });
   const paymentData = getPaymentData.data.response; // 조회한 결제 정보
   const amountToBePaid = parseInt(reqBody.point);
-  const { amount, status } = paymentData;
+  const { amount, apply_num, status } = paymentData;
   if (amountToBePaid == amount) {
     const receipt = await paymentRep.findOne({ where: { userId: tokenData.id, impUid: imp_uid } });
     if (receipt) { res.status(403).json(util.successFalse(null, "이미 충전되었습니다.", null)); }
@@ -55,7 +55,8 @@ point.post('/', util.isLoggedin, async (req: Request, res: Response) => {
         state: 0,
         impUid: imp_uid,
         merchantUid: merchant_uid,
-        amount: amount
+        amount: amount,
+        applyNum: apply_num
       });
       await pointRep.create({
         point: reqBody.point,

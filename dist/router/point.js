@@ -72,13 +72,13 @@ exports.point.post('/', util.isLoggedin, (req, res) => __awaiter(void 0, void 0,
     const { access_token } = getToken.data.response;
     const url = "https://api.iamport.kr/payments/" + imp_uid;
     const getPaymentData = yield axios_1.default({
-        url: "https://api.iamport.kr/payments/" + imp_uid + "?_token=" + "69e9ffc1a45e040f60f56d4ebbe729a79b3a28da",
+        url: "https://api.iamport.kr/payments/" + imp_uid,
         method: "get",
         headers: { "Authorization": access_token }
     });
     const paymentData = getPaymentData.data.response; // 조회한 결제 정보
     const amountToBePaid = parseInt(reqBody.point);
-    const { amount, status } = paymentData;
+    const { amount, apply_num, status } = paymentData;
     if (amountToBePaid == amount) {
         const receipt = yield index_1.paymentRep.findOne({ where: { userId: tokenData.id, impUid: imp_uid } });
         if (receipt) {
@@ -90,7 +90,8 @@ exports.point.post('/', util.isLoggedin, (req, res) => __awaiter(void 0, void 0,
                 state: 0,
                 impUid: imp_uid,
                 merchantUid: merchant_uid,
-                amount: amount
+                amount: amount,
+                applyNum: apply_num
             });
             yield index_1.pointRep.create({
                 point: reqBody.point,

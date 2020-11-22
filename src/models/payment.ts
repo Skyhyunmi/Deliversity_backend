@@ -33,6 +33,9 @@ export default class Payment extends Model<Payment> {
   @Column(DataType.STRING)
   merchantUid!: string;
 
+  @Column(DataType.BIGINT)
+  applyNum!: number;
+
   @Column(DataType.DATE)
   paidAt!: Date;
 

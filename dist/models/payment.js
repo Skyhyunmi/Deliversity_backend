@@ -33,6 +33,9 @@ __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
 ], Payment.prototype, "merchantUid", void 0);
 __decorate([
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BIGINT)
+], Payment.prototype, "applyNum", void 0);
+__decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.DATE)
 ], Payment.prototype, "paidAt", void 0);
 __decorate([
