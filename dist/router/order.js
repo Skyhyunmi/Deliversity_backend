@@ -715,7 +715,8 @@ exports.order.post('/pay', util.isLoggedin, (req, res) => __awaiter(void 0, void
         status: 0,
         expireAt: today,
         userId: reqBody.riderId,
-        point: parseInt(reqBody.price)
+        point: parseInt(reqBody.price),
+        orderId: order.id
     });
     yield order.update({ orderStatus: 2 });
     return res.json(util.successTrue("", null));
@@ -730,7 +731,7 @@ exports.order.get('/complete', util.isLoggedin, util.isRider, function (req, res
             const order = yield models_1.orderRep.findOne({
                 where: {
                     id: reqQuery.orderId,
-                    riderId: tokenData.userId,
+                    riderId: tokenData.id,
                     orderStatus: 2
                 }
             });

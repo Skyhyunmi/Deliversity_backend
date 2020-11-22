@@ -10,7 +10,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_typescript_1 = require("sequelize-typescript");
-const order_1 = __importDefault(require("../models/order"));
 const user_1 = __importDefault(require("../models/user"));
 let Payment = class Payment extends sequelize_typescript_1.Model {
 };
@@ -19,11 +18,6 @@ __decorate([
     sequelize_typescript_1.AutoIncrement,
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BIGINT)
 ], Payment.prototype, "id", void 0);
-__decorate([
-    sequelize_typescript_1.ForeignKey(() => order_1.default),
-    sequelize_typescript_1.AllowNull(false),
-    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BIGINT)
-], Payment.prototype, "orderId", void 0);
 __decorate([
     sequelize_typescript_1.ForeignKey(() => user_1.default),
     sequelize_typescript_1.AllowNull(false),

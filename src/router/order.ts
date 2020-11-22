@@ -607,7 +607,8 @@ order.post('/pay', util.isLoggedin, async (req: Request, res: Response) => {
     status: 0,
     expireAt: today,
     userId: reqBody.riderId,
-    point: parseInt(reqBody.price)
+    point: parseInt(reqBody.price),
+    orderId: order.id
   });
   await order.update({ orderStatus: 2 });
   return res.json(util.successTrue("", null));
@@ -622,7 +623,7 @@ order.get('/complete', util.isLoggedin, util.isRider, async function (req: Reque
     const order = await orderRep.findOne({
       where: {
         id: reqQuery.orderId as string,
-        riderId: tokenData.userId,
+        riderId: tokenData.id,
         orderStatus: 2
       }
     });
