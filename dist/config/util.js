@@ -31,9 +31,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isAdmin = exports.isRider = exports.isUser = exports.isLoggedin = exports.isFirebase = exports.successFalse = exports.successTrue = void 0;
+exports.isAdmin = exports.isUser = exports.isLoggedin = exports.isFirebase = exports.successFalse = exports.successTrue = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const db = __importStar(require("sequelize"));
 const models_1 = require("../models");
 const admin = __importStar(require("firebase-admin"));
 const dotenv_1 = __importDefault(require("dotenv"));
@@ -65,10 +64,12 @@ function isFirebase(req, res, next) {
             admin.auth().verifyIdToken(req.headers['x-firebase-token'])
                 .then((token) => __awaiter(this, void 0, void 0, function* () {
                 const uid = token.uid;
-                const user = yield models_1.userRep.findOne({ where: {
+                const user = yield models_1.userRep.findOne({
+                    where: {
                         firebaseUid: uid,
                         id: req.decoded.id
-                    } });
+                    }
+                });
                 if (!user)
                     return res.status(403).json(successFalse(null, "", null));
                 next();
@@ -103,7 +104,7 @@ exports.isLoggedin = isLoggedin;
 function isUser(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const user = yield models_1.userRep.findOne({ where: { userId: req.decoded.userId, grade: { [db.Op.gte]: 2 } } }); //2이상 = 정회원
+            const user = yield models_1.userRep.findOne({ where: { userId: req.decoded.userId, grade: 2 } }); //2이상 = 정회원
             if (!user)
                 return res.status(403).json(successFalse(null, "정회원이 아닙니다.", null));
             else if (!req.decoded || user.userId !== req.decoded.userId)
@@ -117,23 +118,6 @@ function isUser(req, res, next) {
     });
 }
 exports.isUser = isUser;
-function isRider(req, res, next) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const user = yield models_1.userRep.findOne({ where: { userId: req.decoded.userId, grade: { [db.Op.gte]: 3 } } }); //3 = 배달원
-            if (!user)
-                return res.status(403).json(successFalse(null, "배달원이 아닙니다.", null));
-            else if (!req.decoded || user.userId !== req.decoded.userId)
-                return res.status(403).json(successFalse(null, "배달원이 아닙니다.", null));
-            else
-                return next();
-        }
-        catch (err) {
-            return res.status(403).json(successFalse(err, "", null));
-        }
-    });
-}
-exports.isRider = isRider;
 function isAdmin(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         try {

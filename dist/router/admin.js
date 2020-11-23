@@ -63,7 +63,7 @@ exports.admin.get('/upload', util.isLoggedin, util.isAdmin, function (req, res) 
             if (!user) {
                 return res.status(403).json(util.successFalse(null, "해당하는 유저가 없습니다.", null));
             }
-            if (user.grade > 1) {
+            if (user.grade == 2) {
                 return res.status(403).json(util.successFalse(null, "이미 인증된 유저입니다.", null));
             }
             else if (user.grade == 0) {
@@ -91,7 +91,7 @@ exports.admin.put('/upload', util.isLoggedin, util.isAdmin, function (req, res) 
             if (!user) {
                 return res.status(403).json(util.successFalse(null, "해당하는 유저가 없습니다.", null));
             }
-            if (user.grade > 1) {
+            if (user.grade == 2) {
                 return res.status(403).json(util.successFalse(null, "이미 인증된 유저입니다.", null));
             }
             else if (user.grade == 0) {
