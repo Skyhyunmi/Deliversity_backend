@@ -11,7 +11,7 @@
     "dev": "nodemon --exec ts-node --files src/app.ts",
     "lint": "eslint src/**/*.ts",
     "start": "node dist/app.js",
-    "test": "JEST_ENV=test jest --forceExit"
+    "test": "jest --forceExit"
   },
   "jest": {
     "bail": 0,

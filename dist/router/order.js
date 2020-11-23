@@ -119,10 +119,10 @@ exports.order.post('/', util.isLoggedin, function (req, res) {
             const order = yield models_1.orderRep.create(data);
             let riders;
             if (gender >= 1) {
-                riders = yield models_1.userRep.findAll({ where: { id: { [db.Op.ne]: tokenData.id }, grade: [2, 3], gender: gender } });
+                riders = yield models_1.userRep.findAll({ where: { id: { [db.Op.ne]: tokenData.id }, grade: 2, gender: gender } });
             }
             else
-                riders = yield models_1.userRep.findAll({ where: { id: { [db.Op.ne]: tokenData.id }, grade: [2, 3] } });
+                riders = yield models_1.userRep.findAll({ where: { id: { [db.Op.ne]: tokenData.id }, grade: 2 } });
             for (let i = 0; i < riders.length; i++) {
                 if (riders[i].firebaseFCM != null) {
                     //배달원의 위동 경도 존재 여부 확인
@@ -292,24 +292,19 @@ exports.order.get('/chat', util.isLoggedin, function (req, res) {
             });
             if (!order)
                 return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
-            let room;
-            if (parseInt(tokenData.grade) <= 2)
-                room = yield models_1.roomRep.findOne({
-                    where: {
-                        orderId: order.id,
-                        userId: tokenData.id
-                    }
-                });
-            else if (tokenData.grade == "3")
-                room = yield models_1.roomRep.findOne({
-                    where: {
-                        orderId: order.id,
-                        riderId: order.riderId
-                    }
-                });
+            const room = yield models_1.roomRep.findOne({
+                where: {
+                    orderId: order.id,
+                    userId: tokenData.id
+                }
+            });
             if (!room)
                 return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
-            return res.json(util.successTrue("", { roomId: room.roomId }));
+            if (room.ownerId == tokenData.id)
+                return res.json(util.successTrue("", { roomId: room.roomId }));
+            else if (room.riderId == tokenData.id)
+                return res.json(util.successTrue("", { roomId: room.roomId }));
+            return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
         }
         catch (err) {
             return res.status(403).json(util.successFalse(err, "", null));
@@ -336,7 +331,7 @@ exports.order.get('/price', util.isLoggedin, function (req, res) {
         }
     });
 });
-exports.order.post('/price', util.isLoggedin, util.isRider, function (req, res) {
+exports.order.post('/price', util.isLoggedin, util.isUser, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //배달원이 최종 결제 금액 전송
         const tokenData = req.decoded;
@@ -361,7 +356,7 @@ exports.order.post('/price', util.isLoggedin, util.isRider, function (req, res) 
         }
     });
 });
-exports.order.post('/review/user', util.isLoggedin, util.isRider, function (req, res) {
+exports.order.post('/review/user', util.isLoggedin, util.isUser, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //유저에 대한 리뷰 작성
         const tokenData = req.decoded;
@@ -393,7 +388,7 @@ exports.order.post('/review/user', util.isLoggedin, util.isRider, function (req,
         }
     });
 });
-exports.order.get('/review/user', util.isLoggedin, util.isRider, function (req, res) {
+exports.order.get('/review/user', util.isLoggedin, util.isUser, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //유저에 대한 리뷰 확인
         // const tokenData = req.decoded;
@@ -503,7 +498,7 @@ exports.order.get('/review/rider', util.isLoggedin, function (req, res) {
         }
     });
 });
-exports.order.get('/orders', util.isLoggedin, util.isRider, function (req, res) {
+exports.order.get('/orders', util.isLoggedin, util.isUser, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //배달원이 찾을 배달거리 리스트 반환
         const tokenData = req.decoded;
@@ -536,7 +531,7 @@ exports.order.get('/orders', util.isLoggedin, util.isRider, function (req, res) 
 ////                              개발용 API입니다. 나중에는 지워야 합니다.                              ////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-exports.order.get('/setDelivered', util.isLoggedin, util.isRider, function (req, res) {
+exports.order.get('/setDelivered', util.isLoggedin, util.isUser, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //배달원이 찾을 배달거리 리스트 반환
         // const tokenData = req.decoded;
@@ -561,7 +556,7 @@ exports.order.get('/setDelivered', util.isLoggedin, util.isRider, function (req,
         }
     });
 });
-exports.order.post('/apply', util.isLoggedin, util.isRider, function (req, res) {
+exports.order.post('/apply', util.isLoggedin, util.isUser, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         // 배달원이 해당 주문에 배달원 신청
         const tokenData = req.decoded;
@@ -640,7 +635,7 @@ exports.order.get('/orderList', util.isLoggedin, function (req, res) {
         }
     });
 });
-exports.order.get('/deliverList', util.isLoggedin, util.isRider, function (req, res) {
+exports.order.get('/deliverList', util.isLoggedin, util.isUser, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //현재 배달 중인 배달 내용 받아오기 (배달원)
         const tokenData = req.decoded;
@@ -721,7 +716,7 @@ exports.order.post('/pay', util.isLoggedin, (req, res) => __awaiter(void 0, void
     yield order.update({ orderStatus: 2 });
     return res.json(util.successTrue("", null));
 }));
-exports.order.get('/complete', util.isLoggedin, util.isRider, function (req, res) {
+exports.order.get('/complete', util.isLoggedin, util.isUser, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         // ordetStatus:2 인 상태에서 배달원이 배달 완료 버튼 누르면 3으로 변경
         // 허위로 누르게 되면 신고

@@ -282,7 +282,7 @@ myinfo.post('/upload', util.isLoggedin, async function (req: Request, res: Respo
   try {
     const user = await userRep.findOne({ where: { userId: tokenData.userId } });
     if (!user) return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
-    if (user.grade > 1) return res.status(403).json(util.successFalse(null, "이미 신분확인이 완료되었습니다.", null));
+    if (user.grade == 2) return res.status(403).json(util.successFalse(null, "이미 신분확인이 완료되었습니다.", null));
     if (user.grade == 1) return res.status(403).json(util.successFalse(null, "신분 확인 대기중입니다.", null));
     await user.update({
       grade: 1,
@@ -294,37 +294,13 @@ myinfo.post('/upload', util.isLoggedin, async function (req: Request, res: Respo
   }
 });
 
-myinfo.post('/toRider', util.isLoggedin, util.isUser, async function (req: Request, res: Response) {
-  const tokenData = req.decoded;
-  try {
-    const user = await userRep.findOne({ where: { userId: tokenData.userId } });
-    if (!user) return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
-    await user.update({ grade: 3 });
-    return res.json(util.successTrue("", { grade: user.grade }));
-  } catch (err) {
-    return res.status(403).json(util.successFalse(err, "", null));
-  }
-});
-
-myinfo.post('/toUser', util.isLoggedin, util.isRider, async function (req: Request, res: Response) {
-  const tokenData = req.decoded;
-  try {
-    const user = await userRep.findOne({ where: { userId: tokenData.userId } });
-    if (!user) return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
-    await user.update({ grade: 2 });
-    return res.json(util.successTrue("", { grade: user.grade }));
-  } catch (err) {
-    return res.status(403).json(util.successFalse(err, "", null));
-  }
-});
-
-myinfo.post('/currentLocation',util.isLoggedin, util.isRider, async function ( req: Request, res: Response ) {
+myinfo.post('/currentLocation', util.isLoggedin, util.isUser, async function (req: Request, res: Response) {
   const tokenData = req.decoded;
   const reqBody = req.body;
   try {
-    const user = await userRep.findOne({where:{userId:tokenData.userId}});
+    const user = await userRep.findOne({ where: { userId: tokenData.userId } });
     if (!user) return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
-    await user.update({lat:reqBody.coords.latitude,lng:reqBody.coords.longitude});
+    await user.update({ lat: reqBody.coords.latitude, lng: reqBody.coords.longitude });
     return res.json(util.successTrue("", null));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
@@ -343,7 +319,7 @@ myinfo.get('/grade', util.isLoggedin, async function (req: Request, res: Respons
     const user = await userRep.findOne({ where: { userId: tokenData.userId } });
     if (!user) return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
     if (reqQuery.grade == null || reqQuery.grade == "") return res.status(403).json(util.successFalse(null, "파라미터가 부족합니다.", null));
-    if (parseInt(reqQuery.grade as string) >= 4) return res.json(util.successTrue(`4이상으로 올라 갈 수 없습니다.`, null));
+    if (parseInt(reqQuery.grade as string) >= 3) return res.json(util.successTrue(`4이상으로 올라 갈 수 없습니다.`, null));
     await user.update({ grade: reqQuery.grade });
     return res.json(util.successTrue("", { grade: user.grade }));
   } catch (err) {

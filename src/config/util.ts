@@ -28,21 +28,23 @@ export function successFalse(err: any, message: string, data: any) {
 
 // middlewares
 export async function isFirebase(req: Request, res: Response, next: NextFunction) { //파베 권한 있나
-  try{
+  try {
     admin.auth().verifyIdToken(req.headers['x-firebase-token'] as string)
-      .then(async token =>{
+      .then(async token => {
         const uid = token.uid;
-        const user = await userRep.findOne({where:{
-          firebaseUid:uid,
-          id: req.decoded.id
-        }});
-        if(!user) return res.status(403).json(successFalse(null, "", null));
+        const user = await userRep.findOne({
+          where: {
+            firebaseUid: uid,
+            id: req.decoded.id
+          }
+        });
+        if (!user) return res.status(403).json(successFalse(null, "", null));
         next();
       })
-      .catch((err)=>{
+      .catch((err) => {
         return res.status(403).json(successFalse(err, "", null));
       });
-  }catch(err) {
+  } catch (err) {
     return res.status(403).json(successFalse(err, "", null));
   }
 }
@@ -53,7 +55,7 @@ export function isLoggedin(req: Request, res: Response, next: NextFunction) { //
   if (!token)
     return res.status(401).json(successFalse(null, "token is required!", null));
   else {
-    jwt.verify(token, process.env.JWT_SECRET as string, function (err,decoded) {
+    jwt.verify(token, process.env.JWT_SECRET as string, function (err, decoded) {
       if (err) return res.status(401).json(successFalse(err, "", null));
       else {
         req["decoded"] = decoded;
@@ -64,37 +66,25 @@ export function isLoggedin(req: Request, res: Response, next: NextFunction) { //
 }
 
 export async function isUser(req: Request, res: Response, next: NextFunction) {
-  try{
-    const user = await userRep.findOne({ where: { userId: req.decoded.userId, grade: {[db.Op.gte]:2}} }); //2이상 = 정회원
+  try {
+    const user = await userRep.findOne({ where: { userId: req.decoded.userId, grade: 2 } }); //2이상 = 정회원
     if (!user) return res.status(403).json(successFalse(null, "정회원이 아닙니다.", null));
     else if (!req.decoded || user.userId !== req.decoded.userId)
       return res.status(403).json(successFalse(null, "정회원이 아닙니다.", null));
     else return next();
-  }catch(err) {
-    return res.status(403).json(successFalse(err, "", null));
-  }
-}
-
-export async function isRider(req: Request, res: Response, next: NextFunction) {
-  try{
-    const user = await userRep.findOne({ where: { userId: req.decoded.userId, grade: {[db.Op.gte]:3}} }); //3 = 배달원
-    if (!user) return res.status(403).json(successFalse(null, "배달원이 아닙니다.", null));
-    else if (!req.decoded || user.userId !== req.decoded.userId)
-      return res.status(403).json(successFalse(null, "배달원이 아닙니다.", null));
-    else return next();
-  }catch(err) {
+  } catch (err) {
     return res.status(403).json(successFalse(err, "", null));
   }
 }
 
 export async function isAdmin(req: Request, res: Response, next: NextFunction) {
-  try{
+  try {
     const user = await userRep.findOne({ where: { userId: req.decoded.userId, grade: 777 } }); //3 = 배달원
     if (!user) return res.status(403).json(successFalse(null, "권한이 없습니다.", null));
     else if (!req.decoded || user.userId !== req.decoded.userId)
       return res.status(403).json(successFalse(null, "권한이 없습니다.", null));
     else return next();
-  }catch(err) {
+  } catch (err) {
     return res.status(403).json(successFalse(err, "", null));
   }
 }

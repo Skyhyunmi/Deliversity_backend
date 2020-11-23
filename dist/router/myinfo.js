@@ -346,7 +346,7 @@ exports.myinfo.post('/upload', util.isLoggedin, function (req, res) {
             const user = yield index_1.userRep.findOne({ where: { userId: tokenData.userId } });
             if (!user)
                 return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
-            if (user.grade > 1)
+            if (user.grade == 2)
                 return res.status(403).json(util.successFalse(null, "이미 신분확인이 완료되었습니다.", null));
             if (user.grade == 1)
                 return res.status(403).json(util.successFalse(null, "신분 확인 대기중입니다.", null));
@@ -361,37 +361,7 @@ exports.myinfo.post('/upload', util.isLoggedin, function (req, res) {
         }
     });
 });
-exports.myinfo.post('/toRider', util.isLoggedin, util.isUser, function (req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const tokenData = req.decoded;
-        try {
-            const user = yield index_1.userRep.findOne({ where: { userId: tokenData.userId } });
-            if (!user)
-                return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
-            yield user.update({ grade: 3 });
-            return res.json(util.successTrue("", { grade: user.grade }));
-        }
-        catch (err) {
-            return res.status(403).json(util.successFalse(err, "", null));
-        }
-    });
-});
-exports.myinfo.post('/toUser', util.isLoggedin, util.isRider, function (req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const tokenData = req.decoded;
-        try {
-            const user = yield index_1.userRep.findOne({ where: { userId: tokenData.userId } });
-            if (!user)
-                return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
-            yield user.update({ grade: 2 });
-            return res.json(util.successTrue("", { grade: user.grade }));
-        }
-        catch (err) {
-            return res.status(403).json(util.successFalse(err, "", null));
-        }
-    });
-});
-exports.myinfo.post('/currentLocation', util.isLoggedin, util.isRider, function (req, res) {
+exports.myinfo.post('/currentLocation', util.isLoggedin, util.isUser, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const tokenData = req.decoded;
         const reqBody = req.body;
@@ -422,7 +392,7 @@ exports.myinfo.get('/grade', util.isLoggedin, function (req, res) {
                 return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
             if (reqQuery.grade == null || reqQuery.grade == "")
                 return res.status(403).json(util.successFalse(null, "파라미터가 부족합니다.", null));
-            if (parseInt(reqQuery.grade) >= 4)
+            if (parseInt(reqQuery.grade) >= 3)
                 return res.json(util.successTrue(`4이상으로 올라 갈 수 없습니다.`, null));
             yield user.update({ grade: reqQuery.grade });
             return res.json(util.successTrue("", { grade: user.grade }));

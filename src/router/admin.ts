@@ -26,7 +26,7 @@ admin.get('/upload', util.isLoggedin, util.isAdmin, async function (req: Request
   try {
     const user = await userRep.findOne({ where: { id: id } });
     if (!user) { return res.status(403).json(util.successFalse(null, "해당하는 유저가 없습니다.", null)); }
-    if (user.grade > 1) { return res.status(403).json(util.successFalse(null, "이미 인증된 유저입니다.", null)); }
+    if (user.grade == 2) { return res.status(403).json(util.successFalse(null, "이미 인증된 유저입니다.", null)); }
     else if (user.grade == 0) { return res.status(403).json(util.successFalse(null, "인증을 요청하지 않은 유저입니다.", null)); }
     if (!user.idCard) return res.status(403).json(util.successFalse(null, "해당 유저가 사진을 등록하지 않았습니다.", null));
     return res.json(util.successTrue("", user));
@@ -45,13 +45,13 @@ admin.put('/upload', util.isLoggedin, util.isAdmin, async function (req: Request
   try {
     let user = await userRep.findOne({ where: { id: id }, attributes: ['id', 'grade'] });
     if (!user) { return res.status(403).json(util.successFalse(null, "해당하는 유저가 없습니다.", null)); }
-    if (user.grade > 1) { return res.status(403).json(util.successFalse(null, "이미 인증된 유저입니다.", null)); }
+    if (user.grade == 2) { return res.status(403).json(util.successFalse(null, "이미 인증된 유저입니다.", null)); }
     else if (user.grade == 0) { return res.status(403).json(util.successFalse(null, "인증을 요청하지 않은 유저입니다.", null)); }
     // 통과
     if (result == 1) {
       user = await user.update({ grade: 2 });
       registrationToken = user.firebaseFCM;
-      if(registrationToken){
+      if (registrationToken) {
         const message = {
           data: {
             test: "인증이 완료되었습니다." + registrationToken
