@@ -67,6 +67,12 @@ function sendEmail(email, suburl) {
             if (user)
                 return 'Already Existed Email';
             exports.myCache.del(email);
+            const regex = /^[0-9a-zA-Z]([-_\\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[a]{1}[c]{1}.[k]{1}[r]{1}$/i;
+            const actest = regex.test(email);
+            const regExp = /^[0-9a-zA-Z]([-_\\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[e]{1}[d]{1}[u]{1}$/i;
+            const edutest = regExp.test(email);
+            if (!(edutest || actest))
+                return 'Try with Student Email';
             const url = 'http://' + suburl + '/api/v1/auth/email/verification' + '?email_number=' + email_number;
             yield mail_1.transporter.sendMail({
                 from: '"발신전용" <noreply@deliversity.co.kr>',

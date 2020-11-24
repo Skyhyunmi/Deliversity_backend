@@ -308,38 +308,21 @@ myinfo.post('/currentLocation', util.isLoggedin, util.isUser, async function (re
   }
 });
 
-myinfo.get('/review/wrote', util.isLoggedin, async function (req: Request, res: Response) {
-  // 내가 쓴 리뷰
-  const tokenData = req.decoded;
-  try {
-    const reviews = await reviewRep.findAll({
-      where: {
-        fromId: tokenData.id
-      }
-    });
-    return res.json(util.successTrue("", { reviews: reviews }));
-  } catch (err) {
-    return res.status(403).json(util.successFalse(err, "사용자가 없거나 권한이 없습니다.", null));
-  }
-});
-
 myinfo.get('/review/written', util.isLoggedin, async function (req: Request, res: Response) {
   // 나에 대해 작성된 리뷰
   const tokenData = req.decoded;
   try {
     const reviews = await reviewRep.findAll({
       where: {
+        fromId: { [db.Op.ne]: tokenData.id },
         [db.Op.or]: [{ riderId: tokenData.id }, { userId: tokenData.id }],
-        fromId: { [db.Op.ne]: tokenData.id }
       }
     });
-    const rating = reviews.reduce((sum, cur) => sum + cur.rating, 0);
-    return res.json(util.successTrue("", {
-      rating: rating / reviews.length,
-      reviews: reviews
-    }));
+    console.log(reviews);
+    if (!reviews) { return res.status(403).json(util.successFalse(null, "나에게 작성된 리뷰가 없습니다.", null)); }
+    return res.json(util.successTrue("", reviews));
   } catch (err) {
-    return res.status(403).json(util.successFalse(err, "사용자가 없거나 권한이 없습니다.", null));
+    return res.status(403).json(util.successFalse(err, "나에게 작성된 리뷰가 없습니다.", null));
   }
 });
 
