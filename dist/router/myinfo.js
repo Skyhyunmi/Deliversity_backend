@@ -378,23 +378,6 @@ exports.myinfo.post('/currentLocation', util.isLoggedin, util.isUser, function (
         }
     });
 });
-exports.myinfo.get('/review/wrote', util.isLoggedin, function (req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        // 내가 쓴 리뷰
-        const tokenData = req.decoded;
-        try {
-            const reviews = yield index_1.reviewRep.findAll({
-                where: {
-                    fromId: tokenData.id
-                }
-            });
-            return res.json(util.successTrue("", { reviews: reviews }));
-        }
-        catch (err) {
-            return res.status(403).json(util.successFalse(err, "사용자가 없거나 권한이 없습니다.", null));
-        }
-    });
-});
 exports.myinfo.get('/review/written', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         // 나에 대해 작성된 리뷰
@@ -402,18 +385,18 @@ exports.myinfo.get('/review/written', util.isLoggedin, function (req, res) {
         try {
             const reviews = yield index_1.reviewRep.findAll({
                 where: {
+                    fromId: { [db.Op.ne]: tokenData.id },
                     [db.Op.or]: [{ riderId: tokenData.id }, { userId: tokenData.id }],
-                    fromId: { [db.Op.ne]: tokenData.id }
                 }
             });
-            const rating = reviews.reduce((sum, cur) => sum + cur.rating, 0);
-            return res.json(util.successTrue("", {
-                rating: rating / reviews.length,
-                reviews: reviews
-            }));
+            console.log(reviews);
+            if (!reviews) {
+                return res.status(403).json(util.successFalse(null, "나에게 작성된 리뷰가 없습니다.", null));
+            }
+            return res.json(util.successTrue("", reviews));
         }
         catch (err) {
-            return res.status(403).json(util.successFalse(err, "사용자가 없거나 권한이 없습니다.", null));
+            return res.status(403).json(util.successFalse(err, "나에게 작성된 리뷰가 없습니다.", null));
         }
     });
 });

@@ -498,6 +498,28 @@ exports.order.get('/review/rider', util.isLoggedin, function (req, res) {
         }
     });
 });
+exports.order.get('/review/wrote', util.isLoggedin, function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // 내가 쓴 리뷰
+        const tokenData = req.decoded;
+        const reqQuery = req.query;
+        try {
+            const review = yield models_1.reviewRep.findOne({
+                where: {
+                    fromId: tokenData.id,
+                    orderId: parseInt(reqQuery.orderId)
+                }
+            });
+            if (!review) {
+                return res.status(403).json(util.successFalse(null, "해당 주문이 없거나 리뷰를 작성하지 않았습니다.", null));
+            }
+            return res.json(util.successTrue("", review));
+        }
+        catch (err) {
+            return res.status(403).json(util.successFalse(err, "해당 주문이 없거나 리뷰를 작성하지 않았습니다.", null));
+        }
+    });
+});
 exports.order.get('/orders', util.isLoggedin, util.isUser, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //배달원이 찾을 배달거리 리스트 반환
