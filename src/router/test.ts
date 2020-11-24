@@ -60,13 +60,13 @@ test.post('/noti', util.isLoggedin, async function (req: Request, res: Response)
   }
 });
 
-test.post('/email', util.isLoggedin, async function (req: Request, res: Response) {
-  const reqBody = req.body;
-  const email = reqBody.email;
-  const regex = /^[0-9a-zA-Z]([-_\\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[a]{1}[c]{1}.[k]{1}[r]{1}$/i;
-  const actest = regex.test(email);
-  const regExp = /^[0-9a-zA-Z]([-_\\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[e]{1}[d]{1}[u]{1}$/i;
-  const edutest = regExp.test(email);
-  if (!(edutest || actest)) return res.status(403).json(util.successFalse(null, "Retry.", null));
-  return res.json(util.successTrue("", "good"));
-});
+// test.post('/email', util.isLoggedin, async function (req: Request, res: Response) {
+//   const reqBody = req.body;
+//   const email = reqBody.email;
+//   const regex = /^[0-9a-zA-Z]([-_\\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[a]{1}[c]{1}.[k]{1}[r]{1}$/i;
+//   const actest = regex.test(email);
+//   const regExp = /^[0-9a-zA-Z]([-_\\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[e]{1}[d]{1}[u]{1}$/i;
+//   const edutest = regExp.test(email);
+//   if (!(edutest || actest)) return res.status(403).json(util.successFalse(null, "Retry.", null));
+//   return res.json(util.successTrue("", "good"));
+// });
