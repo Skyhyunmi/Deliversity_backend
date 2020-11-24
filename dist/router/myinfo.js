@@ -38,6 +38,7 @@ const index_1 = require("../models/index");
 const crypto = __importStar(require("crypto"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const axios_1 = __importDefault(require("axios"));
+const db = __importStar(require("sequelize"));
 dotenv_1.default.config();
 // const KAKAO = "+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=500000 +ellps=GRS80 +units=m +no_defs"; //5181
 // const GRS80 = "+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs"; //도로명주소 제공 좌표 5179
@@ -374,6 +375,45 @@ exports.myinfo.post('/currentLocation', util.isLoggedin, util.isUser, function (
         }
         catch (err) {
             return res.status(403).json(util.successFalse(err, "", null));
+        }
+    });
+});
+exports.myinfo.get('/review/wrote', util.isLoggedin, function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // 내가 쓴 리뷰
+        const tokenData = req.decoded;
+        try {
+            const reviews = yield index_1.reviewRep.findAll({
+                where: {
+                    fromId: tokenData.id
+                }
+            });
+            return res.json(util.successTrue("", { reviews: reviews }));
+        }
+        catch (err) {
+            return res.status(403).json(util.successFalse(err, "사용자가 없거나 권한이 없습니다.", null));
+        }
+    });
+});
+exports.myinfo.get('/review/written', util.isLoggedin, function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // 나에 대해 작성된 리뷰
+        const tokenData = req.decoded;
+        try {
+            const reviews = yield index_1.reviewRep.findAll({
+                where: {
+                    [db.Op.or]: [{ riderId: tokenData.id }, { userId: tokenData.id }],
+                    fromId: { [db.Op.ne]: tokenData.id }
+                }
+            });
+            const rating = reviews.reduce((sum, cur) => sum + cur.rating, 0);
+            return res.json(util.successTrue("", {
+                rating: rating / reviews.length,
+                reviews: reviews
+            }));
+        }
+        catch (err) {
+            return res.status(403).json(util.successFalse(err, "사용자가 없거나 권한이 없습니다.", null));
         }
     });
 });

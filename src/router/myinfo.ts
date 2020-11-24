@@ -1,9 +1,10 @@
 import { Request, Response, Router } from "express";
 import * as util from "../config/util";
-import { userRep, addressRep, qnaRep, reportRep, orderRep } from "../models/index";
+import { userRep, addressRep, qnaRep, reportRep, orderRep, reviewRep } from "../models/index";
 import * as crypto from "crypto";
 import dotenv from "dotenv";
 import axios from "axios";
+import * as db from "sequelize";
 dotenv.config();
 
 // const KAKAO = "+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=500000 +ellps=GRS80 +units=m +no_defs"; //5181
@@ -304,6 +305,41 @@ myinfo.post('/currentLocation', util.isLoggedin, util.isUser, async function (re
     return res.json(util.successTrue("", null));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
+  }
+});
+
+myinfo.get('/review/wrote', util.isLoggedin, async function (req: Request, res: Response) {
+  // 내가 쓴 리뷰
+  const tokenData = req.decoded;
+  try {
+    const reviews = await reviewRep.findAll({
+      where: {
+        fromId: tokenData.id
+      }
+    });
+    return res.json(util.successTrue("", { reviews: reviews }));
+  } catch (err) {
+    return res.status(403).json(util.successFalse(err, "사용자가 없거나 권한이 없습니다.", null));
+  }
+});
+
+myinfo.get('/review/written', util.isLoggedin, async function (req: Request, res: Response) {
+  // 나에 대해 작성된 리뷰
+  const tokenData = req.decoded;
+  try {
+    const reviews = await reviewRep.findAll({
+      where: {
+        [db.Op.or]: [{ riderId: tokenData.id }, { userId: tokenData.id }],
+        fromId: { [db.Op.ne]: tokenData.id }
+      }
+    });
+    const rating = reviews.reduce((sum, cur) => sum + cur.rating, 0);
+    return res.json(util.successTrue("", {
+      rating: rating / reviews.length,
+      reviews: reviews
+    }));
+  } catch (err) {
+    return res.status(403).json(util.successFalse(err, "사용자가 없거나 권한이 없습니다.", null));
   }
 });
 
