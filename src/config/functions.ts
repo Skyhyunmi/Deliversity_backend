@@ -58,6 +58,21 @@ export async function sendEmail(email: string, suburl: string) {
   }
 }
 
+export async function pwEmail(email: string, hashPW: string) {
+  try {
+    await transporter.sendMail({
+      from: '"발신전용" <noreply@deliversity.co.kr>',
+      to: email,
+      subject: "Deliversity 변경된 임시 비밀번호입니다.",
+      html: "<h3>로그인 후 변경해주세요.</h3><br>" + hashPW
+    });
+    return null;
+  }
+  catch (e) {
+    return 'Sent PW Email Failed';
+  }
+}
+
 export async function emailVerify(verify: string) {
   try {
     const veri = myCache.take(verify) as classes.Veri;

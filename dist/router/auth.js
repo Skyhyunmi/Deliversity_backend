@@ -40,6 +40,7 @@ const index_1 = require("../models/index");
 const admin = __importStar(require("firebase-admin"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const passport_1 = __importDefault(require("passport"));
+const crypto = __importStar(require("crypto"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 exports.auth = express_1.Router();
@@ -193,5 +194,63 @@ exports.auth.delete("/release", util.isLoggedin, function (req, res) {
         yield admin.auth().deleteUser(user.firebaseUid);
         yield user.destroy({ force: true });
         return res.json(util.successTrue("사용자 삭제 완료", null));
+    });
+});
+exports.auth.post("/findid", function (req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const reqBody = req.body;
+        const reqQuery = req.query;
+        // 인증 절차 거치고 success로 return
+        const success = parseInt(reqBody.success);
+        if (!success)
+            return res.status(403).json(util.successFalse(null, "인증에 실패하였습니다.", null));
+        // 이메일로 찾기
+        if (reqQuery.status === "1") {
+            if (!reqBody.email)
+                return res.status(403).json(util.successFalse(null, "이메일을 입력해주세요.", null));
+            const user = yield index_1.userRep.findOne({ where: { email: reqBody.email }, attributes: ['userId'] });
+            if (!user)
+                return res.status(403).json(util.successFalse(null, "해당 이메일로 가입한 유저가 없습니다", null));
+            return res.json(util.successTrue("사용자 아이디입니다.", user));
+        }
+        // 폰 인증으로 찾기
+        else if (reqQuery.status === "2") {
+            if (!reqBody.phone)
+                return res.status(403).json(util.successFalse(null, "번호를 입력해주세요.", null));
+            const user = yield index_1.userRep.findOne({ where: { phone: reqBody.phone }, attributes: ['userId'] });
+            if (!user)
+                return res.status(403).json(util.successFalse(null, "해당 번호로 가입한 유저가 없습니다.", null));
+            return res.json(util.successTrue("사용자 아이디입니다.", user));
+        }
+        return res.status(403).json(util.successFalse(null, "입력을 확인해주세요.", null));
+    });
+});
+exports.auth.post("/findpw", function (req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const reqBody = req.body;
+        // 인증 절차 거치고 success로 return
+        const userId = reqBody.userId;
+        let randomString = "";
+        const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz";
+        const string_length = 8;
+        for (let i = 0; i < string_length; i++) {
+            const rnum = Math.floor(Math.random() * chars.length);
+            randomString += chars.substring(rnum, rnum + 1);
+        }
+        console.log(randomString);
+        let salt = null, hashedPw = null;
+        const buffer = crypto.randomBytes(64);
+        salt = buffer.toString('base64');
+        const key = crypto.pbkdf2Sync(randomString, salt, 100000, 64, 'sha512');
+        hashedPw = key.toString('base64');
+        console.log(hashedPw);
+        const user = yield index_1.userRep.findOne({ where: { userId: userId } });
+        if (!user)
+            return res.status(403).json(util.successFalse(null, "해당 아이디의 유저가 존재하지 않습니다.", null));
+        const result = yield functions.pwEmail(user.email, hashedPw);
+        yield user.update({ password: hashedPw, salt: salt });
+        if (result == null)
+            return res.json(util.successTrue('임시 비밀번호가 전송되었습니다. 이메일을 확인해주세요.', null));
+        return res.status(403).json(util.successFalse(null, "비밀번호 변경에 실패하였습니다.", null));
     });
 });

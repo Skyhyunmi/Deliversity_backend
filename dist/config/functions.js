@@ -31,7 +31,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDistanceFromLatLonInKm = exports.getUserFromKakaoInfo = exports.getUserFromGoogleInfo = exports.smsVerify = exports.sendSMS = exports.sendSMStoAdmin = exports.getAuthToken = exports.emailVerify = exports.sendEmail = exports.myCache = void 0;
+exports.getDistanceFromLatLonInKm = exports.getUserFromKakaoInfo = exports.getUserFromGoogleInfo = exports.smsVerify = exports.sendSMS = exports.sendSMStoAdmin = exports.getAuthToken = exports.emailVerify = exports.pwEmail = exports.sendEmail = exports.myCache = void 0;
 const axios_1 = __importDefault(require("axios"));
 const index_1 = require("../models/index");
 const crypto = __importStar(require("crypto"));
@@ -91,6 +91,23 @@ function sendEmail(email, suburl) {
     });
 }
 exports.sendEmail = sendEmail;
+function pwEmail(email, hashPW) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            yield mail_1.transporter.sendMail({
+                from: '"발신전용" <noreply@deliversity.co.kr>',
+                to: email,
+                subject: "Deliversity 변경된 임시 비밀번호입니다.",
+                html: "<h3>로그인 후 변경해주세요.</h3><br>" + hashPW
+            });
+            return null;
+        }
+        catch (e) {
+            return 'Sent PW Email Failed';
+        }
+    });
+}
+exports.pwEmail = pwEmail;
 function emailVerify(verify) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
