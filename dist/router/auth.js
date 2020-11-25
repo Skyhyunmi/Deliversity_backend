@@ -237,17 +237,15 @@ exports.auth.post("/findpw", function (req, res, next) {
             const rnum = Math.floor(Math.random() * chars.length);
             randomString += chars.substring(rnum, rnum + 1);
         }
-        console.log(randomString);
         let salt = null, hashedPw = null;
         const buffer = crypto.randomBytes(64);
         salt = buffer.toString('base64');
         const key = crypto.pbkdf2Sync(randomString, salt, 100000, 64, 'sha512');
         hashedPw = key.toString('base64');
-        console.log(hashedPw);
         const user = yield index_1.userRep.findOne({ where: { userId: userId } });
         if (!user)
             return res.status(403).json(util.successFalse(null, "해당 아이디의 유저가 존재하지 않습니다.", null));
-        const result = yield functions.pwEmail(user.email, hashedPw);
+        const result = yield functions.pwEmail(user.email, randomString);
         yield user.update({ password: hashedPw, salt: salt });
         if (result == null)
             return res.json(util.successTrue('임시 비밀번호가 전송되었습니다. 이메일을 확인해주세요.', null));
