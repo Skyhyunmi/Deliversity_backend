@@ -1,9 +1,10 @@
 import { Request, Response, Router } from "express";
 import * as util from "../config/util";
-import { qnaRep, reportRep, userRep } from "../models/index";
+import { qnaRep, reportRep, userRep, refundRep } from "../models/index";
 import * as Admin from "firebase-admin";
 
 import dotenv from "dotenv";
+import { getMaxListeners } from "cluster";
 dotenv.config();
 
 export const admin = Router();
@@ -81,6 +82,7 @@ admin.get('/reports', util.isLoggedin, util.isAdmin, async function (req: Reques
   //신고 리스트 반환
   try {
     const lists = await reportRep.findAll({ where: { status: 0 }, attributes: ['id', 'orderId', 'reportKind', 'fromId'] });
+    if (!lists) return res.status(403).json(util.successFalse(null, "현재 처리를 기다리는 신고가 없습니다.", null));
     return res.json(util.successTrue("", lists));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
@@ -122,6 +124,7 @@ admin.get('/qnas', util.isLoggedin, util.isAdmin, async function (req: Request, 
   //문의 리스트 반환
   try {
     const lists = await qnaRep.findAll({ where: { status: 0 }, attributes: ['id', 'qnaKind'] });
+    if (!lists) return res.status(403).json(util.successFalse(null, "현재 처리를 기다리는 문의가 없습니다.", null));
     return res.json(util.successTrue("", lists));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
@@ -157,3 +160,47 @@ admin.put('/qna', util.isLoggedin, util.isAdmin, async function (req: Request, r
     return res.status(403).json(util.successFalse(err, "", null));
   }
 });
+
+admin.get('/refunds', util.isLoggedin, util.isAdmin, async function (req: Request, res: Response) {
+  //환급 리스트 반환
+  try {
+    const refunds = await refundRep.findAll({ where: { status: 0 }, attributes: ['id'] });
+    if (!refunds) return res.status(403).json(util.successFalse(null, "현재 입금을 기다리는 환급이 없습니다.", null));
+    return res.json(util.successTrue("", refunds));
+  } catch (err) {
+    return res.status(403).json(util.successFalse(err, "", null));
+  }
+});
+
+admin.get('/refund', util.isLoggedin, util.isAdmin, async function (req: Request, res: Response) {
+  //환급 상세내용보기
+  const reqQuery = req.query;
+  const refundId = parseInt(reqQuery.refundId as string);
+  try {
+    const refund = await refundRep.findOne({ where: { id: refundId } });
+    if (!refund) { return res.status(403).json(util.successFalse(null, "해당하는 입금 신청 내역이 없습니다.", null)); }
+    return res.json(util.successTrue("", refund));
+  } catch (err) {
+    return res.status(403).json(util.successFalse(err, "", null));
+  }
+});
+
+admin.put('/refund', util.isLoggedin, util.isAdmin, async function (req: Request, res: Response) {
+  //환급 답변 작성
+  const reqQuery = req.query;
+  const reqBody = req.body;
+  const refundId = parseInt(reqQuery.refundId as string);
+  const complete = parseInt(reqBody.complete);
+  const today = new Date();
+  today.setFullYear(today.getFullYear(), today.getMonth(), today.getDay());
+  try {
+    const refund = await refundRep.findOne({ where: { id: refundId } });
+    if (!refund) { return res.status(403).json(util.successFalse(null, "해당하는 입금 신청 내역이 없습니다.", null)); }
+    if (refund.status) { return res.status(403).json(util.successFalse(null, "이미 입금이 완료된 신청입니다.", null)); }
+    if (complete == 1) await refund.update({ status: true, refundAt: today });
+    return res.json(util.successTrue("", refund));
+  } catch (err) {
+    return res.status(403).json(util.successFalse(err, "", null));
+  }
+});
+
