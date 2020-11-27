@@ -4,7 +4,6 @@ import { qnaRep, reportRep, userRep, refundRep } from "../models/index";
 import * as Admin from "firebase-admin";
 
 import dotenv from "dotenv";
-import { getMaxListeners } from "cluster";
 dotenv.config();
 
 export const admin = Router();
