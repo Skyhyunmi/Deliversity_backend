@@ -9,6 +9,9 @@ services:
   - docker
   - mysql
 
+addons:
+  - mariadb: '10.3'
+
 script:
   - npm run lint
   - mysql -e 'CREATE DATABASE testdb'
