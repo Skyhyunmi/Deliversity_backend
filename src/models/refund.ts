@@ -1,15 +1,15 @@
 import {
-    AllowNull,
-    Table,
-    Column,
-    Model,
-    PrimaryKey,
-    AutoIncrement,
-    DataType,
-    Default,
-    CreatedAt,
-    UpdatedAt,
-    ForeignKey
+  AllowNull,
+  Table,
+  Column,
+  Model,
+  PrimaryKey,
+  AutoIncrement,
+  DataType,
+  Default,
+  CreatedAt,
+  UpdatedAt,
+  ForeignKey
 } from "sequelize-typescript";
 import User from "../models/user";
 

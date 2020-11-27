@@ -1,6 +1,6 @@
 import { Request, Response, Router } from "express";
 import * as util from "../config/util";
-import { userRep, addressRep, qnaRep, reportRep, orderRep, reviewRep } from "../models/index";
+import { userRep, addressRep, qnaRep, reportRep, orderRep, reviewRep, refundRep, paymentRep } from "../models/index";
 import * as crypto from "crypto";
 import dotenv from "dotenv";
 import axios from "axios";
@@ -326,36 +326,29 @@ myinfo.get('/review/written', util.isLoggedin, async function (req: Request, res
   }
 });
 
-// myinfo.get('/refunds', util.isLoggedin, async function (req: Request, res: Response) {
-//   // 환급 신청 리스트
-//   const tokenData = req.decoded;
-//   try {
-//     const refunds = await refundRep.findAll({ where: { status: 0 }, attributes: ['id', 'status'] });
-//     console.log(reviews);
-//     if (!reviews) { return res.status(403).json(util.successFalse(null, "나에게 작성된 리뷰가 없습니다.", null)); }
-//     return res.json(util.successTrue("", reviews));
-//   } catch (err) {
-//     return res.status(403).json(util.successFalse(err, "나에게 작성된 리뷰가 없습니다.", null));
-//   }
-// });
+myinfo.get('/refunds', util.isLoggedin, async function (req: Request, res: Response) {
+  // 환급 신청 리스트
+  const tokenData = req.decoded;
+  try {
+    const refunds = await refundRep.findAll({ where: { userId: tokenData.id } });
+    if (!refunds) { return res.status(403).json(util.successFalse(null, "환급 신청 내역이 없습니다.", null)); }
+    return res.json(util.successTrue("", refunds));
+  } catch (err) {
+    return res.status(403).json(util.successFalse(err, "환급 신청 내역이 없습니다.", null));
+  }
+});
 
-// myinfo.get('/paids', util.isLoggedin, async function (req: Request, res: Response) {
-//   // 결제 내역 리스트
-//   const tokenData = req.decoded;
-//   try {
-//     const reviews = await reviewRep.findAll({
-//       where: {
-//         fromId: { [db.Op.ne]: tokenData.id },
-//         [db.Op.or]: [{ riderId: tokenData.id }, { userId: tokenData.id }],
-//       }
-//     });
-//     console.log(reviews);
-//     if (!reviews) { return res.status(403).json(util.successFalse(null, "나에게 작성된 리뷰가 없습니다.", null)); }
-//     return res.json(util.successTrue("", reviews));
-//   } catch (err) {
-//     return res.status(403).json(util.successFalse(err, "나에게 작성된 리뷰가 없습니다.", null));
-//   }
-// });
+myinfo.get('/paids', util.isLoggedin, async function (req: Request, res: Response) {
+  // 환급 신청 리스트
+  const tokenData = req.decoded;
+  try {
+    const paids = await paymentRep.findAll({ where: { userId: tokenData.id } });
+    if (!paids) { return res.status(403).json(util.successFalse(null, "결제 내역이 없습니다.", null)); }
+    return res.json(util.successTrue("", paids));
+  } catch (err) {
+    return res.status(403).json(util.successFalse(err, "결제 내역이 없습니다.", null));
+  }
+});
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -39,9 +39,7 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const axios_1 = __importDefault(require("axios"));
 dotenv_1.default.config();
 exports.point = express_1.Router();
-// 포인트 반환
-// 포인트 차감
-// 포인트 추가 - 
+// 포인트 조회
 exports.point.get('/', util.isLoggedin, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const tokenData = req.decoded;
     const point = yield index_1.pointRep.findAll({ where: { userId: tokenData.id, status: false } });
@@ -50,10 +48,10 @@ exports.point.get('/', util.isLoggedin, (req, res) => __awaiter(void 0, void 0, 
         return res.status(403).json(util.successFalse(null, "포인트 반환 실패", null));
     return res.json(util.successTrue("", { point: sum.toString() }));
 }));
+// 충전하기(결제)
 exports.point.post('/', util.isLoggedin, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const reqBody = req.body;
     const tokenData = req.decoded;
-    //결제 검증 프로세스 있어야함.
     const user = yield index_1.userRep.findOne({ where: { id: tokenData.id } });
     if (!user)
         return res.status(403).json(util.successFalse(null, "포인트 충전 실패", null));
@@ -70,7 +68,6 @@ exports.point.post('/', util.isLoggedin, (req, res) => __awaiter(void 0, void 0,
         }
     });
     const { access_token } = getToken.data.response;
-    const url = "https://api.iamport.kr/payments/" + imp_uid;
     const getPaymentData = yield axios_1.default({
         url: "https://api.iamport.kr/payments/" + imp_uid,
         method: "get",
@@ -82,7 +79,7 @@ exports.point.post('/', util.isLoggedin, (req, res) => __awaiter(void 0, void 0,
     if (amountToBePaid == amount) {
         const receipt = yield index_1.paymentRep.findOne({ where: { userId: tokenData.id, impUid: imp_uid } });
         if (receipt) {
-            res.status(403).json(util.successFalse(null, "이미 충전되었습니다.", null));
+            return res.status(403).json(util.successFalse(null, "이미 충전되었습니다.", null));
         }
         else {
             yield index_1.paymentRep.create({
@@ -103,8 +100,54 @@ exports.point.post('/', util.isLoggedin, (req, res) => __awaiter(void 0, void 0,
         return res.json(util.successTrue("", status));
     }
     else { // 결제 금액 불일치. 위/변조 된 결제
-        res.status(403).json(util.successFalse(null, "결제 금액과 충전 금액이 다릅니다.", null));
+        return res.status(403).json(util.successFalse(null, "결제 금액과 충전 금액이 다릅니다.", null));
     }
 }));
-// point.post('/withdraw', util.isLoggedin,async (req:Request,res:Response)=>{
-// });
+// 포인트 환급 신청
+exports.point.post('/refund', util.isLoggedin, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const tokenData = req.decoded;
+    const reqBody = req.body;
+    let amountToBeRefund = parseInt(reqBody.point);
+    if (!amountToBeRefund)
+        return res.status(403).json(util.successFalse(null, "환급 금액을 입력해주세요.", null));
+    const accountName = reqBody.accountName;
+    if (!accountName)
+        return res.status(403).json(util.successFalse(null, "계좌에 등록된 이름을 입력해주세요.", null));
+    const bankKind = reqBody.bankKind;
+    if (!bankKind)
+        return res.status(403).json(util.successFalse(null, "은행 종류를 입력해주세요.", null));
+    const accountNum = reqBody.accountNum;
+    if (!accountNum)
+        return res.status(403).json(util.successFalse(null, "계좌 번호를 입력해주세요.", null));
+    const points = yield index_1.pointRep.findAll({ where: { userId: tokenData.id, }, order: [['expireAt', 'ASC']] });
+    const sum = points.reduce((sum, cur) => { return sum + cur.point; }, 0);
+    if (sum < amountToBeRefund)
+        return res.status(403).json(util.successFalse(null, "포인트가 모자랍니다.", null));
+    points.some((point) => __awaiter(void 0, void 0, void 0, function* () {
+        if (amountToBeRefund) {
+            const curPoint = point.point;
+            if (amountToBeRefund <= point.point) {
+                yield point.update({ point: curPoint - amountToBeRefund });
+                amountToBeRefund = 0;
+                return true;
+            }
+            else {
+                yield point.update({ point: 0 });
+                yield point.destroy();
+                amountToBeRefund -= curPoint;
+                return false;
+            }
+        }
+        else
+            return true;
+    }));
+    /* 환급 내역 */
+    yield index_1.refundRep.create({
+        userId: tokenData.id,
+        accountName: accountName,
+        bankKind: bankKind,
+        accountNum: accountNum,
+        status: 0
+    });
+    return res.json(util.successTrue("", null));
+}));

@@ -400,6 +400,38 @@ exports.myinfo.get('/review/written', util.isLoggedin, function (req, res) {
         }
     });
 });
+exports.myinfo.get('/refunds', util.isLoggedin, function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // 환급 신청 리스트
+        const tokenData = req.decoded;
+        try {
+            const refunds = yield index_1.refundRep.findAll({ where: { userId: tokenData.id } });
+            if (!refunds) {
+                return res.status(403).json(util.successFalse(null, "환급 신청 내역이 없습니다.", null));
+            }
+            return res.json(util.successTrue("", refunds));
+        }
+        catch (err) {
+            return res.status(403).json(util.successFalse(err, "환급 신청 내역이 없습니다.", null));
+        }
+    });
+});
+exports.myinfo.get('/paids', util.isLoggedin, function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // 환급 신청 리스트
+        const tokenData = req.decoded;
+        try {
+            const paids = yield index_1.paymentRep.findAll({ where: { userId: tokenData.id } });
+            if (!paids) {
+                return res.status(403).json(util.successFalse(null, "결제 내역이 없습니다.", null));
+            }
+            return res.json(util.successTrue("", paids));
+        }
+        catch (err) {
+            return res.status(403).json(util.successFalse(err, "결제 내역이 없습니다.", null));
+        }
+    });
+});
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////                              개발용 API입니다. 나중에는 지워야 합니다.                              ////
