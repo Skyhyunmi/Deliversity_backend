@@ -47,7 +47,7 @@ point.post('/', util.isLoggedin, async (req: Request, res: Response) => {
   const { amount, status } = paymentData;
   if (amountToBePaid == amount) {
     const receipt = await paymentRep.findOne({ where: { userId: tokenData.id, impUid: imp_uid } });
-    if (receipt) { res.status(403).json(util.successFalse(null, "이미 충전되었습니다.", null)); }
+    if (receipt) { return res.status(403).json(util.successFalse(null, "이미 충전되었습니다.", null)); }
     else {
       await paymentRep.create({
         userId: tokenData.id,
@@ -66,7 +66,7 @@ point.post('/', util.isLoggedin, async (req: Request, res: Response) => {
     }
     return res.json(util.successTrue("", status));
   } else { // 결제 금액 불일치. 위/변조 된 결제
-    res.status(403).json(util.successFalse(null, "결제 금액과 충전 금액이 다릅니다.", null));
+    return res.status(403).json(util.successFalse(null, "결제 금액과 충전 금액이 다릅니다.", null));
   }
 });
 
