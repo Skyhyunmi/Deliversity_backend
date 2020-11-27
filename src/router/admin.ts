@@ -164,7 +164,7 @@ admin.put('/qna', util.isLoggedin, util.isAdmin, async function (req: Request, r
 admin.get('/refunds', util.isLoggedin, util.isAdmin, async function (req: Request, res: Response) {
   //환급 리스트 반환
   try {
-    const refunds = await refundRep.findAll({ where: { status: 0 }, attributes: ['id'] });
+    const refunds = await refundRep.findAll({ where: { status: 0 }, attributes: ['id', 'status'] });
     if (!refunds) return res.status(403).json(util.successFalse(null, "현재 입금을 기다리는 환급이 없습니다.", null));
     return res.json(util.successTrue("", refunds));
   } catch (err) {
@@ -197,7 +197,7 @@ admin.put('/refund', util.isLoggedin, util.isAdmin, async function (req: Request
     const refund = await refundRep.findOne({ where: { id: refundId } });
     if (!refund) { return res.status(403).json(util.successFalse(null, "해당하는 입금 신청 내역이 없습니다.", null)); }
     if (refund.status) { return res.status(403).json(util.successFalse(null, "이미 입금이 완료된 신청입니다.", null)); }
-    if (complete == 1) await refund.update({ status: true, refundAt: today });
+    if (complete === 1) await refund.update({ status: true, refundAt: today });
     return res.json(util.successTrue("", refund));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));

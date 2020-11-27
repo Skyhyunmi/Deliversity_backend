@@ -74,12 +74,8 @@ point.post('/', util.isLoggedin, async (req: Request, res: Response) => {
 point.post('/refund', util.isLoggedin, async (req: Request, res: Response) => {
   const tokenData = req.decoded;
   const reqBody = req.body;
-  const point = await pointRep.findAll({ where: { userId: tokenData.id, status: false } });
-  const sum = point.reduce((sum, cur) => sum + cur.point, 0);
-  if (sum < 0) return res.status(403).json(util.successFalse(null, "환급할 포인트가 없습니다.", null));
   let amountToBeRefund = parseInt(reqBody.point);
   if (!amountToBeRefund) return res.status(403).json(util.successFalse(null, "환급 금액을 입력해주세요.", null));
-  if (sum < amountToBeRefund) return res.status(403).json(util.successFalse(null, "포인트가 모자랍니다.", null));
   const accountName = reqBody.accountName;
   if (!accountName) return res.status(403).json(util.successFalse(null, "계좌에 등록된 이름을 입력해주세요.", null));
   const bankKind = reqBody.bankKind;
@@ -87,6 +83,8 @@ point.post('/refund', util.isLoggedin, async (req: Request, res: Response) => {
   const accountNum = reqBody.accountNum;
   if (!accountNum) return res.status(403).json(util.successFalse(null, "계좌 번호를 입력해주세요.", null));
   const points = await pointRep.findAll({ where: { userId: tokenData.id, }, order: [['expireAt', 'ASC']] });
+  const sum = points.reduce((sum, cur) => { return sum + cur.point; }, 0);
+  if (sum < amountToBeRefund) return res.status(403).json(util.successFalse(null, "포인트가 모자랍니다.", null));
   points.some(async (point) => {
     if (amountToBeRefund) {
       const curPoint = point.point;
