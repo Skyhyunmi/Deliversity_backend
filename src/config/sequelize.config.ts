@@ -20,10 +20,10 @@ export const config = {
   }),
   test:prepareOptions({
     database:process.env.TEST_DB_NAME as string,
-    username:process.env.TEST_DB_USER as string,
+    username:process.env.TRAVIS != undefined?"root":process.env.TEST_DB_USER as string,
     password:process.env.TRAVIS != undefined?undefined:process.env.DB_PASS,
     host: process.env.TRAVIS != undefined?"127.0.0.1":process.env.DB_HOST,
-    port: Number.parseInt(process.env.DB_PORT as string),
+    port: process.env.TRAVIS != undefined?3306:Number.parseInt(process.env.DB_PORT as string),
     dialect: "mysql",
     dialectOptions: {
       charset: "utf8mb4",
