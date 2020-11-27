@@ -10,7 +10,7 @@ services:
   - mysql
 
 addons:
-  - mariadb: '10.3.25'
+  - mariadb: '10.3'
 
 script:
   - npm run lint
