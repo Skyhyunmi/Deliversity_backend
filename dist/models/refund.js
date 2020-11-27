@@ -43,6 +43,7 @@ __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.DATE)
 ], Refund.prototype, "canceledAt", void 0);
 __decorate([
+    sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BIGINT)
 ], Refund.prototype, "amount", void 0);
 __decorate([
