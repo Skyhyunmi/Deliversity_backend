@@ -74,6 +74,7 @@ point.post('/refund', util.isLoggedin, async (req: Request, res: Response) => {
   const tokenData = req.decoded;
   const reqBody = req.body;
   let amountToBeRefund = parseInt(reqBody.point);
+  const amount = amountToBeRefund;
   if (!amountToBeRefund) return res.status(403).json(util.successFalse(null, "환급 금액을 입력해주세요.", null));
   const accountName = reqBody.accountName;
   if (!accountName) return res.status(403).json(util.successFalse(null, "계좌에 등록된 이름을 입력해주세요.", null));
@@ -107,6 +108,7 @@ point.post('/refund', util.isLoggedin, async (req: Request, res: Response) => {
     accountName: accountName,
     bankKind: bankKind,
     accountNum: accountNum,
+    amount: amount,
     status: 0
   });
   return res.json(util.successTrue("", null));
