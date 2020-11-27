@@ -7,9 +7,11 @@ sudo: required
 
 services:
   - docker
+  - mysql
 
 script:
   - npm run lint
+  - mysql -e 'CREATE DATABASE testdb'
   - npm run test
 
 deploy:

@@ -14,23 +14,12 @@ import Room from "./room";
 import dotenv from "dotenv";
 dotenv.config();
 
-export const db = new Sequelize(
-  process.env.JEST_ENV === 'test' ?process.env.TEST_DB_NAME as string: process.env.DB_NAME as string,
-  process.env.DB_USER as string,
-  process.env.DB_PASS?process.env.DB_PASS:'',
-  {
-    host: process.env.DB_HOST,
-    port: Number.parseInt(process.env.DB_PORT as string),
-    dialect: "mysql",
-    dialectOptions: {
-      charset: "utf8mb4",
-      dateStrings: true,
-      typeCast: true,
-    },
-    timezone: "+09:00",
-    models: [__dirname+'/models'],
-  }
-);
+import {config} from "../config/sequelize.config";
+// console.log(process.env.TRAVIS)
+export let db:Sequelize;
+if(process.env.NODE_ENV == 'test')
+  db = new Sequelize(config.test);
+else db = new Sequelize(config.development);
 
 db.addModels([User]);
 db.addModels([Address]);

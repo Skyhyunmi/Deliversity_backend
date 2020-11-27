@@ -32,8 +32,7 @@ Admin.initializeApp({
 import dotenv from "dotenv";
 dotenv.config();
 
-process.env.NODE_ENV = ( process.env.NODE_ENV && ( process.env.NODE_ENV )
-  .trim().toLowerCase() == 'production' ) ? 'production' : 'development';
+if(!process.env.NODE_ENV) process.env.NODE_ENV = 'development';
 
 // authenticate -> Open connection
 // sync -> make table if not exist
@@ -118,11 +117,11 @@ app.use(function(err:any, req:any, res:Response, next:NextFunction) {
   // render the error page
   res.status(err.status || 500).json(util.successFalse(null,"Error",null));
 });
-if (process.env.JEST_ENV !== 'test') {
+console.log(process.env.NODE_ENV);
+if (process.env.NODE_ENV !== 'test') {
   const server = app.listen(process.env.WEB_PORT, () => {
     if(process.env.NODE_ENV == 'production')
       functions.sendSMStoAdmin();
-    console.log(process.env.NODE_ENV);
     console.log("Server Started");
   });
   chatServer(server);

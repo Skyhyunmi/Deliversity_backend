@@ -90,7 +90,9 @@ export default function chatServer(server:any){
         data:{
           type:'Chat',
           roomId: roomId,
-          senderId: data[0].user._id.toString()
+          senderId: data[0].user._id.toString(),
+          image:data[0].image,
+          messageType:data[0].messageType //image or null
         }
       };
       if(fcm)
