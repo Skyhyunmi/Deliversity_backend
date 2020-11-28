@@ -648,8 +648,6 @@ exports.order.get('/orderList', util.isLoggedin, function (req, res) {
                 },
                 order: [['orderStatus', 'ASC'], ['id', 'ASC']]
             });
-            if (!orderList)
-                return res.status(403).json(util.successFalse(null, "주문 내역이 없습니다", null));
             return res.json(util.successTrue("", orderList));
         }
         catch (err) {
@@ -669,8 +667,6 @@ exports.order.get('/deliverList', util.isLoggedin, util.isUser, function (req, r
                 },
                 order: [['orderStatus', 'ASC'], ['id', 'ASC']]
             });
-            if (!deliverList)
-                return res.status(403).json(util.successFalse(null, "배달 내역이 없습니다", null));
             return res.json(util.successTrue("", deliverList));
         }
         catch (err) {

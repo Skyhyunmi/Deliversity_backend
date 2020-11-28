@@ -44,7 +44,7 @@ auth.post("/login", async function (req: Request, res: Response, next: NextFunct
     user: any,
     info: any
   ) {
-    if (info === {})
+    if (info)
       return res.status(403).json(util.successFalse(null, "ID or PW is not valid", null));
     if (err || !user) {
       return res.status(403).json(util.successFalse(null, err, null));
@@ -59,8 +59,9 @@ auth.post("/login", async function (req: Request, res: Response, next: NextFunct
 
 auth.get("/login", util.isLoggedin, async function (req: Request, res: Response, next: NextFunction) {
   try{
+    req.body.id = req.decoded.userId;
     passport.authenticate("silent_login", { session: false }, function (err: any,user: any,info: any ) {
-      if (info === {})
+      if (info)
         return res.status(403).json(util.successFalse(null, "로그인을 실패했습니다.", null));
       if (err || !user) {
         return res.status(403).json(util.successFalse(null, err, null));

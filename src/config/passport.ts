@@ -201,7 +201,8 @@ export function passportConfig(){
     'silent_login',
     new LocalStrategy({
       session: false,
-
+      usernameField:'id',
+      passwordField:'id',
       passReqToCallback: true
     },
     async function (req,id,pw, done) {

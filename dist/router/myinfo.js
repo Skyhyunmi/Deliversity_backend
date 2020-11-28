@@ -142,8 +142,6 @@ exports.myinfo.get('/address/list', util.isLoggedin, function (req, res) {
                     userId: tokenData.id
                 }
             });
-            if (!addressList)
-                return res.status(403).json(util.successFalse(null, "해당 하는 주소가 없습니다.", null));
             return res.json(util.successTrue("", addressList));
         }
         catch (err) {
@@ -390,9 +388,6 @@ exports.myinfo.get('/review/written', util.isLoggedin, function (req, res) {
                 }
             });
             console.log(reviews);
-            if (!reviews) {
-                return res.status(403).json(util.successFalse(null, "나에게 작성된 리뷰가 없습니다.", null));
-            }
             return res.json(util.successTrue("", reviews));
         }
         catch (err) {

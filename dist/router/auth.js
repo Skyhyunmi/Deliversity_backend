@@ -74,7 +74,7 @@ exports.auth.post("/signup", function (req, res, next) {
 exports.auth.post("/login", function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         passport_1.default.authenticate("login", { session: false }, function (err, user, info) {
-            if (info === {})
+            if (info)
                 return res.status(403).json(util.successFalse(null, "ID or PW is not valid", null));
             if (err || !user) {
                 return res.status(403).json(util.successFalse(null, err, null));
@@ -93,8 +93,9 @@ exports.auth.post("/login", function (req, res, next) {
 exports.auth.get("/login", util.isLoggedin, function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            req.body.id = req.decoded.userId;
             passport_1.default.authenticate("silent_login", { session: false }, function (err, user, info) {
-                if (info === {})
+                if (info)
                     return res.status(403).json(util.successFalse(null, "로그인을 실패했습니다.", null));
                 if (err || !user) {
                     return res.status(403).json(util.successFalse(null, err, null));

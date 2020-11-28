@@ -243,6 +243,8 @@ function passportConfig() {
     }));
     passport_1.default.use('silent_login', new LocalStrategy({
         session: false,
+        usernameField: 'id',
+        passwordField: 'id',
         passReqToCallback: true
     }, function (req, id, pw, done) {
         return __awaiter(this, void 0, void 0, function* () {
