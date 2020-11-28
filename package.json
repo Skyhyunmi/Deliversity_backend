@@ -15,7 +15,7 @@
   },
   "jest": {
     "bail": 0,
-    "setupFilesAfterEnv": [
+    "setupFiles": [
       "./test/jest.setup.ts"
     ],
     "globalSetup": "./test/global.setup.ts",

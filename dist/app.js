@@ -54,8 +54,8 @@ Admin.initializeApp({
 });
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
-process.env.NODE_ENV = (process.env.NODE_ENV && (process.env.NODE_ENV)
-    .trim().toLowerCase() == 'production') ? 'production' : 'development';
+if (!process.env.NODE_ENV)
+    process.env.NODE_ENV = 'development';
 // authenticate -> Open connection
 // sync -> make table if not exist
 models_1.db
@@ -121,11 +121,11 @@ exports.app.use(function (err, req, res, next) {
     // render the error page
     res.status(err.status || 500).json(util.successFalse(null, "Error", null));
 });
-if (process.env.JEST_ENV !== 'test') {
+console.log(process.env.NODE_ENV);
+if (process.env.NODE_ENV !== 'test') {
     const server = exports.app.listen(process.env.WEB_PORT, () => {
         if (process.env.NODE_ENV == 'production')
             functions.sendSMStoAdmin();
-        console.log(process.env.NODE_ENV);
         console.log("Server Started");
     });
     chatServer_1.default(server);

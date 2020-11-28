@@ -7,6 +7,13 @@ sudo: required
 
 services:
   - docker
+  - mysql
+
+addons:
+  - mariadb: '10.3'
+
+before_install:
+  - mysql -u root -e 'CREATE DATABASE testdb'
 
 script:
   - npm run lint

@@ -103,40 +103,47 @@ export function passportConfig(){
         const emailVeri=await emailVerify(reqBody.email);
         if(emailVeri==0) return done(null, false, { message: 'E-mail Verification is required.' });
         const idToken = req.body.idToken;
-        let googleToken=null;
+        let googleToken: string | null = null;
         if(idToken){
           const ret = await functions.getUserFromGoogleInfo(idToken);
-          if(ret && !ret.user) googleToken = ret.id;
+          if(ret) googleToken = ret.id;
         }
         const accessToken = req.body.accessToken;
-        let kakaoToken=null;
+        let kakaoToken: string | null = null;
         if(accessToken){
           const ret = await functions.getUserFromKakaoInfo(accessToken);
-          if(ret && !ret.user) kakaoToken = ret.id;
+          if(ret) kakaoToken = ret.id;
         }
-        const fbUser = await admin.auth().createUser({
-          email:reqBody.email,
-          emailVerified:true,
-          phoneNumber:"+82"+reqBody.phone.slice(1),
-          password:hashedPw
-        });
-        if(!fbUser) return done(null, false, { message: 'firebase Account is already exists.' });
-        const user = await userRep.create({
-          userId: userId,
-          password: hashedPw,
-          salt: salt,
-          name: reqBody.name,
-          nickName: reqBody.nickName,
-          age: Number.parseInt(reqBody.age),
-          email: reqBody.email,
-          phone: reqBody.phone,
-          createdAt: new Date(),
-          updatedAt: null,
-          googleOAuth:googleToken || null,
-          kakaoOAuth:kakaoToken || null,
-          firebaseUid:fbUser.uid
-        });
-        return done(null,user);
+        let fbUser;
+        try{
+          fbUser = await admin.auth().getUserByEmail(reqBody.email);
+        }catch(err){
+          fbUser = await admin.auth().createUser({
+            email:reqBody.email,
+            emailVerified:true,
+            phoneNumber:"+82"+reqBody.phone.slice(1),
+            password:hashedPw
+          });
+        }
+        if(fbUser){
+          const user = await userRep.create({
+            userId: userId,
+            password: hashedPw,
+            salt: salt,
+            name: reqBody.name,
+            nickName: reqBody.nickName,
+            age: Number.parseInt(reqBody.age),
+            email: reqBody.email,
+            phone: reqBody.phone,
+            createdAt: new Date(),
+            updatedAt: null,
+            googleOAuth:googleToken || null,
+            kakaoOAuth:kakaoToken || null,
+            firebaseUid:fbUser.uid
+          });
+          return done(null,user);
+        }
+        return done(null,"firebase 에러");
       }catch(err){
         return done(err);
       };
@@ -184,6 +191,25 @@ export function passportConfig(){
             return done(null, false, { message: 'Password do not match.' });
           }
         });
+      } catch (err) {
+        return done(err);
+      }
+    })
+  );
+
+  passport.use(
+    'silent_login',
+    new LocalStrategy({
+      session: false,
+      usernameField:'id',
+      passwordField:'id',
+      passReqToCallback: true
+    },
+    async function (req,id,pw, done) {
+      try {
+        const user = await userRep.findOne({where:{id:req.decoded.id}});
+        if (!user) return done(null, false, { message: "Can't login" });
+        return done(null, user);
       } catch (err) {
         return done(err);
       }
