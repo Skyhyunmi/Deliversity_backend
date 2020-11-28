@@ -44,7 +44,8 @@ setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
     }
 }), 5000);
 function chatServer(server) {
-    const io = socket_io_1.default.listen(server, { transports: ['websocket', 'polling'],
+    const io = socket_io_1.default.listen(server, {
+        transports: ['websocket', 'polling'],
         'pingTimeout': 10000 * 60 * 10, 'pingInterval': 10000 * 60 * 7
     });
     io.on('connect', (socket) => __awaiter(this, void 0, void 0, function* () {

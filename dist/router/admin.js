@@ -132,6 +132,8 @@ exports.admin.get('/reports', util.isLoggedin, util.isAdmin, function (req, res)
         //신고 리스트 반환
         try {
             const lists = yield index_1.reportRep.findAll({ where: { status: 0 }, attributes: ['id', 'orderId', 'reportKind', 'fromId'] });
+            if (!lists)
+                return res.status(403).json(util.successFalse(null, "현재 처리를 기다리는 신고가 없습니다.", null));
             return res.json(util.successTrue("", lists));
         }
         catch (err) {
@@ -184,6 +186,8 @@ exports.admin.get('/qnas', util.isLoggedin, util.isAdmin, function (req, res) {
         //문의 리스트 반환
         try {
             const lists = yield index_1.qnaRep.findAll({ where: { status: 0 }, attributes: ['id', 'qnaKind'] });
+            if (!lists)
+                return res.status(403).json(util.successFalse(null, "현재 처리를 기다리는 문의가 없습니다.", null));
             return res.json(util.successTrue("", lists));
         }
         catch (err) {
@@ -225,6 +229,63 @@ exports.admin.put('/qna', util.isLoggedin, util.isAdmin, function (req, res) {
             }
             yield answered_qna.update({ answer: answer, status: true });
             return res.json(util.successTrue("", answered_qna));
+        }
+        catch (err) {
+            return res.status(403).json(util.successFalse(err, "", null));
+        }
+    });
+});
+exports.admin.get('/refunds', util.isLoggedin, util.isAdmin, function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        //환급 리스트 반환
+        try {
+            const refunds = yield index_1.refundRep.findAll({ where: { status: 0 }, attributes: ['id', 'status'] });
+            if (!refunds)
+                return res.status(403).json(util.successFalse(null, "현재 입금을 기다리는 환급이 없습니다.", null));
+            return res.json(util.successTrue("", refunds));
+        }
+        catch (err) {
+            return res.status(403).json(util.successFalse(err, "", null));
+        }
+    });
+});
+exports.admin.get('/refund', util.isLoggedin, util.isAdmin, function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        //환급 상세내용보기
+        const reqQuery = req.query;
+        const refundId = parseInt(reqQuery.refundId);
+        try {
+            const refund = yield index_1.refundRep.findOne({ where: { id: refundId } });
+            if (!refund) {
+                return res.status(403).json(util.successFalse(null, "해당하는 입금 신청 내역이 없습니다.", null));
+            }
+            return res.json(util.successTrue("", refund));
+        }
+        catch (err) {
+            return res.status(403).json(util.successFalse(err, "", null));
+        }
+    });
+});
+exports.admin.put('/refund', util.isLoggedin, util.isAdmin, function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        //환급 답변 작성
+        const reqQuery = req.query;
+        const reqBody = req.body;
+        const refundId = parseInt(reqQuery.refundId);
+        const complete = parseInt(reqBody.complete);
+        const today = new Date();
+        today.setFullYear(today.getFullYear(), today.getMonth(), today.getDay());
+        try {
+            const refund = yield index_1.refundRep.findOne({ where: { id: refundId } });
+            if (!refund) {
+                return res.status(403).json(util.successFalse(null, "해당하는 입금 신청 내역이 없습니다.", null));
+            }
+            if (refund.status) {
+                return res.status(403).json(util.successFalse(null, "이미 입금이 완료된 신청입니다.", null));
+            }
+            if (complete === 1)
+                yield refund.update({ status: true, refundAt: today });
+            return res.json(util.successTrue("", refund));
         }
         catch (err) {
             return res.status(403).json(util.successFalse(err, "", null));
