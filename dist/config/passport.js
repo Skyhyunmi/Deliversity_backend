@@ -146,40 +146,47 @@ function passportConfig() {
                 let googleToken = null;
                 if (idToken) {
                     const ret = yield functions.getUserFromGoogleInfo(idToken);
-                    if (ret && !ret.user)
+                    if (ret)
                         googleToken = ret.id;
                 }
                 const accessToken = req.body.accessToken;
                 let kakaoToken = null;
                 if (accessToken) {
                     const ret = yield functions.getUserFromKakaoInfo(accessToken);
-                    if (ret && !ret.user)
+                    if (ret)
                         kakaoToken = ret.id;
                 }
-                const fbUser = yield admin.auth().createUser({
-                    email: reqBody.email,
-                    emailVerified: true,
-                    phoneNumber: "+82" + reqBody.phone.slice(1),
-                    password: hashedPw
-                });
-                if (!fbUser)
-                    return done(null, false, { message: 'firebase Account is already exists.' });
-                const user = yield index_1.userRep.create({
-                    userId: userId,
-                    password: hashedPw,
-                    salt: salt,
-                    name: reqBody.name,
-                    nickName: reqBody.nickName,
-                    age: Number.parseInt(reqBody.age),
-                    email: reqBody.email,
-                    phone: reqBody.phone,
-                    createdAt: new Date(),
-                    updatedAt: null,
-                    googleOAuth: googleToken || null,
-                    kakaoOAuth: kakaoToken || null,
-                    firebaseUid: fbUser.uid
-                });
-                return done(null, user);
+                let fbUser;
+                try {
+                    fbUser = yield admin.auth().getUserByEmail(reqBody.email);
+                }
+                catch (err) {
+                    fbUser = yield admin.auth().createUser({
+                        email: reqBody.email,
+                        emailVerified: true,
+                        phoneNumber: "+82" + reqBody.phone.slice(1),
+                        password: hashedPw
+                    });
+                }
+                if (fbUser) {
+                    const user = yield index_1.userRep.create({
+                        userId: userId,
+                        password: hashedPw,
+                        salt: salt,
+                        name: reqBody.name,
+                        nickName: reqBody.nickName,
+                        age: Number.parseInt(reqBody.age),
+                        email: reqBody.email,
+                        phone: reqBody.phone,
+                        createdAt: new Date(),
+                        updatedAt: null,
+                        googleOAuth: googleToken || null,
+                        kakaoOAuth: kakaoToken || null,
+                        firebaseUid: fbUser.uid
+                    });
+                    return done(null, user);
+                }
+                return done(null, "firebase 에러");
             }
             catch (err) {
                 return done(err);
@@ -228,6 +235,22 @@ function passportConfig() {
                         return done(null, false, { message: 'Password do not match.' });
                     }
                 });
+            }
+            catch (err) {
+                return done(err);
+            }
+        });
+    }));
+    passport_1.default.use('silent_login', new LocalStrategy({
+        session: false,
+        passReqToCallback: true
+    }, function (req, id, pw, done) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const user = yield index_1.userRep.findOne({ where: { id: req.decoded.id } });
+                if (!user)
+                    return done(null, false, { message: "Can't login" });
+                return done(null, user);
             }
             catch (err) {
                 return done(err);

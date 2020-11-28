@@ -90,6 +90,48 @@ exports.auth.post("/login", function (req, res, next) {
         })(req, res, next);
     });
 });
+exports.auth.get("/login", util.isLoggedin, function (req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            passport_1.default.authenticate("silent_login", { session: false }, function (err, user, info) {
+                if (info === {})
+                    return res.status(403).json(util.successFalse(null, "로그인을 실패했습니다.", null));
+                if (err || !user) {
+                    return res.status(403).json(util.successFalse(null, err, null));
+                }
+                req.logIn(user, { session: false }, function (err) {
+                    return __awaiter(this, void 0, void 0, function* () {
+                        if (err)
+                            return res.status(403).json(util.successFalse(err, "로그인을 실패했습니다.", null));
+                        const result = yield functions.getAuthToken(user);
+                        return res.json(util.successTrue("", { firebaseToken: result.firebaseToken, token: result.authToken, grade: user.grade }));
+                    });
+                });
+            })(req, res, next);
+        }
+        catch (e) {
+            console.log(e);
+            return res.status(403).json(util.successFalse(null, "에러.", null));
+        }
+    });
+});
+exports.auth.post("/login/fcm", util.isLoggedin, function (req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const tokenData = req.decoded;
+        const reqBody = req.body;
+        try {
+            const user = yield index_1.userRep.findOne({ where: { id: tokenData.id } });
+            if (!user)
+                return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
+            yield user.update({ fcmToken: reqBody.fcmToken });
+            return res.json(util.successTrue("", null));
+        }
+        catch (e) {
+            console.log(e);
+            return res.status(403).json(util.successFalse(null, "에러.", null));
+        }
+    });
+});
 exports.auth.post('/login/google', function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const reqBody = req.body;

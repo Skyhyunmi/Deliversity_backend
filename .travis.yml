@@ -12,9 +12,11 @@ services:
 addons:
   - mariadb: '10.3'
 
+before_install:
+  - mysql -u root -e 'CREATE DATABASE testdb'
+
 script:
   - npm run lint
-  - mysql -e 'CREATE DATABASE testdb'
   - npm run test
 
 deploy:

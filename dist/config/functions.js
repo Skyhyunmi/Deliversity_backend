@@ -258,7 +258,9 @@ function getUserFromGoogleInfo(idToken) {
             }
         });
         if (!user)
-            return null;
+            return {
+                id: ret.data.sub
+            };
         return {
             id: ret.data.sub,
             user: user
@@ -283,7 +285,9 @@ function getUserFromKakaoInfo(accessToken) {
             }
         });
         if (!user)
-            return null;
+            return {
+                id: ret.data.id
+            };
         return {
             id: ret.data.id,
             user: user

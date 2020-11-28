@@ -209,7 +209,9 @@ export async function getUserFromGoogleInfo(idToken: string) {
       googleOAuth: ret.data.sub
     }
   });
-  if (!user) return null;
+  if (!user) return {
+    id: ret.data.sub
+  };
   return {
     id: ret.data.sub,
     user: user
@@ -230,7 +232,9 @@ export async function getUserFromKakaoInfo(accessToken: string) {
       kakaoOAuth: ret.data.id
     }
   });
-  if (!user) return null;
+  if (!user) return {
+    id: ret.data.id
+  };
   return {
     id: ret.data.id,
     user: user
