@@ -106,9 +106,8 @@ exports.admin.put('/upload', util.isLoggedin, util.isAdmin, function (req, res) 
                         data: {
                             test: "인증이 완료되었습니다." + registrationToken
                         },
-                        token: registrationToken
                     };
-                    Admin.messaging().send(message)
+                    Admin.messaging().sendToDevice(registrationToken, message)
                         .then((response) => {
                         console.log('Successfully sent message:', response);
                     })

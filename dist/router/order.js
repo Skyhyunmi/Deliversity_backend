@@ -146,7 +146,7 @@ exports.order.post('/', util.isLoggedin, function (req, res) {
                     "body": order.storeName,
                 },
                 data: {
-                    type: 'ManageDelivery',
+                    type: 'newOrder',
                 },
                 tokens: registrationToken
             })
@@ -250,8 +250,8 @@ exports.order.post('/rider', util.isLoggedin, function (req, res) {
                 myCache.del(reqQuery.orderId);
                 const message = {
                     notification: {
-                        "title": "배달원으로 선발되었습니다.",
-                        "body": "확인해보세요.",
+                        "title": "배달원으로 선발 알림",
+                        "body": "배달원으로 선발되었습니다.",
                     },
                     data: {
                         orderId: order.id.toString(),
@@ -260,9 +260,8 @@ exports.order.post('/rider', util.isLoggedin, function (req, res) {
                         riderId: room.riderId.toString(),
                         type: 'selected'
                     },
-                    token: registrationToken
                 };
-                admin.messaging().send(message)
+                admin.messaging().sendToDevice(registrationToken, message, { priority: "high" })
                     .then((response) => {
                     console.log('Successfully sent message:', response);
                 })
@@ -620,13 +619,16 @@ exports.order.post('/apply', util.isLoggedin, util.isUser, function (req, res) {
             myCache.set(reqQuery.orderId, riderlist);
         }
         const message = {
-            data: {
-                test: "추가 배달원이 배정되었습니다.",
-                type: "newRiderApply"
+            notification: {
+                title: "배달원 추가 알림",
+                tag: "newRiderApply",
+                body: "추가 배달원이 배정되었습니다.",
             },
-            token: registrationToken
+            data: {
+                type: "newRiderApply"
+            }
         };
-        admin.messaging().send(message)
+        admin.messaging().sendToDevice(registrationToken, message)
             .then((response) => {
             console.log('Successfully sent message:', response);
         })
