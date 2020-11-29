@@ -85,19 +85,19 @@ export default function chatServer(server: any) {
         notification: {
           "title": data[0].user.nickName,
           "tag": data[0].user.nickName,
-          "body": data[0].text,
+          "body": data[0].text?data[0].text:"",
           // "clickAction":
         },
         data: {
           type: 'Chat',
           roomId: roomId,
           senderId: data[0].user._id.toString(),
-          image: data[0].image,
-          messageType: data[0].messageType //image or null
+          image: data[0].image?data[0].image:"",
+          messageType: data[0].messageType?data[0].messageType:"" //image or null
         }
       };
       if (fcm)
-        Admin.messaging().sendToDevice(fcm, message)
+        Admin.messaging().sendToDevice(fcm, message,{priority:"high"})
           .then((response) => {
             console.log(response.results[0]);
           })

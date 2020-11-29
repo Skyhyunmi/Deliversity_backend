@@ -107,7 +107,7 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
         "body": order.storeName,
       },
       data: {
-        type: 'ManageDelivery',
+        type: 'newOrder',
         //여기에 관련 데이터 넣으면 될듯
       },
       tokens: registrationToken
@@ -194,8 +194,8 @@ order.post('/rider', util.isLoggedin, async function (req: Request, res: Respons
       myCache.del(reqQuery.orderId as string);
       const message = {
         notification: {
-          "title": "배달원으로 선발되었습니다.",
-          "body": "확인해보세요.",
+          "title": "배달원으로 선발 알림",
+          "body": "배달원으로 선발되었습니다.",
         },
         data: {
           orderId: order.id.toString(),
@@ -204,9 +204,8 @@ order.post('/rider', util.isLoggedin, async function (req: Request, res: Respons
           riderId: room.riderId.toString(),
           type: 'selected'
         },
-        token: registrationToken
       };
-      admin.messaging().send(message)
+      admin.messaging().sendToDevice(registrationToken,message,{priority:"high"})
         .then((response) => {
           console.log('Successfully sent message:', response);
         })
@@ -514,13 +513,16 @@ order.post('/apply', util.isLoggedin, util.isUser, async function (req: Request,
     myCache.set(reqQuery.orderId as string, riderlist);
   }
   const message = {
-    data: {
-      test: "추가 배달원이 배정되었습니다.",
-      type: "newRiderApply"
+    notification:{
+      title: "배달원 추가 알림",
+      tag: "newRiderApply",
+      body: "추가 배달원이 배정되었습니다.",
     },
-    token: registrationToken
+    data: {
+      type: "newRiderApply"
+    }
   };
-  admin.messaging().send(message)
+  admin.messaging().sendToDevice(registrationToken,message)
     .then((response) => {
       console.log('Successfully sent message:', response);
     })
