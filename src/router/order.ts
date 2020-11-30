@@ -109,7 +109,7 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
           "body": order.storeName,
         },
         data: {
-          type: 'newOrder',
+          type: 'ManageDelivery',
           //여기에 관련 데이터 넣으면 될듯
         },
         tokens: registrationToken
@@ -120,8 +120,8 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
         .catch((error) => {
           console.log('Error sending message:', error);
         });
-      return res.json(util.successTrue("", order));
     }
+    return res.json(util.successTrue("", order));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }

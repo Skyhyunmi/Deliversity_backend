@@ -38,8 +38,8 @@ module.exports = async (globalConfig: any) => {
     await signupFunc("test@test.ac.kr", "jesttest", "jesttest", "01000000000");
     myCache.set("01011111111", { verify: 1, updatedAt: Date.now() });
     myCache.set("user@user.ac.kr", { verify: 1, updatedAt: Date.now() });
-    await signupFunc("user@user.ac.kr", "user", "user", "01011111111");
+    await signupFunc("user@user.ac.kr", "usertest", "usertest", "01011111111");
     myCache.set("01022222222", { verify: 1, updatedAt: Date.now() });
     myCache.set("rider@rider.ac.kr", { verify: 1, updatedAt: Date.now() });
-    await signupFunc("rider@rider.ac.kr", "rider", "rider", "01022222222");
+    await signupFunc("rider@rider.ac.kr", "ridertest", "ridertest", "01022222222");
 };

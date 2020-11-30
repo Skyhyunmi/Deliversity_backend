@@ -149,7 +149,7 @@ exports.order.post('/', util.isLoggedin, function (req, res) {
                         "body": order.storeName,
                     },
                     data: {
-                        type: 'newOrder',
+                        type: 'ManageDelivery',
                     },
                     tokens: registrationToken
                 })
@@ -159,8 +159,8 @@ exports.order.post('/', util.isLoggedin, function (req, res) {
                     .catch((error) => {
                     console.log('Error sending message:', error);
                 });
-                return res.json(util.successTrue("", order));
             }
+            return res.json(util.successTrue("", order));
         }
         catch (err) {
             return res.status(403).json(util.successFalse(err, "", null));

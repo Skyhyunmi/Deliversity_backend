@@ -9,57 +9,87 @@ dotenv.config({ path: "../../.env" });
 
 let riderToken: any;
 let userToken: any;
+let adminToken: any;
 let userParsedData: any;
 let riderParsedData: any;
+let addressId: any;
 
+// before
+// 사용자는 회원가입을 한다. - ★
+// 사용자는 로그인을 한다. - ★
+// 배달원은 회원가입을 한다. - ★
+// 배달원은 로그인을 한다. - ★
+// 배달원은 회원인증을 진행한다. - ★
+// 배달원은 정회원 등급이 된다. - ★
+// 사용자는 기본 주소를 설정한다. - ★
 beforeAll(async (done) => {
   const userData = await request(app)
     .post('/api/v1/auth/login')
     .send({
-      id: "user",
-      pw: "user"
-    });
+      id: "usertest",
+      pw: "jesttest"
+    })
   expect(userData.status).toBe(200);
   userToken = userData.body.data.token;
   userParsedData = jwt.decode(userToken);
-  done();
+  const addressData = await request(app)
+    .post('/api/v1/myinfo/address')
+    .set('x-access-token', userToken)
+    .send({
+      address: "서울 강남구 도산대로55길 26",
+      detailAddress: "3층",
+      setDefault: "1"
+    })
+  expect(addressData.body.data.address).toBe("서울 강남구 도산대로55길 26");
+  addressId = addressData.body.data.id;
+
   const riderData = await request(app)
     .post('/api/v1/auth/login')
     .send({
-      id: "user",
-      pw: "user"
+      id: "ridertest",
+      pw: "jesttest"
     });
   expect(userData.status).toBe(200);
   riderToken = riderData.body.data.token;
   riderParsedData = jwt.decode(riderToken);
+  const adminData = await request(app)
+    .post('/api/v1/auth/login')
+    .send({
+      id: "admin",
+      pw: process.env.MAIL_PW
+    });
+  expect(adminData.status).toBe(200);
+  adminToken = adminData.body.data.token;
+
+  const user = await request(app)
+    .post('/api/v1/myinfo/upload')
+    .set('x-access-token', userToken)
+    .send({ idCard: "test" })
+
+  const rider = await request(app)
+    .post('/api/v1/myinfo/upload')
+    .set('x-access-token', riderToken)
+    .send({ idCard: "test" })
+
+  const userres = await request(app)
+    .put(`/api/v1/admin/upload?id=${userParsedData.id}`)
+    .set('x-access-token', adminToken)
+    .send({ result: "1" });
+
+  const riderres = await request(app)
+    .put(`/api/v1/admin/upload?id=${riderParsedData.id}`)
+    .set('x-access-token', adminToken)
+    .send({ result: "1" });
   done();
 });
-// /*
-// before
-// 사용자는 회원가입을 한다. - ★
-// 사용자는 로그인을 한다.
-// 배달원은 회원가입을 한다. - ★
-// 배달원은 로그인을 한다.
-// 배달원은 회원인증을 진행한다.
-// 배달원은 정회원 등급이 된다.
-
-// [ 스토리 A ]
-// 사용자는 기본 주소를 설정한다.
 
 // ㄱ) 주문을 하지 않은 경우
 // 예외)사용자는 신청 배달원 목록을 반환한다.
 // 예외)사용자는 배달원을 선택한다.
-
 // 주문을 등록한다.
 // 예외) 동성 배달 이용 불가 확인
-
-// [ 스토리 B ]
-// 사용자는 회원인증을 진행한다.
-// 사용자는 정회원 등급이 된다.
-// 사용자는 기본 주소를 설정한다.
 // 사용자는 주문을 확인한다.
 // 예외) 주문을 하지 않은 경우
-// 사용자는 주문을 등록한다.
 // a) 예약인 경우 : 시간 분 등록 했는지
 // 예외) 시간 분 등록이 안된 경우
 // b) 예약이 아닌 경우
@@ -95,31 +125,90 @@ beforeAll(async (done) => {
 // 소비자 주문 내역 받아오기
 // 배달원 배달 내역 받아오기
 
-// // describe('주문관련 테스트', () => {
-// //     describe('소비자 시나리오 테스트', () => {
-// //         it('주문을 접수한다.', async done => {
-// //             const Order = await request(app)
-// //                 .post('/api/v1/order/')
-// //                 .set('x-access-token', userToken)
-// //                 .send({
-// //                     storeName: "수빈이네 디저트가게",
-// //                     storeAddress: "서울 강남구 도산대로55길 26",
-// //                     storeDetailAddress: "A동 302호",
-// //                     gender: "0",
-// //                     hotDeal: "0",
-// //                     reservation: "0",
-// //                     categoryName: "카페",
-// //                     content: "마카롱 56개 주세요."
-// //                 });
-// //             console.log(Order.body);
-// //             expect(Order.body.data.storeName).toBe("수빈이네 디저트가게");
-// //             expect(Order.body.data.storeAddress).toBe("서울 강남구 도산대로55길 26");
-// //             expect(Order.body.data.storeDetailAddress).toBe("A동 302호");
-// //             expect(Order.body.data.gender).toBe("0");
-// //             expect(Order.body.data.hotDeal).toBe("0");
-// //             expect(Order.body.data.reservation).toBe("0");
-// //             expect(Order.body.data.categoryName).toBe("카페");
-// //             expect(Order.body.data.content).toBe("마카롱 56개 주세요.");
-// //         });
-// //     });
-// // });
+describe('주문 관련 테스트', () => {
+  // 사용자는 주문을 등록한다.
+  describe('주문 접수 테스트', () => {
+    // 1. 동성 배달 X, 예약 X
+    it('동성 배달X 예약X 주문 등록', async done => {
+      const Order1 = await request(app)
+        .post('/api/v1/order/')
+        .set('x-access-token', userToken)
+        .send({
+          storeName: "A네 디저트가게",
+          storeAddress: "경기 가평군 가평읍 가화로 142-21",
+          storeDetailAddress: "A동 A호",
+          gender: "0",
+          hotDeal: "0",
+          reservation: "0",
+          categoryName: "카페",
+          content: "마카롱 11개 주세요."
+        });
+      expect(Order1.body.data.storeName).toBe("A네 디저트가게");
+      expect(Order1.body.data.gender).toBe(0);
+      expect(Order1.body.data.reservation).toBe("0");
+      done();
+    });
+    // 2. 동성 배달 O, 예약 X
+    it('동성 배달O 예약X 주문 등록.', async done => {
+      const Order2 = await request(app)
+        .post('/api/v1/order/')
+        .set('x-access-token', userToken)
+        .send({
+          storeName: "B네 디저트가게",
+          storeAddress: "경기 수원시 영통구 월드컵로 164",
+          storeDetailAddress: "B동 B호",
+          gender: "1",
+          hotDeal: "0",
+          reservation: "0",
+          categoryName: "카페",
+          content: "마카롱 22개 주세요."
+        });
+      expect(Order2.body.data.storeName).toBe("B네 디저트가게");
+      expect(Order2.body.data.reservation).toBe("0");
+      done();
+    });
+    // 3. 동성 배달 O, 예약 O
+    it('동성 배달O 예약O 주문 등록.', async done => {
+      const Order3 = await request(app)
+        .post('/api/v1/order/')
+        .set('x-access-token', userToken)
+        .send({
+          storeName: "C네 편의점",
+          storeAddress: "경기 용인시 처인구 금학로341번길 8",
+          storeDetailAddress: "C동 C호",
+          gender: "1",
+          hotDeal: "0",
+          reservation: "1",
+          expHour: "1",
+          expMinute: "30",
+          categoryName: "편의점",
+          content: "콜라 3개 사주세요."
+        });
+      expect(Order3.body.data.storeName).toBe("C네 편의점");
+      expect(Order3.body.data.reservation).toBe("1");
+      done();
+    });
+  });
+  // 4. 동성 배달 X, 예약 O
+  it('동성 배달X 예약O 주문 등록.', async done => {
+    const Order4 = await request(app)
+      .post('/api/v1/order/')
+      .set('x-access-token', userToken)
+      .send({
+        storeName: "D네 편의점",
+        storeAddress: "경기 용인시 처인구 포곡읍 두계로 10-6",
+        storeDetailAddress: "D동 D호",
+        gender: "0",
+        hotDeal: "0",
+        reservation: "1",
+        expHour: "1",
+        expMinute: "10",
+        categoryName: "편의점",
+        content: "콜라 4개 사주세요."
+      });
+    expect(Order4.body.data.storeName).toBe("D네 편의점");
+    expect(Order4.body.data.gender).toBe(0);
+    expect(Order4.body.data.reservation).toBe("1");
+    done();
+  });
+});
