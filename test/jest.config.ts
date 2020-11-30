@@ -1,3 +1,4 @@
+// in jest.config.js
 module.exports = {
-    setupFilesAfterEnv: ['./jest.setup.js']
-};
+    setupTestFrameworkScriptFile: './jest.setup.js'
+}
