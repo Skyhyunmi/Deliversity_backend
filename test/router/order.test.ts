@@ -141,11 +141,7 @@ describe('주문 관련 테스트', () => {
           hotDeal: "0",
           reservation: "0",
           categoryName: "카페",
-          content: "마카롱 11개 주세요.",
-          userLat: "0",
-          userLng: "0",
-          storeLat: "10",
-          storeLng: "10"
+          content: "마카롱 11개 주세요."
         });
       expect(Order1.body.data.storeName).toBe("A네 디저트가게");
       expect(Order1.body.data.gender).toBe(0);
@@ -165,11 +161,7 @@ describe('주문 관련 테스트', () => {
           hotDeal: "0",
           reservation: "0",
           categoryName: "카페",
-          content: "마카롱 22개 주세요.",
-          userLat: "0",
-          userLng: "0",
-          storeLat: "20",
-          storeLng: "20"
+          content: "마카롱 22개 주세요."
         });
       expect(Order2.body.data.storeName).toBe("B네 디저트가게");
       expect(Order2.body.data.reservation).toBe("0");
@@ -190,11 +182,7 @@ describe('주문 관련 테스트', () => {
           expHour: "1",
           expMinute: "30",
           categoryName: "편의점",
-          content: "콜라 3개 사주세요.",
-          userLat: "0",
-          userLng: "0",
-          storeLat: "30",
-          storeLng: "30"
+          content: "콜라 3개 사주세요."
         });
       expect(Order3.body.data.storeName).toBe("C네 편의점");
       expect(Order3.body.data.reservation).toBe("1");
@@ -216,11 +204,7 @@ describe('주문 관련 테스트', () => {
         expHour: "1",
         expMinute: "10",
         categoryName: "편의점",
-        content: "콜라 4개 사주세요.",
-        userLat: "0",
-        userLng: "0",
-        storeLat: "40",
-        storeLng: "40"
+        content: "콜라 4개 사주세요."
       });
     expect(Order4.body.data.storeName).toBe("D네 편의점");
     expect(Order4.body.data.gender).toBe(0);
