@@ -131,7 +131,7 @@ describe('주문 관련 테스트', () => {
     // 1. 동성 배달 X, 예약 X
     it('동성 배달X 예약X 주문 등록', async done => {
       const Order1 = await request(app)
-        .post('/api/v1/order/')
+        .post('/api/v1/order')
         .set('x-access-token', userToken)
         .send({
           storeName: "A네 디저트가게",
@@ -151,7 +151,7 @@ describe('주문 관련 테스트', () => {
     // 2. 동성 배달 O, 예약 X
     it('동성 배달O 예약X 주문 등록.', async done => {
       const Order2 = await request(app)
-        .post('/api/v1/order/')
+        .post('/api/v1/order')
         .set('x-access-token', userToken)
         .send({
           storeName: "B네 디저트가게",
@@ -170,7 +170,7 @@ describe('주문 관련 테스트', () => {
     // 3. 동성 배달 O, 예약 O
     it('동성 배달O 예약O 주문 등록.', async done => {
       const Order3 = await request(app)
-        .post('/api/v1/order/')
+        .post('/api/v1/order')
         .set('x-access-token', userToken)
         .send({
           storeName: "C네 편의점",
@@ -192,7 +192,7 @@ describe('주문 관련 테스트', () => {
   // 4. 동성 배달 X, 예약 O
   it('동성 배달X 예약O 주문 등록.', async done => {
     const Order4 = await request(app)
-      .post('/api/v1/order/')
+      .post('/api/v1/order')
       .set('x-access-token', userToken)
       .send({
         storeName: "D네 편의점",
