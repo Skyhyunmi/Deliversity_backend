@@ -147,7 +147,7 @@ describe('주문 관련 테스트', () => {
       expect(Order1.body.data.gender).toBe(0);
       expect(Order1.body.data.reservation).toBe("0");
       done();
-    });
+    }, 30000);
     // 2. 동성 배달 O, 예약 X
     it('동성 배달O 예약X 주문 등록.', async done => {
       const Order2 = await request(app)
@@ -166,7 +166,7 @@ describe('주문 관련 테스트', () => {
       expect(Order2.body.data.storeName).toBe("B네 디저트가게");
       expect(Order2.body.data.reservation).toBe("0");
       done();
-    });
+    }, 30000);
     // 3. 동성 배달 O, 예약 O
     it('동성 배달O 예약O 주문 등록.', async done => {
       const Order3 = await request(app)
@@ -187,7 +187,7 @@ describe('주문 관련 테스트', () => {
       expect(Order3.body.data.storeName).toBe("C네 편의점");
       expect(Order3.body.data.reservation).toBe("1");
       done();
-    });
+    }, 30000);
   });
   // 4. 동성 배달 X, 예약 O
   it('동성 배달X 예약O 주문 등록.', async done => {
@@ -210,5 +210,5 @@ describe('주문 관련 테스트', () => {
     expect(Order4.body.data.gender).toBe(0);
     expect(Order4.body.data.reservation).toBe("1");
     done();
-  });
+  }, 30000);
 });
