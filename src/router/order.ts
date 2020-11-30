@@ -101,23 +101,25 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
         }
       }
     }
-    admin.messaging().sendMulticast({
-      notification: {
-        "title": "배달 건이 추가되었습니다.",
-        "body": order.storeName,
-      },
-      data: {
-        type: 'ManageDelivery',
-        //여기에 관련 데이터 넣으면 될듯
-      },
-      tokens: registrationToken
-    })
-      .then((response) => {
-        console.log('Successfully sent message:', response);
+    if (registrationToken.length > 0) {
+      admin.messaging().sendMulticast({
+        notification: {
+          "title": "배달 건이 추가되었습니다.",
+          "body": order.storeName,
+        },
+        data: {
+          type: 'ManageDelivery',
+          //여기에 관련 데이터 넣으면 될듯
+        },
+        tokens: registrationToken
       })
-      .catch((error) => {
-        console.log('Error sending message:', error);
-      });
+        .then((response) => {
+          console.log('Successfully sent message:', response);
+        })
+        .catch((error) => {
+          console.log('Error sending message:', error);
+        });
+    }
     return res.json(util.successTrue("", order));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));

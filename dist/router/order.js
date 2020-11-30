@@ -140,22 +140,24 @@ exports.order.post('/', util.isLoggedin, function (req, res) {
                     }
                 }
             }
-            admin.messaging().sendMulticast({
-                notification: {
-                    "title": "배달 건이 추가되었습니다.",
-                    "body": order.storeName,
-                },
-                data: {
-                    type: 'ManageDelivery',
-                },
-                tokens: registrationToken
-            })
-                .then((response) => {
-                console.log('Successfully sent message:', response);
-            })
-                .catch((error) => {
-                console.log('Error sending message:', error);
-            });
+            if (registrationToken.length > 0) {
+                admin.messaging().sendMulticast({
+                    notification: {
+                        "title": "배달 건이 추가되었습니다.",
+                        "body": order.storeName,
+                    },
+                    data: {
+                        type: 'ManageDelivery',
+                    },
+                    tokens: registrationToken
+                })
+                    .then((response) => {
+                    console.log('Successfully sent message:', response);
+                })
+                    .catch((error) => {
+                    console.log('Error sending message:', error);
+                });
+            }
             return res.json(util.successTrue("", order));
         }
         catch (err) {
