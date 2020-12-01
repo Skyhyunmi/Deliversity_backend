@@ -149,7 +149,7 @@ exports.order.post('/', util.isLoggedin, function (req, res) {
                         "body": order.storeName,
                     },
                     data: {
-                        type: 'ManageDelivery',
+                        type: 'newOrder',
                     },
                     tokens: registrationToken
                 })

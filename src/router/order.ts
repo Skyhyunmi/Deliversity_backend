@@ -109,7 +109,7 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
           "body": order.storeName,
         },
         data: {
-          type: 'ManageDelivery',
+          type: 'newOrder',
           //여기에 관련 데이터 넣으면 될듯
         },
         tokens: registrationToken
