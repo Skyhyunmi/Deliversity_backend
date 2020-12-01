@@ -205,7 +205,7 @@ order.post('/rider', util.isLoggedin, async function (req: Request, res: Respons
           type: 'selected'
         },
       };
-      admin.messaging().sendToDevice(registrationToken,message,{priority:"high"})
+      admin.messaging().sendToDevice(registrationToken, message, { priority: "high" })
         .then((response) => {
           console.log('Successfully sent message:', response);
         })
@@ -301,6 +301,7 @@ order.post('/review/user', util.isLoggedin, util.isUser, async function (req: Re
       userId: _order?.userId,
       riderId: _order?.riderId,
       fromId: tokenData.id,
+      nickName: tokenData.nickName,
       rating: reqBody.rating,
       content: reqBody.content
     });
@@ -365,6 +366,7 @@ order.post('/review/rider', util.isLoggedin, async function (req: Request, res: 
       userId: _order?.userId,
       riderId: _order?.riderId,
       fromId: tokenData.id,
+      nickName: tokenData.nickName,
       rating: reqBody.rating,
       content: reqBody.content
     });
@@ -513,7 +515,7 @@ order.post('/apply', util.isLoggedin, util.isUser, async function (req: Request,
     myCache.set(reqQuery.orderId as string, riderlist);
   }
   const message = {
-    notification:{
+    notification: {
       title: "배달원 추가 알림",
       tag: "newRiderApply",
       body: "추가 배달원이 배정되었습니다.",
@@ -522,7 +524,7 @@ order.post('/apply', util.isLoggedin, util.isUser, async function (req: Request,
       type: "newRiderApply"
     }
   };
-  admin.messaging().sendToDevice(registrationToken,message)
+  admin.messaging().sendToDevice(registrationToken, message)
     .then((response) => {
       console.log('Successfully sent message:', response);
     })

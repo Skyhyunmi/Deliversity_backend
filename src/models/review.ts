@@ -34,6 +34,10 @@ export default class Review extends Model<Review> {
   @Column(DataType.BIGINT)
   fromId!: number;
 
+  // @AllowNull(true)
+  @Column(DataType.TEXT)
+  nickName!: string;
+
   // @ForeignKey(()=>{Address})
   @Column(DataType.INTEGER)
   rating!: number;

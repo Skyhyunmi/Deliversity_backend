@@ -31,6 +31,9 @@ __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BIGINT)
 ], Review.prototype, "fromId", void 0);
 __decorate([
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.TEXT)
+], Review.prototype, "nickName", void 0);
+__decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.INTEGER)
 ], Review.prototype, "rating", void 0);
 __decorate([
