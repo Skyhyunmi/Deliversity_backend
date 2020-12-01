@@ -187,7 +187,7 @@ myinfo.post('/address', util.isLoggedin, async function (req: Request, res: Resp
     }
     return res.json(util.successTrue("", address));
   } catch (err) {
-    console.log(err)
+    console.log(err);
     return res.status(403).json(util.successFalse(err, "", null));
   }
 });
