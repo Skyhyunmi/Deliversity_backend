@@ -59,13 +59,15 @@ function makeSignature(urlsub, timestamp) {
     const signature = hmac.update(mes.join('')).digest('base64');
     return signature;
 }
-function sendEmail(email, suburl) {
+function sendEmail(email, suburl, type) {
     return __awaiter(this, void 0, void 0, function* () {
         const email_number = crypto.randomBytes(256).toString('hex').substr(100, 20);
         try {
-            const user = yield index_1.userRep.findOne({ where: { email: email } });
-            if (user)
-                return 'Already Existed Email';
+            if (type != 1) {
+                const user = yield index_1.userRep.findOne({ where: { email: email } });
+                if (user)
+                    return 'Already Existed Email';
+            }
             exports.myCache.del(email);
             const regex = /^[0-9a-zA-Z]([-_\\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[a]{1}[c]{1}.[k]{1}[r]{1}$/i;
             const actest = regex.test(email);
@@ -185,7 +187,7 @@ function sendSMStoAdmin() {
     });
 }
 exports.sendSMStoAdmin = sendSMStoAdmin;
-function sendSMS(phone) {
+function sendSMS(phone, type) {
     return __awaiter(this, void 0, void 0, function* () {
         const sendFrom = process.env.SEND_FROM;
         const serviceID = encodeURIComponent(process.env.NAVER_SMS_SERVICE_ID);
@@ -202,9 +204,11 @@ function sendSMS(phone) {
             "messages": [{ "to": phone }]
         };
         try {
-            const user = yield index_1.userRep.findOne({ where: { phone: phone } });
-            if (user)
-                return "phone number duplicated.";
+            if (type != 1) {
+                const user = yield index_1.userRep.findOne({ where: { phone: phone } });
+                if (user)
+                    return "phone number duplicated.";
+            }
             exports.myCache.del(phone);
             const Token = yield axios_1.default({
                 url: `https://sens.apigw.ntruss.com/sms/v2/services/${serviceID}/messages`,
