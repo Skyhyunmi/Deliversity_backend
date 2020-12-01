@@ -17,7 +17,10 @@ before_install:
   - mysql -u root -e 'show variables like "char%"'
   - mysql -u root -e 'set character_set_client = utf8mb4'
   - mysql -u root -e 'set character_set_connection = utf8mb4'
+  - mysql -u root -e 'set character_set_database = utf8mb4'
   - mysql -u root -e 'set character_set_results = utf8mb4'
+  - mysql -u root -e 'set character_set_server = utf8mb4'
+  - mysql -u root -e 'set character_set_system = utf8mb4'
 
 script:
   - npm run lint
