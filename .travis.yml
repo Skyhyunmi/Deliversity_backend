@@ -14,7 +14,7 @@ addons:
 
 before_install:
   - mysql -u root -e 'CREATE DATABASE testdb;'
-  - mysql -u root -e 'ALTER DATABASE YOUR_DBNAME CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci'
+  - mysql -u root -e 'ALTER DATABASE testdb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci'
 
 script:
   - npm run lint
