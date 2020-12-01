@@ -237,7 +237,6 @@ exports.myinfo.post('/address', util.isLoggedin, function (req, res) {
             return res.json(util.successTrue("", address));
         }
         catch (err) {
-            console.log(err);
             return res.status(403).json(util.successFalse(err, "", null));
         }
     });
