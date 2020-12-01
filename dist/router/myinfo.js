@@ -40,9 +40,6 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const axios_1 = __importDefault(require("axios"));
 const db = __importStar(require("sequelize"));
 dotenv_1.default.config();
-// const KAKAO = "+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=500000 +ellps=GRS80 +units=m +no_defs"; //5181
-// const GRS80 = "+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs"; //도로명주소 제공 좌표 5179
-// const WGS84 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +units=degrees"; //경위도
 exports.myinfo = express_1.Router();
 exports.myinfo.get('/', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {

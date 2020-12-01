@@ -2,11 +2,10 @@ import { Request, Response, Router } from "express";
 import * as util from "../config/util";
 import axios from "axios";
 
+import * as functions from "../config/functions";
+import { userRep } from "../models";
 import dotenv from "dotenv";
 dotenv.config();
-
-import * as admin from "firebase-admin";
-import { userRep } from "../models";
 
 export const test = Router();
 
@@ -49,7 +48,8 @@ test.post('/noti', util.isLoggedin, async function (req: Request, res: Response)
     // await admin.messaging().sendToDevice(registrationToken,{
     //   data:{test:"hi"}
     // })
-    await admin.messaging().sendToDevice(registrationToken, payload);
+    functions.sendFCMMessage(registrationToken,payload);
+    // await admin.messaging().sendToDevice(registrationToken, payload);
     // admin.messaging().send(payload)
     // .then(result=>{
     //   return res.json(util.successTrue( "", payload.notification));

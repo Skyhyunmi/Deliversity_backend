@@ -31,7 +31,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDistanceFromLatLonInKm = exports.getUserFromKakaoInfo = exports.getUserFromGoogleInfo = exports.smsVerify = exports.sendSMS = exports.sendSMStoAdmin = exports.getAuthToken = exports.emailVerify = exports.pwEmail = exports.sendEmail = exports.myCache = void 0;
+exports.sendFCMMessage = exports.getDistanceFromLatLonInKm = exports.getUserFromKakaoInfo = exports.getUserFromGoogleInfo = exports.smsVerify = exports.sendSMS = exports.sendSMStoAdmin = exports.getAuthToken = exports.emailVerify = exports.pwEmail = exports.sendEmail = exports.myCache = void 0;
 const axios_1 = __importDefault(require("axios"));
 const index_1 = require("../models/index");
 const crypto = __importStar(require("crypto"));
@@ -329,3 +329,15 @@ function getDistanceFromLatLonInKm(lat1, lng1, lat2, lng2) {
     return d;
 }
 exports.getDistanceFromLatLonInKm = getDistanceFromLatLonInKm;
+function sendFCMMessage(tokens, payload) {
+    admin.messaging().sendToDevice(tokens, payload, { priority: "high" })
+        .then((response) => {
+        console.log(response.results[0]);
+        return true;
+    })
+        .catch((error) => {
+        console.log('Error sending message:', error);
+        return false;
+    });
+}
+exports.sendFCMMessage = sendFCMMessage;

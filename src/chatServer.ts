@@ -1,7 +1,7 @@
 import SocketIO from "socket.io";
 import * as classes from "./config/classes";
 import { chatRep, roomRep, userRep } from "./models";
-import * as Admin from "firebase-admin";
+import * as functions from "./config/functions";
 import nCache from "node-cache";
 const myCache = new nCache();
 
@@ -96,14 +96,14 @@ export default function chatServer(server: any) {
           messageType: data[0].messageType?data[0].messageType:"" //image or null
         }
       };
-      if (fcm)
-        Admin.messaging().sendToDevice(fcm, message,{priority:"high"})
-          .then((response) => {
-            console.log(response.results[0]);
-          })
-          .catch((error) => {
-            console.log('Error sending message:', error);
-          });
+      if (fcm) functions.sendFCMMessage(fcm,message);
+      // Admin.messaging().sendToDevice(fcm, message,{priority:"high"})
+      //   .then((response) => {
+      //     console.log(response.results[0]);
+      //   })
+      //   .catch((error) => {
+      //     console.log('Error sending message:', error);
+      //   });
       let list = myCache.get('chat') as classes.userData[];
       if (list == undefined)
         myCache.set('chat', [new classes.userData(data[0], data[0].user.nickName)]);

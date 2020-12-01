@@ -7,7 +7,6 @@ import NodeCache from "node-cache";
 import * as db from "sequelize";
 import * as crypto from "crypto";
 import { addressRep, orderRep, reviewRep, roomRep, userRep, pointRep } from "../models";
-import * as admin from "firebase-admin";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -22,7 +21,7 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
   let expMinute = reqBody.expMinute;
   let gender = reqBody.gender == true ? 1 : 0;
   const today = new Date();
-  const registrationToken = [];
+  const registrationToken:string[] = [];
 
   if (reqBody.reservation === "1") {
     if (!expHour || !expMinute) { return res.status(403).json(util.successFalse(null, "예약 시간 또는 분을 입력하시지 않으셨습니다.", null)); };
@@ -51,10 +50,10 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
     const fee = functions.getDistanceFromLatLonInKm(reqBody.userLat, reqBody.userLng,
       reqBody.storeLat, reqBody.storeLng) - 1;
 
-    console.log(reqBody.userLat, reqBody.userLng,
+    console.log("위치",reqBody.userLat, reqBody.userLng,
       reqBody.storeLat, reqBody.storeLng);
     if (fee > 0) deliveryFee += Math.round((550 * fee / 0.5) / 100) * 100;
-    console.log(fee);
+    console.log("가격: ",fee);
     const data = {
       userId: tokenData.id,
       gender: gender, // 0이면 random, 1이면 남자 2면 여자
@@ -80,52 +79,33 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
     };
     const order = await orderRep.create(data);
     let riders;
-    if (gender >= 1) {
-      riders = await userRep.findAll({ where: { id: { [db.Op.ne]: tokenData.id }, grade: 2, gender: gender } });
-    }
+    if (gender >= 1) riders = await userRep.findAll({ where: { id: { [db.Op.ne]: tokenData.id }, grade: 2, gender: gender } });
     else riders = await userRep.findAll({ where: { id: { [db.Op.ne]: tokenData.id }, grade: 2 } });
-
-    for (let i = 0; i < riders.length; i++) {
-      if (riders[i].firebaseFCM != null) {
-        //배달원의 위동 경도 존재 여부 확인
-        if (riders[i].lat != null) {
-          //직선 거리 계산
-          const distance = functions.getDistanceFromLatLonInKm(riders[i].lat, riders[i].lng, reqBody.userLat, reqBody.userLng);
-          if (distance < 100) {//1.5km 미만의 위치에 존재하는 배달원에게 푸시 메시지 전송
-            registrationToken.push(riders[i].firebaseFCM);
-            console.log(i, ': ', riders[i].name + " FCM: " + riders[i].firebaseFCM);
-          }
-        }
-        else {//개발용으로 위도 경도 데이터 없는 배달원에게도 푸시 메시지 전송
-          registrationToken.push(riders[i].firebaseFCM);
-          console.log(i, ': ', riders[i].name + " FCM: " + riders[i].firebaseFCM);
-        }
+    riders.map(rider=>{
+      if(rider.firebaseFCM){
+        if (rider.lat != null) {
+          const distance = functions.getDistanceFromLatLonInKm(rider.lat, rider.lng, reqBody.userLat, reqBody.userLng);
+          //1.5km 미만의 위치에 존재하는 배달원에게 푸시 메시지 전송. 현재는 테스트용으로 100km
+          if (distance < 100) registrationToken.push(rider.firebaseFCM);
+        }//개발용으로 위도 경도 데이터 없는 배달원에게도 푸시 메시지 전송
+        else registrationToken.push(rider.firebaseFCM);
       }
-    }
-    if (registrationToken.length > 0) {
-      admin.messaging().sendMulticast({
-        notification: {
-          "title": "배달 건이 추가되었습니다.",
-          "body": order.storeName,
-        },
-        data: {
-          type: 'newOrder',
-          //여기에 관련 데이터 넣으면 될듯
-        },
-        tokens: registrationToken
-      })
-        .then((response) => {
-          console.log('Successfully sent message:', response);
-        })
-        .catch((error) => {
-          console.log('Error sending message:', error);
-        });
-      return res.json(util.successTrue("", order));
-    }
+    });
+    const payload = {
+      notification: {
+        "title": "배달 건이 추가되었습니다.",
+        "body": order.storeName,
+      },
+      data: {
+        type: 'newOrder'
+      }
+    };
+    console.log(registrationToken);
+    if (registrationToken.length) functions.sendFCMMessage(registrationToken,payload);
+    return res.json(util.successTrue("", order));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
-
 });
 
 order.get('/', util.isLoggedin, async function (req: Request, res: Response) {
@@ -150,9 +130,12 @@ order.get('/riders', util.isLoggedin, async function (req: Request, res: Respons
   try {
     const order = await orderRep.findOne({ where: { id: reqQuery.orderId as string } });
     if (!order) return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
+
     if (parseInt(order.orderStatus) != 0) return res.status(403).json(util.successFalse(null, "배달원 모집이 완료된 주문입니다.", null));
+
     const riderlist = myCache.get(reqQuery.orderId as string) as classes.Rider[];
     if (riderlist == undefined) { return res.json(util.successTrue("배달을 희망하는 배달원이 없습니다.", null)); }
+    
     return res.json(util.successTrue("", riderlist));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
@@ -166,58 +149,56 @@ order.post('/rider', util.isLoggedin, async function (req: Request, res: Respons
   const reqQuery = req.query;
   const riderId = parseInt(reqBody.riderId);
   try {
-    const order = await orderRep.findOne({
-      where: {
-        id: reqQuery.orderId as string
-      }
-    });
-    let registrationToken;
+    const order = await orderRep.findOne({where: {id: reqQuery.orderId as string}});
     if (!order) return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
+
     const riderlist = myCache.get(reqQuery.orderId as string) as classes.Rider[];
     if (riderlist == undefined) return res.status(403).json(util.successFalse(null, "배달을 희망하는 배달원이 없습니다.", null));
+
     const rider = riderlist.filter(rider => rider.riderId == riderId)[0];
     if (!rider) return res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
+
     const rider_fire = await userRep.findOne({ where: { id: riderId } });
-    if (!rider_fire) res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
-    else { registrationToken = rider_fire.firebaseFCM; }
-    if (registrationToken == undefined) res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
-    else {
-      const room = await roomRep.create({
-        orderId: order.id,
-        owner: tokenData.nickName,
-        ownerId: tokenData.id,
-        riderId: rider.riderId,
-        roomId: crypto.randomBytes(256).toString('hex').substr(100, 50)
-      });
-      await order.update({
-        riderId: rider.riderId,
-        extraFee: rider.extraFee,
-        orderStatus: 1,
-        chatId: room.id
-      });
-      myCache.del(reqQuery.orderId as string);
-      const message = {
-        notification: {
-          "title": "배달원으로 선발 알림",
-          "body": "배달원으로 선발되었습니다.",
-        },
-        data: {
-          orderId: order.id.toString(),
-          roomId: room.roomId,
-          userId: room.ownerId.toString(),
-          riderId: room.riderId.toString(),
-          type: 'selected'
-        },
-      };
-      admin.messaging().sendToDevice(registrationToken, message, { priority: "high" })
-        .then((response) => {
-          console.log('Successfully sent message:', response);
-        })
-        .catch((error) => {
-          console.log('Error sending message:', error);
-        });
-      return res.json(util.successTrue("", { order: order, room: room }));
-    }
+    if (!rider_fire) return res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
+
+    const registrationToken = rider_fire.firebaseFCM;
+    if (registrationToken == undefined) return res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
+    const room = await roomRep.create({
+      orderId: order.id,
+      owner: tokenData.nickName,
+      ownerId: tokenData.id,
+      riderId: rider.riderId,
+      roomId: crypto.randomBytes(256).toString('hex').substr(100, 50)
+    });
+    await order.update({
+      riderId: rider.riderId,
+      extraFee: rider.extraFee,
+      orderStatus: 1,
+      chatId: room.id
+    });
+    myCache.del(reqQuery.orderId as string);
+    const payload = {
+      notification: {
+        "title": "배달원으로 선발 알림",
+        "body": "배달원으로 선발되었습니다.",
+      },
+      data: {
+        orderId: order.id.toString(),
+        roomId: room.roomId,
+        userId: room.ownerId.toString(),
+        riderId: room.riderId.toString(),
+        type: 'selected'
+      },
+    };
+    functions.sendFCMMessage(registrationToken,payload);
+    // admin.messaging().sendToDevice(registrationToken, message, { priority: "high" })
+    //   .then((response) => {
+    //     console.log('Successfully sent message:', response);
+    //   })
+    //   .catch((error) => {
+    //     console.log('Error sending message:', error);
+    //   });
+    return res.json(util.successTrue("", { order: order, room: room }));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
@@ -492,19 +473,19 @@ order.post('/apply', util.isLoggedin, util.isUser, async function (req: Request,
   const tokenData = req.decoded;
   const reqQuery = req.query;
   const reqBody = req.body;
-  let orderStatus;
-  let registrationToken;
   // 해당 주문 번호
   const order = await orderRep.findOne({ where: { id: reqQuery.orderId as string } });
   if (!order) return res.status(403).json(util.successFalse(null, "주문 건이 없습니다.", null));
-  else { orderStatus = parseInt(order?.orderStatus); }
+  const orderStatus = parseInt(order.orderStatus);
+
   if (orderStatus != 0) return res.status(403).json(util.successFalse(null, "배달원 모집이 끝난 주문입니다.", null));
   if (order.userId == tokenData.id) return res.status(403).json(util.successFalse(null, "본인의 주문에 배달원 지원은 불가능합니다.", null));
   const riderId = tokenData.id;
+  
   const user = await userRep.findOne({ where: { id: order.userId } });
   if (!user) return res.status(403).json(util.successFalse(null, "해당 주문의 주문자가 존재하지 않습니다.", null));
   // eslint-disable-next-line prefer-const
-  registrationToken = user.firebaseFCM;
+  const registrationToken = user.firebaseFCM;
   let extraFee;
   extraFee = parseInt(reqBody.extraFee);
   if (!reqBody.extraFee) extraFee = 0;
@@ -518,7 +499,7 @@ order.post('/apply', util.isLoggedin, util.isUser, async function (req: Request,
     riderlist.push({ riderId: riderId, extraFee: extraFee });
     myCache.set(reqQuery.orderId as string, riderlist);
   }
-  const message = {
+  const payload = {
     notification: {
       title: "배달원 추가 알림",
       tag: "newRiderApply",
@@ -528,13 +509,14 @@ order.post('/apply', util.isLoggedin, util.isUser, async function (req: Request,
       type: "newRiderApply"
     }
   };
-  admin.messaging().sendToDevice(registrationToken, message)
-    .then((response) => {
-      console.log('Successfully sent message:', response);
-    })
-    .catch((error) => {
-      console.log('Error sending message:', error);
-    });
+  if(registrationToken) functions.sendFCMMessage(registrationToken,payload);
+  // admin.messaging().sendToDevice(registrationToken, message)
+  //   .then((response) => {
+  //     console.log('Successfully sent message:', response);
+  //   })
+  //   .catch((error) => {
+  //     console.log('Error sending message:', error);
+  //   });
   return res.json(util.successTrue("", riderlist));
 });
 
@@ -578,13 +560,17 @@ order.post('/pay', util.isLoggedin, async (req: Request, res: Response) => {
   const reqBody = req.body;
   if (!parseInt(reqBody.riderId))
     return res.status(403).json(util.successFalse(null, "정상적인 접근이 아닙니다.", null));
+
   const order = await orderRep.findOne({ where: { id: reqQuery.orderId as string, orderStatus: 1, userId: tokenData.id } });
   if (!order) return res.status(403).json(util.successFalse(null, "주문이 없습니다.", null));
   let price = order.totalCost;
+
   const user = await userRep.findOne({ where: { id: tokenData.id } });
   if (!user) return res.status(403).json(util.successFalse(null, "사용자를 찾을 수 없습니다.", null));
+
   const rider = await userRep.findOne({ where: { id: reqBody.riderId } });
   if (!rider) return res.status(403).json(util.successFalse(null, "배달원을 찾을 수 없습니다.", null));
+
   const points = await pointRep.findAll(
     {
       where: {
