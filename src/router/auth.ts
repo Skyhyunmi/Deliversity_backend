@@ -58,9 +58,9 @@ auth.post("/login", async function (req: Request, res: Response, next: NextFunct
 });
 
 auth.get("/login", util.isLoggedin, async function (req: Request, res: Response, next: NextFunction) {
-  try{
+  try {
     req.body.id = req.decoded.userId;
-    passport.authenticate("silent_login", { session: false }, function (err: any,user: any,info: any ) {
+    passport.authenticate("silent_login", { session: false }, function (err: any, user: any, info: any) {
       if (info)
         return res.status(403).json(util.successFalse(null, "로그인을 실패했습니다.", null));
       if (err || !user) {
@@ -69,24 +69,24 @@ auth.get("/login", util.isLoggedin, async function (req: Request, res: Response,
       req.logIn(user, { session: false }, async function (err: any) {
         if (err) return res.status(403).json(util.successFalse(err, "로그인을 실패했습니다.", null));
         const result = await functions.getAuthToken(user);
-        return res.json(util.successTrue("", {firebaseToken:result.firebaseToken, token: result.authToken, grade: user.grade }));
+        return res.json(util.successTrue("", { firebaseToken: result.firebaseToken, token: result.authToken, grade: user.grade }));
       });
     })(req, res, next);
-  }catch (e) {
+  } catch (e) {
     console.log(e);
     return res.status(403).json(util.successFalse(null, "에러.", null));
   }
 });
 
-auth.post("/login/fcm",util.isLoggedin, async function (req: Request, res: Response, next: NextFunction) {
+auth.post("/login/fcm", util.isLoggedin, async function (req: Request, res: Response, next: NextFunction) {
   const tokenData = req.decoded;
-  const reqBody=req.body;
-  try{
-    const user = await userRep.findOne({where:{id:tokenData.id}});
+  const reqBody = req.body;
+  try {
+    const user = await userRep.findOne({ where: { id: tokenData.id } });
     if (!user) return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
-    await user.update({fcmToken:reqBody.fcmToken});
+    await user.update({ fcmToken: reqBody.fcmToken });
     return res.json(util.successTrue("", null));
-  }catch (e) {
+  } catch (e) {
     console.log(e);
     return res.status(403).json(util.successFalse(null, "에러.", null));
   }
@@ -139,7 +139,7 @@ auth.get('/refresh', util.isLoggedin, async function (req: Request, res: Respons
 auth.post("/sms",/*util.isLoggedin,*/async function (req: Request, res: Response) {
   const reqBody = req.body;
   const phone = reqBody.phone;
-  const result = await functions.sendSMS(phone);
+  const result = await functions.sendSMS(phone, 0);
   if (result == null) return res.json(util.successTrue("문자 전송 성공", null));
   return res.status(403).json(util.successFalse(null, result, null));
 });
@@ -156,7 +156,7 @@ auth.post("/sms/verification", async function (req: Request, res: Response) {
 auth.post("/email",/*util.isLoggedin,*/async function (req: Request, res: Response) {
   const reqBody = req.body;
   const email = reqBody.email;
-  const result = await functions.sendEmail(email, req.get('host') as string);
+  const result = await functions.sendEmail(email, req.get('host') as string, 0);
   if (result == null) return res.json(util.successTrue('이메일 전송 성공', null));
   else return res.status(403).json(util.successFalse("", result, ""));
 });
@@ -176,6 +176,22 @@ auth.delete("/release", util.isLoggedin, async function (req: Request, res: Resp
   await admin.auth().deleteUser(user.firebaseUid);
   await user.destroy({ force: true });
   return res.json(util.successTrue("사용자 삭제 완료", null));
+});
+
+auth.post("/find/email",/*util.isLoggedin,*/async function (req: Request, res: Response) {
+  const reqBody = req.body;
+  const email = reqBody.email;
+  const result = await functions.sendEmail(email, req.get('host') as string, 1);
+  if (result == null) return res.json(util.successTrue('이메일 전송 성공', null));
+  else return res.status(403).json(util.successFalse("", result, ""));
+});
+
+auth.post("/find/sms",/*util.isLoggedin,*/async function (req: Request, res: Response) {
+  const reqBody = req.body;
+  const phone = reqBody.phone;
+  const result = await functions.sendSMS(phone, 1);
+  if (result == null) return res.json(util.successTrue("문자 전송 성공", null));
+  return res.status(403).json(util.successFalse(null, result, null));
 });
 
 auth.post("/findid", async function (req: Request, res: Response, next: NextFunction) {

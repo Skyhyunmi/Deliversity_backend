@@ -30,11 +30,13 @@ function makeSignature(urlsub: string, timestamp: string) {
   return signature;
 }
 
-export async function sendEmail(email: string, suburl: string) {
+export async function sendEmail(email: string, suburl: string, type: number) {
   const email_number = crypto.randomBytes(256).toString('hex').substr(100, 20);
   try {
-    const user = await userRep.findOne({ where: { email: email } });
-    if (user) return 'Already Existed Email';
+    if (type != 1) {
+      const user = await userRep.findOne({ where: { email: email } });
+      if (user) return 'Already Existed Email';
+    }
     myCache.del(email);
     const regex = /^[0-9a-zA-Z]([-_\\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[a]{1}[c]{1}.[k]{1}[r]{1}$/i;
     const actest = regex.test(email);
@@ -143,7 +145,7 @@ export async function sendSMStoAdmin() {
   }
 }
 
-export async function sendSMS(phone: string) {
+export async function sendSMS(phone: string, type: number) {
   const sendFrom = process.env.SEND_FROM;
   const serviceID = encodeURIComponent(process.env.NAVER_SMS_SERVICE_ID as string);
   const timestamp = Date.now().toString();
@@ -159,8 +161,10 @@ export async function sendSMS(phone: string) {
     "messages": [{ "to": phone }]
   };
   try {
-    const user = await userRep.findOne({ where: { phone: phone } });
-    if (user) return "phone number duplicated.";
+    if (type != 1) {
+      const user = await userRep.findOne({ where: { phone: phone } });
+      if (user) return "phone number duplicated.";
+    }
     myCache.del(phone);
     const Token = await axios({
       url: `https://sens.apigw.ntruss.com/sms/v2/services/${serviceID}/messages`,

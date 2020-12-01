@@ -190,7 +190,7 @@ exports.auth.post("/sms", /*util.isLoggedin,*/ function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const reqBody = req.body;
         const phone = reqBody.phone;
-        const result = yield functions.sendSMS(phone);
+        const result = yield functions.sendSMS(phone, 0);
         if (result == null)
             return res.json(util.successTrue("문자 전송 성공", null));
         return res.status(403).json(util.successFalse(null, result, null));
@@ -212,7 +212,7 @@ exports.auth.post("/email", /*util.isLoggedin,*/ function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const reqBody = req.body;
         const email = reqBody.email;
-        const result = yield functions.sendEmail(email, req.get('host'));
+        const result = yield functions.sendEmail(email, req.get('host'), 0);
         if (result == null)
             return res.json(util.successTrue('이메일 전송 성공', null));
         else
@@ -237,6 +237,27 @@ exports.auth.delete("/release", util.isLoggedin, function (req, res) {
         yield admin.auth().deleteUser(user.firebaseUid);
         yield user.destroy({ force: true });
         return res.json(util.successTrue("사용자 삭제 완료", null));
+    });
+});
+exports.auth.post("/find/email", /*util.isLoggedin,*/ function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const reqBody = req.body;
+        const email = reqBody.email;
+        const result = yield functions.sendEmail(email, req.get('host'), 1);
+        if (result == null)
+            return res.json(util.successTrue('이메일 전송 성공', null));
+        else
+            return res.status(403).json(util.successFalse("", result, ""));
+    });
+});
+exports.auth.post("/find/sms", /*util.isLoggedin,*/ function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const reqBody = req.body;
+        const phone = reqBody.phone;
+        const result = yield functions.sendSMS(phone, 1);
+        if (result == null)
+            return res.json(util.successTrue("문자 전송 성공", null));
+        return res.status(403).json(util.successFalse(null, result, null));
     });
 });
 exports.auth.post("/findid", function (req, res, next) {
