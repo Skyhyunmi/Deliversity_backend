@@ -120,8 +120,8 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
         .catch((error) => {
           console.log('Error sending message:', error);
         });
-      return res.json(util.successTrue("", order));
     }
+    return res.json(util.successTrue("", order));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
