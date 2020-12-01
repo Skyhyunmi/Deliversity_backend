@@ -71,7 +71,9 @@ exports.order.post('/', util.isLoggedin, function (req, res) {
         try {
             const user = yield models_1.userRep.findOne({ where: { id: tokenData.id } });
             if (!user)
-                return res.status(403).json(util.successFalse(null, "준회원은 동성 배달을 이용할 수 없습니다.", null));
+                return res.status(403).json(util.successFalse(null, "해당하는 유저가 없습니다", null));
+            if (!user.addressId)
+                return res.status(403).json(util.successFalse(null, "주소 먼저 등록해주세요", null));
             if (gender >= 1) {
                 if (user.grade < 2)
                     return res.status(403).json(util.successFalse(null, "준회원은 동성 배달을 이용할 수 없습니다.", null));
@@ -140,23 +142,25 @@ exports.order.post('/', util.isLoggedin, function (req, res) {
                     }
                 }
             }
-            admin.messaging().sendMulticast({
-                notification: {
-                    "title": "배달 건이 추가되었습니다.",
-                    "body": order.storeName,
-                },
-                data: {
-                    type: 'newOrder',
-                },
-                tokens: registrationToken
-            })
-                .then((response) => {
-                console.log('Successfully sent message:', response);
-            })
-                .catch((error) => {
-                console.log('Error sending message:', error);
-            });
-            return res.json(util.successTrue("", order));
+            if (registrationToken.length > 0) {
+                admin.messaging().sendMulticast({
+                    notification: {
+                        "title": "배달 건이 추가되었습니다.",
+                        "body": order.storeName,
+                    },
+                    data: {
+                        type: 'newOrder',
+                    },
+                    tokens: registrationToken
+                })
+                    .then((response) => {
+                    console.log('Successfully sent message:', response);
+                })
+                    .catch((error) => {
+                    console.log('Error sending message:', error);
+                });
+                return res.json(util.successTrue("", order));
+            }
         }
         catch (err) {
             return res.status(403).json(util.successFalse(err, "", null));
