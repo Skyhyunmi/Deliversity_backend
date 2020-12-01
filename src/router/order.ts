@@ -100,8 +100,7 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
         type: 'newOrder'
       }
     };
-    console.log(registrationToken > 0);
-    if (registrationToken.length) functions.sendFCMMessage(registrationToken,payload);
+    if (registrationToken.length > 0) functions.sendFCMMessage(registrationToken,payload);
     return res.json(util.successTrue("", order));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));

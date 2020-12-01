@@ -144,7 +144,6 @@ exports.order.post('/', util.isLoggedin, function (req, res) {
                     type: 'newOrder'
                 }
             };
-            console.log(registrationToken);
             if (registrationToken.length > 0)
                 functions.sendFCMMessage(registrationToken, payload);
             return res.json(util.successTrue("", order));
