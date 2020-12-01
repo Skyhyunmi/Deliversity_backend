@@ -13,7 +13,11 @@ addons:
   - mariadb: '10.3'
 
 before_install:
-  - mysql -u root -e 'CREATE DATABASE testdb'
+  - mysql -u root -e 'CREATE DATABASE testdb;'
+  - mysql -u root -e 'show variables like "char%"'
+  - mysql -u root -e 'set character_set_client = utf8mb4'
+  - mysql -u root -e 'set character_set_connection = utf8mb4'
+  - mysql -u root -e 'set character_set_results = utf8mb4'
 
 script:
   - npm run lint
