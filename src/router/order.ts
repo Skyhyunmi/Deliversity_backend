@@ -33,7 +33,8 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
   else { today.setHours(today.getHours() + 1); }
   try {
     const user = await userRep.findOne({ where: { id: tokenData.id } });
-    if (!user) return res.status(403).json(util.successFalse(null, "준회원은 동성 배달을 이용할 수 없습니다.", null));
+    if (!user) return res.status(403).json(util.successFalse(null, "해당하는 유저가 없습니다", null));
+    if (!user.addressId) return res.status(403).json(util.successFalse(null, "주소 먼저 등록해주세요", null));
     if (gender >= 1) {
       if (user.grade < 2) return res.status(403).json(util.successFalse(null, "준회원은 동성 배달을 이용할 수 없습니다.", null));
       else gender = user.gender;
@@ -101,27 +102,30 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
         }
       }
     }
-    admin.messaging().sendMulticast({
-      notification: {
-        "title": "배달 건이 추가되었습니다.",
-        "body": order.storeName,
-      },
-      data: {
-        type: 'newOrder',
-        //여기에 관련 데이터 넣으면 될듯
-      },
-      tokens: registrationToken
-    })
-      .then((response) => {
-        console.log('Successfully sent message:', response);
+    if (registrationToken.length > 0) {
+      admin.messaging().sendMulticast({
+        notification: {
+          "title": "배달 건이 추가되었습니다.",
+          "body": order.storeName,
+        },
+        data: {
+          type: 'newOrder',
+          //여기에 관련 데이터 넣으면 될듯
+        },
+        tokens: registrationToken
       })
-      .catch((error) => {
-        console.log('Error sending message:', error);
-      });
-    return res.json(util.successTrue("", order));
+        .then((response) => {
+          console.log('Successfully sent message:', response);
+        })
+        .catch((error) => {
+          console.log('Error sending message:', error);
+        });
+      return res.json(util.successTrue("", order));
+    }
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
   }
+
 });
 
 order.get('/', util.isLoggedin, async function (req: Request, res: Response) {
