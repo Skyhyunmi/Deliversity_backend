@@ -376,6 +376,7 @@ exports.order.post('/review/user', util.isLoggedin, util.isUser, function (req, 
                 userId: _order === null || _order === void 0 ? void 0 : _order.userId,
                 riderId: _order === null || _order === void 0 ? void 0 : _order.riderId,
                 fromId: tokenData.id,
+                nickName: tokenData.nickName,
                 rating: reqBody.rating,
                 content: reqBody.content
             });
@@ -447,6 +448,7 @@ exports.order.post('/review/rider', util.isLoggedin, function (req, res) {
                 userId: _order === null || _order === void 0 ? void 0 : _order.userId,
                 riderId: _order === null || _order === void 0 ? void 0 : _order.riderId,
                 fromId: tokenData.id,
+                nickName: tokenData.nickName,
                 rating: reqBody.rating,
                 content: reqBody.content
             });
