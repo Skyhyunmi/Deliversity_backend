@@ -45,50 +45,60 @@ const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 exports.auth = express_1.Router();
 exports.auth.post("/signup", function (req, res, next) {
-    passport_1.default.authenticate("signup", function (err, _user, info) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (err) {
-                return res.status(403).json(util.successFalse(err, "", null));
-            }
-            if (info) {
-                return res.status(403).json(util.successFalse(null, info, null));
-            }
-            if (_user) {
-                const user = {
-                    id: _user.id,
-                    userId: _user.userId,
-                    name: _user.name,
-                    nickName: _user.nickName,
-                    age: _user.age,
-                    email: _user.email,
-                    phone: _user.phone,
-                    addressId: _user.addressId,
-                    grade: _user.grade,
-                    createdAt: _user.createdAt,
-                    updatedAt: _user.updatedAt
-                };
-                return res.json(util.successTrue("", user));
-            }
-        });
-    })(req, res, next);
+    try {
+        passport_1.default.authenticate("signup", function (err, _user, info) {
+            return __awaiter(this, void 0, void 0, function* () {
+                if (err) {
+                    return res.status(403).json(util.successFalse(err, "", null));
+                }
+                if (info) {
+                    return res.status(403).json(util.successFalse(null, info, null));
+                }
+                if (_user) {
+                    const user = {
+                        id: _user.id,
+                        userId: _user.userId,
+                        name: _user.name,
+                        nickName: _user.nickName,
+                        age: _user.age,
+                        email: _user.email,
+                        phone: _user.phone,
+                        addressId: _user.addressId,
+                        grade: _user.grade,
+                        createdAt: _user.createdAt,
+                        updatedAt: _user.updatedAt
+                    };
+                    return res.json(util.successTrue("", user));
+                }
+            });
+        })(req, res, next);
+    }
+    catch (e) {
+        return res.status(403).json(util.successFalse(null, "에러.", null));
+    }
 });
 exports.auth.post("/login", function (req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
-        passport_1.default.authenticate("login", { session: false }, function (err, user, info) {
-            if (info)
-                return res.status(403).json(util.successFalse(null, "ID or PW is not valid", null));
-            if (err || !user) {
-                return res.status(403).json(util.successFalse(null, err, null));
-            }
-            req.logIn(user, { session: false }, function (err) {
-                return __awaiter(this, void 0, void 0, function* () {
-                    if (err)
-                        return res.status(403).json(util.successFalse(err, "로그인을 실패했습니다.", null));
-                    const result = yield functions.getAuthToken(user);
-                    return res.json(util.successTrue("", { firebaseToken: result.firebaseToken, token: result.authToken, grade: user.grade }));
+        try {
+            passport_1.default.authenticate("login", { session: false }, function (err, user, info) {
+                if (info)
+                    return res.status(403).json(util.successFalse(null, "ID 또는 비밀번호가 틀렸습니다.", null));
+                if (err || !user)
+                    return res.status(403).json(util.successFalse(null, err, null));
+                req.logIn(user, { session: false }, function (err) {
+                    return __awaiter(this, void 0, void 0, function* () {
+                        if (err)
+                            return res.status(403).json(util.successFalse(err, "로그인을 실패했습니다.", null));
+                        const result = yield functions.getAuthToken(user);
+                        return res.json(util.successTrue("", { firebaseToken: result.firebaseToken, token: result.authToken, grade: user.grade }));
+                    });
                 });
-            });
-        })(req, res, next);
+            })(req, res, next);
+        }
+        catch (e) {
+            console.log(e);
+            return res.status(403).json(util.successFalse(null, "에러.", null));
+        }
     });
 });
 exports.auth.get("/login", util.isLoggedin, function (req, res, next) {
@@ -98,9 +108,8 @@ exports.auth.get("/login", util.isLoggedin, function (req, res, next) {
             passport_1.default.authenticate("silent_login", { session: false }, function (err, user, info) {
                 if (info)
                     return res.status(403).json(util.successFalse(null, "로그인을 실패했습니다.", null));
-                if (err || !user) {
+                if (err || !user)
                     return res.status(403).json(util.successFalse(null, err, null));
-                }
                 req.logIn(user, { session: false }, function (err) {
                     return __awaiter(this, void 0, void 0, function* () {
                         if (err)

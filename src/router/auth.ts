@@ -13,59 +13,59 @@ dotenv.config();
 
 export const auth = Router();
 auth.post("/signup", function (req: Request, res: Response, next: NextFunction) {
-  passport.authenticate("signup", async function (err: any, _user: User, info: any) {
-    if (err) {
-      return res.status(403).json(util.successFalse(err, "", null));
-    }
-    if (info) {
-      return res.status(403).json(util.successFalse(null, info, null));
-    }
-    if (_user) {
-      const user = {
-        id: _user.id,
-        userId: _user.userId,
-        name: _user.name,
-        nickName: _user.nickName,
-        age: _user.age,
-        email: _user.email,
-        phone: _user.phone,
-        addressId: _user.addressId,
-        grade: _user.grade,
-        createdAt: _user.createdAt,
-        updatedAt: _user.updatedAt
-      };
-      return res.json(util.successTrue("", user));
-    }
-  })(req, res, next);
+  try {
+    passport.authenticate("signup", async function (err: any, _user: User, info: any) {
+      if (err) {
+        return res.status(403).json(util.successFalse(err, "", null));
+      }
+      if (info) {
+        return res.status(403).json(util.successFalse(null, info, null));
+      }
+      if (_user) {
+        const user = {
+          id: _user.id,
+          userId: _user.userId,
+          name: _user.name,
+          nickName: _user.nickName,
+          age: _user.age,
+          email: _user.email,
+          phone: _user.phone,
+          addressId: _user.addressId,
+          grade: _user.grade,
+          createdAt: _user.createdAt,
+          updatedAt: _user.updatedAt
+        };
+        return res.json(util.successTrue("", user));
+      }
+    })(req, res, next);
+  } catch (e) {
+    return res.status(403).json(util.successFalse(null, "에러.", null));
+  }
 });
 
 auth.post("/login", async function (req: Request, res: Response, next: NextFunction) {
-  passport.authenticate("login", { session: false }, function (err: any,
-    user: any,
-    info: any
-  ) {
-    if (info)
-      return res.status(403).json(util.successFalse(null, "ID or PW is not valid", null));
-    if (err || !user) {
-      return res.status(403).json(util.successFalse(null, err, null));
-    }
-    req.logIn(user, { session: false }, async function (err: any) {
-      if (err) return res.status(403).json(util.successFalse(err, "로그인을 실패했습니다.", null));
-      const result = await functions.getAuthToken(user);
-      return res.json(util.successTrue("", { firebaseToken: result.firebaseToken, token: result.authToken, grade: user.grade }));
-    });
-  })(req, res, next);
+  try {
+    passport.authenticate("login", { session: false }, function (err: any, user: any, info: any) {
+      if (info) return res.status(403).json(util.successFalse(null, "ID 또는 비밀번호가 틀렸습니다.", null));
+      if (err || !user) return res.status(403).json(util.successFalse(null, err, null));
+      req.logIn(user, { session: false }, async function (err: any) {
+        if (err) return res.status(403).json(util.successFalse(err, "로그인을 실패했습니다.", null));
+        const result = await functions.getAuthToken(user);
+        return res.json(util.successTrue("", { firebaseToken: result.firebaseToken, token: result.authToken, grade: user.grade }));
+      });
+    })(req, res, next);
+  } catch (e) {
+    console.log(e);
+    return res.status(403).json(util.successFalse(null, "에러.", null));
+  }
 });
 
 auth.get("/login", util.isLoggedin, async function (req: Request, res: Response, next: NextFunction) {
   try {
     req.body.id = req.decoded.userId;
     passport.authenticate("silent_login", { session: false }, function (err: any, user: any, info: any) {
-      if (info)
-        return res.status(403).json(util.successFalse(null, "로그인을 실패했습니다.", null));
-      if (err || !user) {
-        return res.status(403).json(util.successFalse(null, err, null));
-      }
+      if (info) return res.status(403).json(util.successFalse(null, "로그인을 실패했습니다.", null));
+      if (err || !user) return res.status(403).json(util.successFalse(null, err, null));
       req.logIn(user, { session: false }, async function (err: any) {
         if (err) return res.status(403).json(util.successFalse(err, "로그인을 실패했습니다.", null));
         const result = await functions.getAuthToken(user);
