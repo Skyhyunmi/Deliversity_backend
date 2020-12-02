@@ -109,7 +109,7 @@ exports.order.post('/', util.isLoggedin, function (req, res) {
                 chatId: reqBody.chatId ? reqBody.chatId : null,
                 expArrivalTime: today,
                 orderStatus: 0,
-                hotDeal: reqBody.hotDeal === "1" ? true : false,
+                hotDeal: reqBody.hotDeal,
                 totalCost: 0,
                 cost: 0,
                 content: reqBody.content,

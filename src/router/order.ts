@@ -21,7 +21,7 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
   let expMinute = reqBody.expMinute;
   let gender = reqBody.gender == true ? 1 : 0;
   const today = new Date();
-  const registrationToken:string[] = [];
+  const registrationToken: string[] = [];
 
   if (reqBody.reservation === "1") {
     if (!expHour || !expMinute) { return res.status(403).json(util.successFalse(null, "예약 시간 또는 분을 입력하시지 않으셨습니다.", null)); };
@@ -50,10 +50,10 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
     const fee = functions.getDistanceFromLatLonInKm(reqBody.userLat, reqBody.userLng,
       reqBody.storeLat, reqBody.storeLng) - 1;
 
-    console.log("위치",reqBody.userLat, reqBody.userLng,
+    console.log("위치", reqBody.userLat, reqBody.userLng,
       reqBody.storeLat, reqBody.storeLng);
     if (fee > 0) deliveryFee += Math.round((550 * fee / 0.5) / 100) * 100;
-    console.log("가격: ",fee);
+    console.log("가격: ", fee);
     const data = {
       userId: tokenData.id,
       gender: gender, // 0이면 random, 1이면 남자 2면 여자
@@ -69,7 +69,7 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
       chatId: reqBody.chatId ? reqBody.chatId : null,
       expArrivalTime: today,
       orderStatus: 0,
-      hotDeal: reqBody.hotDeal === "1" ? true : false,
+      hotDeal: reqBody.hotDeal,
       totalCost: 0,
       cost: 0,
       content: reqBody.content,
@@ -81,8 +81,8 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
     let riders;
     if (gender >= 1) riders = await userRep.findAll({ where: { id: { [db.Op.ne]: tokenData.id }, grade: 2, gender: gender } });
     else riders = await userRep.findAll({ where: { id: { [db.Op.ne]: tokenData.id }, grade: 2 } });
-    riders.map(rider=>{
-      if(rider.firebaseFCM){
+    riders.map(rider => {
+      if (rider.firebaseFCM) {
         if (rider.lat != null) {
           const distance = functions.getDistanceFromLatLonInKm(rider.lat, rider.lng, reqBody.userLat, reqBody.userLng);
           //1.5km 미만의 위치에 존재하는 배달원에게 푸시 메시지 전송. 현재는 테스트용으로 100km
@@ -100,7 +100,7 @@ order.post('/', util.isLoggedin, async function (req: Request, res: Response) {
         type: 'newOrder'
       }
     };
-    if (registrationToken.length > 0) functions.sendFCMMessage(registrationToken,payload);
+    if (registrationToken.length > 0) functions.sendFCMMessage(registrationToken, payload);
     return res.json(util.successTrue("", order));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
@@ -134,7 +134,7 @@ order.get('/riders', util.isLoggedin, async function (req: Request, res: Respons
 
     const riderlist = myCache.get(reqQuery.orderId as string) as classes.Rider[];
     if (riderlist == undefined) { return res.json(util.successTrue("배달을 희망하는 배달원이 없습니다.", null)); }
-    
+
     return res.json(util.successTrue("", riderlist));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
@@ -148,7 +148,7 @@ order.post('/rider', util.isLoggedin, async function (req: Request, res: Respons
   const reqQuery = req.query;
   const riderId = parseInt(reqBody.riderId);
   try {
-    const order = await orderRep.findOne({where: {id: reqQuery.orderId as string}});
+    const order = await orderRep.findOne({ where: { id: reqQuery.orderId as string } });
     if (!order) return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
 
     const riderlist = myCache.get(reqQuery.orderId as string) as classes.Rider[];
@@ -189,7 +189,7 @@ order.post('/rider', util.isLoggedin, async function (req: Request, res: Respons
         type: 'selected'
       },
     };
-    functions.sendFCMMessage(registrationToken,payload);
+    functions.sendFCMMessage(registrationToken, payload);
     // admin.messaging().sendToDevice(registrationToken, message, { priority: "high" })
     //   .then((response) => {
     //     console.log('Successfully sent message:', response);
@@ -480,7 +480,7 @@ order.post('/apply', util.isLoggedin, util.isUser, async function (req: Request,
   if (orderStatus != 0) return res.status(403).json(util.successFalse(null, "배달원 모집이 끝난 주문입니다.", null));
   if (order.userId == tokenData.id) return res.status(403).json(util.successFalse(null, "본인의 주문에 배달원 지원은 불가능합니다.", null));
   const riderId = tokenData.id;
-  
+
   const user = await userRep.findOne({ where: { id: order.userId } });
   if (!user) return res.status(403).json(util.successFalse(null, "해당 주문의 주문자가 존재하지 않습니다.", null));
   // eslint-disable-next-line prefer-const
@@ -508,7 +508,7 @@ order.post('/apply', util.isLoggedin, util.isUser, async function (req: Request,
       type: "newRiderApply"
     }
   };
-  if(registrationToken) functions.sendFCMMessage(registrationToken,payload);
+  if (registrationToken) functions.sendFCMMessage(registrationToken, payload);
   // admin.messaging().sendToDevice(registrationToken, message)
   //   .then((response) => {
   //     console.log('Successfully sent message:', response);
