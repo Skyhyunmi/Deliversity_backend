@@ -273,3 +273,15 @@ export function getDistanceFromLatLonInKm(lat1: string, lng1: string, lat2: stri
   const d = R * c; // Distance in km
   return d;
 }
+
+export function sendFCMMessage(tokens:string | string[], payload: admin.messaging.MessagingPayload ) {
+  admin.messaging().sendToDevice(tokens, payload,{priority:"high"})
+    .then((response) => {
+      console.log(response.results[0]);
+      return true;
+    })
+    .catch((error) => {
+      console.log('Error sending message:', error);
+      return false;
+    });
+}

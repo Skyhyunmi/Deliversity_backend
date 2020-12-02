@@ -40,7 +40,6 @@ const node_cache_1 = __importDefault(require("node-cache"));
 const db = __importStar(require("sequelize"));
 const crypto = __importStar(require("crypto"));
 const models_1 = require("../models");
-const admin = __importStar(require("firebase-admin"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 exports.order = express_1.Router();
@@ -91,10 +90,10 @@ exports.order.post('/', util.isLoggedin, function (req, res) {
             if (reqBody.hotDeal === "1")
                 deliveryFee = 4000;
             const fee = functions.getDistanceFromLatLonInKm(reqBody.userLat, reqBody.userLng, reqBody.storeLat, reqBody.storeLng) - 1;
-            console.log(reqBody.userLat, reqBody.userLng, reqBody.storeLat, reqBody.storeLng);
+            console.log("위치", reqBody.userLat, reqBody.userLng, reqBody.storeLat, reqBody.storeLng);
             if (fee > 0)
                 deliveryFee += Math.round((550 * fee / 0.5) / 100) * 100;
-            console.log(fee);
+            console.log("가격: ", fee);
             const data = {
                 userId: tokenData.id,
                 gender: gender,
@@ -120,46 +119,33 @@ exports.order.post('/', util.isLoggedin, function (req, res) {
             };
             const order = yield models_1.orderRep.create(data);
             let riders;
-            if (gender >= 1) {
+            if (gender >= 1)
                 riders = yield models_1.userRep.findAll({ where: { id: { [db.Op.ne]: tokenData.id }, grade: 2, gender: gender } });
-            }
             else
                 riders = yield models_1.userRep.findAll({ where: { id: { [db.Op.ne]: tokenData.id }, grade: 2 } });
-            for (let i = 0; i < riders.length; i++) {
-                if (riders[i].firebaseFCM != null) {
-                    //배달원의 위동 경도 존재 여부 확인
-                    if (riders[i].lat != null) {
-                        //직선 거리 계산
-                        const distance = functions.getDistanceFromLatLonInKm(riders[i].lat, riders[i].lng, reqBody.userLat, reqBody.userLng);
-                        if (distance < 100) { //1.5km 미만의 위치에 존재하는 배달원에게 푸시 메시지 전송
-                            registrationToken.push(riders[i].firebaseFCM);
-                            console.log(i, ': ', riders[i].name + " FCM: " + riders[i].firebaseFCM);
-                        }
-                    }
-                    else { //개발용으로 위도 경도 데이터 없는 배달원에게도 푸시 메시지 전송
-                        registrationToken.push(riders[i].firebaseFCM);
-                        console.log(i, ': ', riders[i].name + " FCM: " + riders[i].firebaseFCM);
-                    }
+            riders.map(rider => {
+                if (rider.firebaseFCM) {
+                    if (rider.lat != null) {
+                        const distance = functions.getDistanceFromLatLonInKm(rider.lat, rider.lng, reqBody.userLat, reqBody.userLng);
+                        //1.5km 미만의 위치에 존재하는 배달원에게 푸시 메시지 전송. 현재는 테스트용으로 100km
+                        if (distance < 100)
+                            registrationToken.push(rider.firebaseFCM);
+                    } //개발용으로 위도 경도 데이터 없는 배달원에게도 푸시 메시지 전송
+                    else
+                        registrationToken.push(rider.firebaseFCM);
                 }
-            }
-            if (registrationToken.length > 0) {
-                admin.messaging().sendMulticast({
-                    notification: {
-                        "title": "배달 건이 추가되었습니다.",
-                        "body": order.storeName,
-                    },
-                    data: {
-                        type: 'newOrder',
-                    },
-                    tokens: registrationToken
-                })
-                    .then((response) => {
-                    console.log('Successfully sent message:', response);
-                })
-                    .catch((error) => {
-                    console.log('Error sending message:', error);
-                });
-            }
+            });
+            const payload = {
+                notification: {
+                    "title": "배달 건이 추가되었습니다.",
+                    "body": order.storeName,
+                },
+                data: {
+                    type: 'newOrder'
+                }
+            };
+            if (registrationToken.length > 0)
+                functions.sendFCMMessage(registrationToken, payload);
             return res.json(util.successTrue("", order));
         }
         catch (err) {
@@ -215,12 +201,7 @@ exports.order.post('/rider', util.isLoggedin, function (req, res) {
         const reqQuery = req.query;
         const riderId = parseInt(reqBody.riderId);
         try {
-            const order = yield models_1.orderRep.findOne({
-                where: {
-                    id: reqQuery.orderId
-                }
-            });
-            let registrationToken;
+            const order = yield models_1.orderRep.findOne({ where: { id: reqQuery.orderId } });
             if (!order)
                 return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
             const riderlist = myCache.get(reqQuery.orderId);
@@ -231,49 +212,46 @@ exports.order.post('/rider', util.isLoggedin, function (req, res) {
                 return res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
             const rider_fire = yield models_1.userRep.findOne({ where: { id: riderId } });
             if (!rider_fire)
-                res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
-            else {
-                registrationToken = rider_fire.firebaseFCM;
-            }
+                return res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
+            const registrationToken = rider_fire.firebaseFCM;
             if (registrationToken == undefined)
-                res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
-            else {
-                const room = yield models_1.roomRep.create({
-                    orderId: order.id,
-                    owner: tokenData.nickName,
-                    ownerId: tokenData.id,
-                    riderId: rider.riderId,
-                    roomId: crypto.randomBytes(256).toString('hex').substr(100, 50)
-                });
-                yield order.update({
-                    riderId: rider.riderId,
-                    extraFee: rider.extraFee,
-                    orderStatus: 1,
-                    chatId: room.id
-                });
-                myCache.del(reqQuery.orderId);
-                const message = {
-                    notification: {
-                        "title": "배달원으로 선발 알림",
-                        "body": "배달원으로 선발되었습니다.",
-                    },
-                    data: {
-                        orderId: order.id.toString(),
-                        roomId: room.roomId,
-                        userId: room.ownerId.toString(),
-                        riderId: room.riderId.toString(),
-                        type: 'selected'
-                    },
-                };
-                admin.messaging().sendToDevice(registrationToken, message, { priority: "high" })
-                    .then((response) => {
-                    console.log('Successfully sent message:', response);
-                })
-                    .catch((error) => {
-                    console.log('Error sending message:', error);
-                });
-                return res.json(util.successTrue("", { order: order, room: room }));
-            }
+                return res.status(403).json(util.successFalse(null, "해당하는 배달원이 존재하지 않습니다.", null));
+            const room = yield models_1.roomRep.create({
+                orderId: order.id,
+                owner: tokenData.nickName,
+                ownerId: tokenData.id,
+                riderId: rider.riderId,
+                roomId: crypto.randomBytes(256).toString('hex').substr(100, 50)
+            });
+            yield order.update({
+                riderId: rider.riderId,
+                extraFee: rider.extraFee,
+                orderStatus: 1,
+                chatId: room.id
+            });
+            myCache.del(reqQuery.orderId);
+            const payload = {
+                notification: {
+                    "title": "배달원으로 선발 알림",
+                    "body": "배달원으로 선발되었습니다.",
+                },
+                data: {
+                    orderId: order.id.toString(),
+                    roomId: room.roomId,
+                    userId: room.ownerId.toString(),
+                    riderId: room.riderId.toString(),
+                    type: 'selected'
+                },
+            };
+            functions.sendFCMMessage(registrationToken, payload);
+            // admin.messaging().sendToDevice(registrationToken, message, { priority: "high" })
+            //   .then((response) => {
+            //     console.log('Successfully sent message:', response);
+            //   })
+            //   .catch((error) => {
+            //     console.log('Error sending message:', error);
+            //   });
+            return res.json(util.successTrue("", { order: order, room: room }));
         }
         catch (err) {
             return res.status(403).json(util.successFalse(err, "", null));
@@ -589,15 +567,11 @@ exports.order.post('/apply', util.isLoggedin, util.isUser, function (req, res) {
         const tokenData = req.decoded;
         const reqQuery = req.query;
         const reqBody = req.body;
-        let orderStatus;
-        let registrationToken;
         // 해당 주문 번호
         const order = yield models_1.orderRep.findOne({ where: { id: reqQuery.orderId } });
         if (!order)
             return res.status(403).json(util.successFalse(null, "주문 건이 없습니다.", null));
-        else {
-            orderStatus = parseInt(order === null || order === void 0 ? void 0 : order.orderStatus);
-        }
+        const orderStatus = parseInt(order.orderStatus);
         if (orderStatus != 0)
             return res.status(403).json(util.successFalse(null, "배달원 모집이 끝난 주문입니다.", null));
         if (order.userId == tokenData.id)
@@ -607,7 +581,7 @@ exports.order.post('/apply', util.isLoggedin, util.isUser, function (req, res) {
         if (!user)
             return res.status(403).json(util.successFalse(null, "해당 주문의 주문자가 존재하지 않습니다.", null));
         // eslint-disable-next-line prefer-const
-        registrationToken = user.firebaseFCM;
+        const registrationToken = user.firebaseFCM;
         let extraFee;
         extraFee = parseInt(reqBody.extraFee);
         if (!reqBody.extraFee)
@@ -624,7 +598,7 @@ exports.order.post('/apply', util.isLoggedin, util.isUser, function (req, res) {
             riderlist.push({ riderId: riderId, extraFee: extraFee });
             myCache.set(reqQuery.orderId, riderlist);
         }
-        const message = {
+        const payload = {
             notification: {
                 title: "배달원 추가 알림",
                 tag: "newRiderApply",
@@ -634,13 +608,15 @@ exports.order.post('/apply', util.isLoggedin, util.isUser, function (req, res) {
                 type: "newRiderApply"
             }
         };
-        admin.messaging().sendToDevice(registrationToken, message)
-            .then((response) => {
-            console.log('Successfully sent message:', response);
-        })
-            .catch((error) => {
-            console.log('Error sending message:', error);
-        });
+        if (registrationToken)
+            functions.sendFCMMessage(registrationToken, payload);
+        // admin.messaging().sendToDevice(registrationToken, message)
+        //   .then((response) => {
+        //     console.log('Successfully sent message:', response);
+        //   })
+        //   .catch((error) => {
+        //     console.log('Error sending message:', error);
+        //   });
         return res.json(util.successTrue("", riderlist));
     });
 });

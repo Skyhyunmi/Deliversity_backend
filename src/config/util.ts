@@ -1,6 +1,5 @@
 import { Response, Request, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import * as db from "sequelize";
 import { userRep } from "../models";
 import * as admin from "firebase-admin";
 

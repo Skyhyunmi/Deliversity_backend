@@ -35,10 +35,10 @@ exports.test = void 0;
 const express_1 = require("express");
 const util = __importStar(require("../config/util"));
 const axios_1 = __importDefault(require("axios"));
+const functions = __importStar(require("../config/functions"));
+const models_1 = require("../models");
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
-const admin = __importStar(require("firebase-admin"));
-const models_1 = require("../models");
 exports.test = express_1.Router();
 exports.test.get("/hello", (req, res) => {
     res.json({ string: "hello pm2! nice to meet you!" });
@@ -80,7 +80,8 @@ exports.test.post('/noti', util.isLoggedin, function (req, res) {
             // await admin.messaging().sendToDevice(registrationToken,{
             //   data:{test:"hi"}
             // })
-            yield admin.messaging().sendToDevice(registrationToken, payload);
+            functions.sendFCMMessage(registrationToken, payload);
+            // await admin.messaging().sendToDevice(registrationToken, payload);
             // admin.messaging().send(payload)
             // .then(result=>{
             //   return res.json(util.successTrue( "", payload.notification));

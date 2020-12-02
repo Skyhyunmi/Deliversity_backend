@@ -117,7 +117,7 @@ exports.auth.get("/login", util.isLoggedin, function (req, res, next) {
         }
     });
 });
-exports.auth.post("/login/fcm", util.isLoggedin, function (req, res, next) {
+exports.auth.post("/login/fcm", util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const tokenData = req.decoded;
         const reqBody = req.body;
@@ -125,7 +125,7 @@ exports.auth.post("/login/fcm", util.isLoggedin, function (req, res, next) {
             const user = yield index_1.userRep.findOne({ where: { id: tokenData.id } });
             if (!user)
                 return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
-            yield user.update({ fcmToken: reqBody.fcmToken });
+            yield user.update({ firebaseFCM: reqBody.fcmToken });
             return res.json(util.successTrue("", null));
         }
         catch (e) {
@@ -260,7 +260,7 @@ exports.auth.post("/find/sms", /*util.isLoggedin,*/ function (req, res) {
         return res.status(403).json(util.successFalse(null, result, null));
     });
 });
-exports.auth.post("/findid", function (req, res, next) {
+exports.auth.post("/findid", function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const reqBody = req.body;
         const reqQuery = req.query;
@@ -289,7 +289,7 @@ exports.auth.post("/findid", function (req, res, next) {
         return res.status(403).json(util.successFalse(null, "입력을 확인해주세요.", null));
     });
 });
-exports.auth.post("/findpw", function (req, res, next) {
+exports.auth.post("/findpw", function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const reqBody = req.body;
         // 인증 절차 거치고 success로 return

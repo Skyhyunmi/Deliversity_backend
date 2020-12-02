@@ -34,7 +34,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const socket_io_1 = __importDefault(require("socket.io"));
 const classes = __importStar(require("./config/classes"));
 const models_1 = require("./models");
-const Admin = __importStar(require("firebase-admin"));
+const functions = __importStar(require("./config/functions"));
 const node_cache_1 = __importDefault(require("node-cache"));
 const myCache = new node_cache_1.default();
 setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
@@ -125,13 +125,14 @@ function chatServer(server) {
                 }
             };
             if (fcm)
-                Admin.messaging().sendToDevice(fcm, message, { priority: "high" })
-                    .then((response) => {
-                    console.log(response.results[0]);
-                })
-                    .catch((error) => {
-                    console.log('Error sending message:', error);
-                });
+                functions.sendFCMMessage(fcm, message);
+            // Admin.messaging().sendToDevice(fcm, message,{priority:"high"})
+            //   .then((response) => {
+            //     console.log(response.results[0]);
+            //   })
+            //   .catch((error) => {
+            //     console.log('Error sending message:', error);
+            //   });
             let list = myCache.get('chat');
             if (list == undefined)
                 myCache.set('chat', [new classes.userData(data[0], data[0].user.nickName)]);

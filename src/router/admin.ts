@@ -1,7 +1,7 @@
 import { Request, Response, Router } from "express";
 import * as util from "../config/util";
 import { qnaRep, reportRep, userRep, refundRep } from "../models/index";
-import * as Admin from "firebase-admin";
+import * as functions from "../config/functions";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -57,13 +57,14 @@ admin.put('/upload', util.isLoggedin, util.isAdmin, async function (req: Request
             test: "인증이 완료되었습니다." + registrationToken
           },
         };
-        Admin.messaging().sendToDevice(registrationToken,message)
-          .then((response) => {
-            console.log('Successfully sent message:', response);
-          })
-          .catch((error) => {
-            console.log('Error sending message:', error);
-          });
+        functions.sendFCMMessage(registrationToken,message);
+        // Admin.messaging().sendToDevice(registrationToken,message)
+        //   .then((response) => {
+        //     console.log('Successfully sent message:', response);
+        //   })
+        //   .catch((error) => {
+        //     console.log('Error sending message:', error);
+        //   });
       }
       //토큰 없을 경우 또는 메시지 전송 실패 시 문자 전송?
       return res.json(util.successTrue("", user));

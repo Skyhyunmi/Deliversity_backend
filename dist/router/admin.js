@@ -35,7 +35,7 @@ exports.admin = void 0;
 const express_1 = require("express");
 const util = __importStar(require("../config/util"));
 const index_1 = require("../models/index");
-const Admin = __importStar(require("firebase-admin"));
+const functions = __importStar(require("../config/functions"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 exports.admin = express_1.Router();
@@ -107,13 +107,14 @@ exports.admin.put('/upload', util.isLoggedin, util.isAdmin, function (req, res) 
                             test: "인증이 완료되었습니다." + registrationToken
                         },
                     };
-                    Admin.messaging().sendToDevice(registrationToken, message)
-                        .then((response) => {
-                        console.log('Successfully sent message:', response);
-                    })
-                        .catch((error) => {
-                        console.log('Error sending message:', error);
-                    });
+                    functions.sendFCMMessage(registrationToken, message);
+                    // Admin.messaging().sendToDevice(registrationToken,message)
+                    //   .then((response) => {
+                    //     console.log('Successfully sent message:', response);
+                    //   })
+                    //   .catch((error) => {
+                    //     console.log('Error sending message:', error);
+                    //   });
                 }
                 //토큰 없을 경우 또는 메시지 전송 실패 시 문자 전송?
                 return res.json(util.successTrue("", user));

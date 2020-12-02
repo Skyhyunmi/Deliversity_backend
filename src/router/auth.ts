@@ -78,13 +78,13 @@ auth.get("/login", util.isLoggedin, async function (req: Request, res: Response,
   }
 });
 
-auth.post("/login/fcm", util.isLoggedin, async function (req: Request, res: Response, next: NextFunction) {
+auth.post("/login/fcm", util.isLoggedin, async function (req: Request, res: Response) {
   const tokenData = req.decoded;
   const reqBody = req.body;
   try {
     const user = await userRep.findOne({ where: { id: tokenData.id } });
     if (!user) return res.status(403).json(util.successFalse(null, "회원이 없습니다.", null));
-    await user.update({ fcmToken: reqBody.fcmToken });
+    await user.update({ firebaseFCM: reqBody.fcmToken });
     return res.json(util.successTrue("", null));
   } catch (e) {
     console.log(e);
@@ -194,7 +194,7 @@ auth.post("/find/sms",/*util.isLoggedin,*/async function (req: Request, res: Res
   return res.status(403).json(util.successFalse(null, result, null));
 });
 
-auth.post("/findid", async function (req: Request, res: Response, next: NextFunction) {
+auth.post("/findid", async function (req: Request, res: Response) {
   const reqBody = req.body;
   const reqQuery = req.query;
   // 인증 절차 거치고 success로 return
@@ -217,7 +217,7 @@ auth.post("/findid", async function (req: Request, res: Response, next: NextFunc
   return res.status(403).json(util.successFalse(null, "입력을 확인해주세요.", null));
 });
 
-auth.post("/findpw", async function (req: Request, res: Response, next: NextFunction) {
+auth.post("/findpw", async function (req: Request, res: Response) {
   const reqBody = req.body;
   // 인증 절차 거치고 success로 return
   const userId = reqBody.userId;
