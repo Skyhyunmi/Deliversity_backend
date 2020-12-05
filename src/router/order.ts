@@ -519,6 +519,23 @@ order.post('/apply', util.isLoggedin, util.isUser, async function (req: Request,
   return res.json(util.successTrue("", riderlist));
 });
 
+order.post('/cancel', util.isLoggedin, util.isUser, async function (req: Request, res: Response) {
+  // 배달원이 해당 주문에 배달원 신청
+  const tokenData = req.decoded;
+  const reqQuery = req.query;
+  // 해당 주문 번호
+  const order = await orderRep.findOne({ where: { id: reqQuery.orderId as string } });
+  if (!order) return res.status(403).json(util.successFalse(null, "주문 건이 없습니다.", null));
+  const orderStatus = parseInt(order.orderStatus);
+
+  if (orderStatus != 0) return res.status(403).json(util.successFalse(null, "배달원 모집이 끝나 주문을 취소할 수 없습니다.", null));
+  if (order.userId != tokenData.id) return res.status(403).json(util.successFalse(null, "본인의 주문이 아니면 취소할 수 없습니다.", null));
+
+  myCache.del(reqQuery.orderId as string);
+  order.destroy();
+  return res.json(util.successTrue("", null));
+});
+
 order.get('/orderList', util.isLoggedin, async function (req: Request, res: Response) {
   //현재 주문 중인 주문 내용 받아오기 (소비자)
   const tokenData = req.decoded;
