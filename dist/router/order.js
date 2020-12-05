@@ -624,9 +624,9 @@ exports.order.delete('/', util.isLoggedin, util.isUser, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         // 배달원이 해당 주문에 배달원 신청
         const tokenData = req.decoded;
-        const reqQuery = req.query;
+        const reqBody = req.body;
         // 해당 주문 번호
-        const order = yield models_1.orderRep.findOne({ where: { id: reqQuery.orderId } });
+        const order = yield models_1.orderRep.findOne({ where: { id: reqBody.orderId } });
         if (!order)
             return res.status(403).json(util.successFalse(null, "주문 건이 없습니다.", null));
         const orderStatus = parseInt(order.orderStatus);
@@ -634,7 +634,7 @@ exports.order.delete('/', util.isLoggedin, util.isUser, function (req, res) {
             return res.status(403).json(util.successFalse(null, "배달원 모집이 끝나 주문을 취소할 수 없습니다.", null));
         if (order.userId != tokenData.id)
             return res.status(403).json(util.successFalse(null, "본인의 주문이 아니면 취소할 수 없습니다.", null));
-        myCache.del(reqQuery.orderId);
+        myCache.del(reqBody.orderId);
         order.destroy();
         return res.json(util.successTrue("", null));
     });
