@@ -5,6 +5,7 @@ import { app } from "../../src/app";
 import jwt from "jsonwebtoken";
 import { myCache } from "../../src/config/functions";
 import dotenv from "dotenv";
+import { order } from "../../src/router/order";
 dotenv.config({ path: "../../.env" });
 
 let riderToken: any;
@@ -12,6 +13,7 @@ let userToken: any;
 let adminToken: any;
 let userParsedData: any;
 let riderParsedData: any;
+let orderId: any;
 let addressId: any;
 
 // before
@@ -130,7 +132,7 @@ describe('주문 관련 테스트', () => {
   describe('주문 접수 테스트', () => {
     // 1. 동성 배달 X, 예약 X
     it('동성 배달X 예약X 주문 등록', async done => {
-      const Order1 = await request(app)
+      const Order = await request(app)
         .post('/api/v1/order')
         .set('x-access-token', userToken)
         .send({
@@ -143,14 +145,14 @@ describe('주문 관련 테스트', () => {
           categoryName: "카페",
           content: "마카롱 11개 주세요."
         });
-      expect(Order1.body.data.storeName).toBe("A네 디저트가게");
-      expect(Order1.body.data.gender).toBe(0);
-      expect(Order1.body.data.reservation).toBe("0");
+      expect(Order.body.data.storeName).toBe("A네 디저트가게");
+      expect(Order.body.data.gender).toBe(0);
+      expect(Order.body.data.reservation).toBe("0");
       done();
     });
     // 2. 동성 배달 O, 예약 X
     it('동성 배달O 예약X 주문 등록.', async done => {
-      const Order2 = await request(app)
+      const Order = await request(app)
         .post('/api/v1/order')
         .set('x-access-token', userToken)
         .send({
@@ -163,13 +165,13 @@ describe('주문 관련 테스트', () => {
           categoryName: "카페",
           content: "마카롱 22개 주세요."
         });
-      expect(Order2.body.data.storeName).toBe("B네 디저트가게");
-      expect(Order2.body.data.reservation).toBe("0");
+      expect(Order.body.data.storeName).toBe("B네 디저트가게");
+      expect(Order.body.data.reservation).toBe("0");
       done();
     });
     // 3. 동성 배달 O, 예약 O
     it('동성 배달O 예약O 주문 등록.', async done => {
-      const Order3 = await request(app)
+      const Order = await request(app)
         .post('/api/v1/order')
         .set('x-access-token', userToken)
         .send({
@@ -184,14 +186,14 @@ describe('주문 관련 테스트', () => {
           categoryName: "편의점",
           content: "콜라 3개 사주세요."
         });
-      expect(Order3.body.data.storeName).toBe("C네 편의점");
-      expect(Order3.body.data.reservation).toBe("1");
+      expect(Order.body.data.storeName).toBe("C네 편의점");
+      expect(Order.body.data.reservation).toBe("1");
       done();
     });
   });
   // 4. 동성 배달 X, 예약 O
   it('동성 배달X 예약O 주문 등록.', async done => {
-    const Order4 = await request(app)
+    const Order = await request(app)
       .post('/api/v1/order')
       .set('x-access-token', userToken)
       .send({
@@ -206,11 +208,51 @@ describe('주문 관련 테스트', () => {
         categoryName: "편의점",
         content: "콜라 4개 사주세요."
       });
-    expect(Order4.body.data.storeName).toBe("D네 편의점");
-    expect(Order4.body.data.gender).toBe(0);
-    expect(Order4.body.data.reservation).toBe("1");
+    expect(Order.body.data.storeName).toBe("D네 편의점");
+    expect(Order.body.data.gender).toBe(0);
+    expect(Order.body.data.reservation).toBe("1");
     done();
   });
-});
 
-// 사용자는 주문을 확인한다.
+  describe('배달거리 확인 테스트', () => {
+    it('배달원 배달거리 확인', async done => {
+      const Order = await request(app)
+        .get('/api/v1/order/orders')
+        .set('x-access-token', riderToken);
+      expect(Order.body.data.length).toEqual(4);
+      expect(Order.status).toBe(200);
+      orderId = Order.body.data.orders[1];
+      done();
+    });
+  });
+
+  // describe('소비자 리뷰 확인 테스트', () => {
+  //   it('소비자 리뷰 확인', async done => {
+  //     const Review = await request(app)
+  //       .get('/api/v1/order/review/user')
+  //       .set('x-access-token', riderToken)
+  //       .send({
+  //         orderId: orderId,
+  //         userId: userParsedData.id
+  //       });
+  //     console.log(Review);
+  //     expect(Review.status).toBe(200);
+  //     done();
+  //   });
+  // });
+});
+// 배달원은 소비자에 대한 리뷰를 확인한다.
+// 배달원은 해당 주문에 배달을 신청한다.
+// 사용자는 신청 배달원 목록을 반환한다.
+// 사용자는 배달원에 대한 리뷰를 확인한다.
+// 사용자는 배달원을 선택한다.
+// 사용자는 배달원과 채팅 주소를 받는다.
+// 사용자는 최종 결제 금액을 반환한다.
+// 배달원은 최종 결제 금액을 전송한다.
+// 사용자는 결제한다.
+// 배달원은 배달 완료로 변경한다.
+// 사용자는 배달원에 대한 리뷰를 작성한다.
+// 배달원은 소비자에 대한 리뷰를 작성한다.
+
+// 소비자 주문 내역 받아오기
+// 배달원 배달 내역 받아오기
