@@ -519,7 +519,7 @@ order.post('/apply', util.isLoggedin, util.isUser, async function (req: Request,
   return res.json(util.successTrue("", riderlist));
 });
 
-order.post('/cancel', util.isLoggedin, util.isUser, async function (req: Request, res: Response) {
+order.delete('/cancel', util.isLoggedin, util.isUser, async function (req: Request, res: Response) {
   // 배달원이 해당 주문에 배달원 신청
   const tokenData = req.decoded;
   const reqQuery = req.query;

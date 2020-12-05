@@ -620,7 +620,7 @@ exports.order.post('/apply', util.isLoggedin, util.isUser, function (req, res) {
         return res.json(util.successTrue("", riderlist));
     });
 });
-exports.order.post('/cancel', util.isLoggedin, util.isUser, function (req, res) {
+exports.order.delete('/cancel', util.isLoggedin, util.isUser, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         // 배달원이 해당 주문에 배달원 신청
         const tokenData = req.decoded;
