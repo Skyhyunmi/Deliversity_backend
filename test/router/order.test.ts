@@ -234,8 +234,7 @@ describe('주문 관련 테스트', () => {
         .set('x-access-token', riderToken);
       expect(Order.body.data.length).toEqual(3);
       expect(Order.status).toBe(200);
-      orderId = Order.body.data.orders[0];
-      console.log(orderId);
+      orderId = 1;
       done();
     });
   });
@@ -249,13 +248,37 @@ describe('주문 관련 테스트', () => {
           orderId: orderId,
           userId: userParsedData.userId
         });
-      console.log(Review);
       expect(Review.status).toBe(403);
       done();
     });
   });
+
+  describe('배달 신청 확인 테스트', () => {
+    it('배달원 배달 신청 테스트', async done => {
+      const Apply = await request(app)
+        .post('/api/v1/order/apply?orderId=' + orderId)
+        .set('x-access-token', riderToken)
+        .send({
+          extraFee: 0
+        });
+      console.log(Apply);
+      expect(Apply.status).toBe(200);
+      done();
+    });
+
+    it('배달원 배달 중복 신청 실패 테스트', async done => {
+      const Apply = await request(app)
+        .post('/api/v1/order/apply?orderId=' + orderId)
+        .set('x-access-token', riderToken)
+        .send({
+          extraFee: 0
+        });
+      console.log(Apply);
+      expect(Apply.status).toBe(403);
+      done();
+    });
+  });
 });
-// 배달원은 소비자에 대한 리뷰를 확인한다.
 // 배달원은 해당 주문에 배달을 신청한다.
 // 사용자는 신청 배달원 목록을 반환한다.
 // 사용자는 배달원에 대한 리뷰를 확인한다.
