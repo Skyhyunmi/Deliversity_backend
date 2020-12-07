@@ -214,14 +214,28 @@ describe('주문 관련 테스트', () => {
     done();
   });
 
+  describe('배달거리 삭제 테스트', () => {
+    it('배달거리 삭제', async done => {
+      const Order = await request(app)
+        .delete('/api/v1/order')
+        .set('x-access-token', userToken)
+        .send({
+          orderId: 4
+        });
+      expect(Order.status).toBe(200);
+      done();
+    });
+  });
+
   describe('배달거리 확인 테스트', () => {
     it('배달원 배달거리 확인', async done => {
       const Order = await request(app)
         .get('/api/v1/order/orders')
         .set('x-access-token', riderToken);
-      expect(Order.body.data.length).toEqual(4);
+      expect(Order.body.data.length).toEqual(3);
       expect(Order.status).toBe(200);
-      orderId = Order.body.data.orders[1];
+      orderId = Order.body.data.orders[0];
+      console.log(orderId);
       done();
     });
   });

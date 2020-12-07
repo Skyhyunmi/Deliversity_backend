@@ -653,3 +653,25 @@ order.get('/complete', util.isLoggedin, util.isUser, async function (req: Reques
     return res.status(403).json(util.successFalse(err, "주문 내역이 없거나 배달 완료 처리할 수 없습니다.", null));
   }
 });
+
+order.get('/riderloc', util.isLoggedin, util.isUser, async function (req: Request, res: Response) {
+  //현재 주문중인 배달에서 배달원 위치 받아오기
+  const tokenData = req.decoded;
+  const reqQuery = req.query;
+  try {
+    const order = await orderRep.findOne({
+      where: {
+        id: reqQuery.orderId as string,
+        userId: tokenData.id,
+        orderStatus: 2
+      }
+    });
+    if (!order) return res.status(403).json(util.successFalse(null, "해당 주문 내역이 없거나 주문자가 아니거나 배달 중이 아닙니다", null));
+    const user = await userRep.findOne({ where: { id: order.riderId } });
+    if (!user) return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
+    if (!user.lat) return res.status(403).json(util.successFalse(null, "배달원의 위치를 알 수 없습니다", null));
+    return res.json(util.successTrue("", user));
+  } catch (err) {
+    return res.status(403).json(util.successFalse(err, "", null));
+  }
+});
