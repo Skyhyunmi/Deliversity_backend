@@ -240,20 +240,20 @@ describe('주문 관련 테스트', () => {
     });
   });
 
-  // describe('소비자 리뷰 확인 테스트', () => {
-  //   it('소비자 리뷰 확인', async done => {
-  //     const Review = await request(app)
-  //       .get('/api/v1/order/review/user')
-  //       .set('x-access-token', riderToken)
-  //       .send({
-  //         orderId: orderId,
-  //         userId: userParsedData.id
-  //       });
-  //     console.log(Review);
-  //     expect(Review.status).toBe(200);
-  //     done();
-  //   });
-  // });
+  describe('소비자 리뷰 확인 실패 테스트', () => {
+    it('소비자 리뷰 확인 실패', async done => {
+      const Review = await request(app)
+        .get('/api/v1/order/review/user')
+        .set('x-access-token', riderToken)
+        .send({
+          orderId: orderId,
+          userId: userParsedData.userId
+        });
+      console.log(Review);
+      expect(Review.status).toBe(403);
+      done();
+    });
+  });
 });
 // 배달원은 소비자에 대한 리뷰를 확인한다.
 // 배달원은 해당 주문에 배달을 신청한다.
