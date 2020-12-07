@@ -261,7 +261,6 @@ describe('주문 관련 테스트', () => {
         .send({
           extraFee: 0
         });
-      console.log(Apply);
       expect(Apply.status).toBe(200);
       done();
     });
@@ -273,13 +272,34 @@ describe('주문 관련 테스트', () => {
         .send({
           extraFee: 0
         });
-      console.log(Apply);
       expect(Apply.status).toBe(403);
       done();
     });
   });
+
+  // describe('배달원 목록 확인 테스트', () => {
+  //   it('배달원 목록 확인', async done => {
+  //     const Riders = await request(app)
+  //       .get('/api/v1/order/riders?orderId' + orderId)
+  //       .set('x-access-token', userToken);
+  //     console.log(Riders);
+  //     expect(Riders.status).toBe(200);
+  //     done();
+  //   });
+
+  //   it('배달원 리뷰 확인 실패', async done => {
+  //     const Review = await request(app)
+  //       .get('/api/v1/order/review/rider')
+  //       .set('x-access-token', userToken)
+  //       .send({
+  //         orderId: orderId,
+  //         riderId: riderParsedData.userId
+  //       });
+  //     expect(Review.status).toBe(403);
+  //     done();
+  //   });
+  // });
 });
-// 배달원은 해당 주문에 배달을 신청한다.
 // 사용자는 신청 배달원 목록을 반환한다.
 // 사용자는 배달원에 대한 리뷰를 확인한다.
 // 사용자는 배달원을 선택한다.
