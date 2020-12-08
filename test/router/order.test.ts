@@ -16,6 +16,7 @@ let userParsedData: any;
 let riderParsedData: any;
 let orderId: any;
 let addressId: any;
+let price: any;
 
 // before
 // 사용자는 회원가입을 한다. - ★
@@ -308,7 +309,7 @@ describe('주문 관련 테스트', () => {
 
   // 배달원은 최종 결제 금액을 전송한다.
   describe('결제 테스트', () => {
-    it('최종 결제 금액 전송', async done => {
+    it('최종 결제 금액 전송(배달원)', async done => {
       const Payment = await request(app)
         .post('/api/v1/order/price?orderId=' + orderId)
         .set('x-access-token', riderToken)
@@ -319,14 +320,40 @@ describe('주문 관련 테스트', () => {
       done();
     });
 
-    it('최종 결제 금액 확인', async done => {
+    it('최종 결제 금액 확인(소비자)', async done => {
       const Payment = await request(app)
         .get('/api/v1/order/price?orderId=' + orderId)
         .set('x-access-token', userToken);
       expect(Payment.status).toBe(200);
+      price = Payment.body.data.totalCost;
       done();
     });
 
+    it('포인트 확인하기(소비자)', async done => {
+      const Point = await request(app)
+        .get('/api/v1/point')
+        .set('x-access-token', userToken);
+      expect(Point.status).toBe(200);
+      expect(Point.body.data.point).toBe("0");
+      done();
+    });
+
+    // it('포인트 충전하기(소비자)', async done => {
+    //   done();
+    // });
+
+    // it('결제하기(소비자)', async done => {
+    //   const Payment = await request(app)
+    //     .post('/api/v1/order/pay?orderId=' + orderId)
+    //     .set('x-access-token', userToken)
+    //     .send({
+    //       price: price,
+    //       riderId: riderParsedData.id
+    //     });
+    //   expect(Payment.status).toBe(200);
+    //   console.log(Payment);
+    //   done();
+    // });
   });
 });
 // 사용자는 결제한다.
