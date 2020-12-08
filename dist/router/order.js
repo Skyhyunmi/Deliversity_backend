@@ -258,40 +258,6 @@ exports.order.post('/rider', util.isLoggedin, function (req, res) {
         }
     });
 });
-exports.order.get('/chat', util.isLoggedin, function (req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        //주문에 대한 채팅을 위한 주소 반환
-        //필요없을 수도... 주문 등록 할때 반환해도 될 수도..
-        const tokenData = req.decoded;
-        const reqQuery = req.query;
-        try {
-            //작성
-            const order = yield models_1.orderRep.findOne({
-                where: {
-                    id: reqQuery.orderId,
-                }
-            });
-            if (!order)
-                return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
-            const room = yield models_1.roomRep.findOne({
-                where: {
-                    orderId: order.id,
-                    userId: tokenData.id
-                }
-            });
-            if (!room)
-                return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
-            if (room.ownerId == tokenData.id)
-                return res.json(util.successTrue("", { roomId: room.roomId }));
-            else if (room.riderId == tokenData.id)
-                return res.json(util.successTrue("", { roomId: room.roomId }));
-            return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
-        }
-        catch (err) {
-            return res.status(403).json(util.successFalse(err, "", null));
-        }
-    });
-});
 exports.order.get('/price', util.isLoggedin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //최종 결제 금액 반환
