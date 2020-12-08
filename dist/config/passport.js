@@ -174,6 +174,7 @@ function passportConfig() {
                         password: hashedPw,
                         salt: salt,
                         name: reqBody.name,
+                        gender: reqBody.gender,
                         nickName: reqBody.nickName,
                         age: Number.parseInt(reqBody.age),
                         email: reqBody.email,

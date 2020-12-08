@@ -25,6 +25,7 @@ auth.post("/signup", function (req: Request, res: Response, next: NextFunction) 
         id: _user.id,
         userId: _user.userId,
         name: _user.name,
+        gender: _user.gender,
         nickName: _user.nickName,
         age: _user.age,
         email: _user.email,

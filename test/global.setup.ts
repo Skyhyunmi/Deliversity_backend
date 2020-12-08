@@ -20,7 +20,7 @@ async function signupFunc(email: string, id: string, nickName: string, phone: st
         .post('/api/v1/auth/signup')
         .send({
             "age": "0", "email": email,
-            "id": id, "name": "jesttest",
+            "id": id, "name": "jesttest", "gender": "1",
             "nickName": nickName, "phone": phone, "pw": "jesttest"
         })
 }
