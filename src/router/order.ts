@@ -203,34 +203,6 @@ order.post('/rider', util.isLoggedin, async function (req: Request, res: Respons
   }
 });
 
-order.get('/chat', util.isLoggedin, async function (req: Request, res: Response) {
-  //주문에 대한 채팅을 위한 주소 반환
-  //필요없을 수도... 주문 등록 할때 반환해도 될 수도..
-  const tokenData = req.decoded;
-  const reqQuery = req.query;
-  try {
-    //작성
-    const order = await orderRep.findOne({
-      where: {
-        id: reqQuery.orderId as string,
-      }
-    });
-    if (!order) return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
-    const room = await roomRep.findOne({
-      where: {
-        orderId: order.id,
-        userId: tokenData.id
-      }
-    });
-    if (!room) return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
-    if (room.ownerId == tokenData.id) return res.json(util.successTrue("", { roomId: room.roomId }));
-    else if (room.riderId == tokenData.id) return res.json(util.successTrue("", { roomId: room.roomId }));
-    return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
-  } catch (err) {
-    return res.status(403).json(util.successFalse(err, "", null));
-  }
-});
-
 order.get('/price', util.isLoggedin, async function (req: Request, res: Response) {
   //최종 결제 금액 반환
   const reqQuery = req.query;
