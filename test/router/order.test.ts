@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import { myCache } from "../../src/config/functions";
 import dotenv from "dotenv";
 import { order } from "../../src/router/order";
+import { db } from "../../src/models";
 dotenv.config({ path: "../../.env" });
 
 let riderToken: any;
@@ -30,7 +31,7 @@ beforeAll(async (done) => {
     .send({
       id: "usertest",
       pw: "jesttest"
-    })
+    });
   expect(userData.status).toBe(200);
   userToken = userData.body.data.token;
   userParsedData = jwt.decode(userToken);
@@ -41,7 +42,7 @@ beforeAll(async (done) => {
       address: "서울 강남구 도산대로55길 26",
       detailAddress: "3층",
       setDefault: "1"
-    })
+    });
   expect(addressData.body.data.address).toBe("서울 강남구 도산대로55길 26");
   addressId = addressData.body.data.id;
 
@@ -66,12 +67,12 @@ beforeAll(async (done) => {
   const user = await request(app)
     .post('/api/v1/myinfo/upload')
     .set('x-access-token', userToken)
-    .send({ idCard: "test" })
+    .send({ idCard: "test" });
 
   const rider = await request(app)
     .post('/api/v1/myinfo/upload')
     .set('x-access-token', riderToken)
-    .send({ idCard: "test" })
+    .send({ idCard: "test" });
 
   const userres = await request(app)
     .put(`/api/v1/admin/upload?id=${userParsedData.id}`)
@@ -123,9 +124,6 @@ beforeAll(async (done) => {
 // 사용자는 배달원에 대한 리뷰를 작성한다.
 // 배달원은 소비자에 대한 리뷰를 작성한다.
 // 예외) 이미 리뷰를 단 경우 (한 번 더 시도)
-
-// 소비자 주문 내역 받아오기
-// 배달원 배달 내역 받아오기
 
 describe('주문 관련 테스트', () => {
   // 사용자는 주문을 등록한다.
@@ -277,35 +275,60 @@ describe('주문 관련 테스트', () => {
     });
   });
 
-  // describe('배달원 목록 확인 테스트', () => {
-  //   it('배달원 목록 확인', async done => {
-  //     const Riders = await request(app)
-  //       .get('/api/v1/order/riders?orderId' + orderId)
-  //       .set('x-access-token', userToken);
-  //     console.log(Riders);
-  //     expect(Riders.status).toBe(200);
-  //     done();
-  //   });
+  describe('배달원 선택 테스트', () => {
+    it('배달원 목록 확인', async done => {
+      const Riders = await request(app)
+        .get('/api/v1/order/riders?orderId=' + orderId)
+        .set('x-access-token', userToken);
+      expect(Riders.status).toBe(200);
+      done();
+    });
 
-  //   it('배달원 리뷰 확인 실패', async done => {
-  //     const Review = await request(app)
-  //       .get('/api/v1/order/review/rider')
-  //       .set('x-access-token', userToken)
-  //       .send({
-  //         orderId: orderId,
-  //         riderId: riderParsedData.userId
-  //       });
-  //     expect(Review.status).toBe(403);
-  //     done();
-  //   });
-  // });
+    it('배달원 리뷰 확인 실패', async done => {
+      const Review = await request(app)
+        .get('/api/v1/order/review/rider?orderId=' + orderId + 'riderId=' + riderParsedData.id)
+        .set('x-access-token', userToken);
+      expect(Review.status).toBe(403);
+      done();
+    });
+
+    it('배달원 선택', async done => {
+      const riderId = "UPDATE Orders SET riderId = 4 WHERE id = '1'";
+      const status = "UPDATE Orders SET orderStatus = 1 WHERE id = '1'";
+      const chatId = "UPDATE Orders SET chatId = 1 WHERE id = '1'";
+      const room = "INSERT INTO Rooms(orderId,ownerId,owner,riderId,roomId,createdAt,updatedAt) VALUES(1, 3, 'usertest', 4, 1, '2020-11-12 20:01:42', '2020-11-12 20:01:42')"
+
+      await db.query(riderId as string);
+      await db.query(status as string);
+      await db.query(chatId as string);
+      await db.query(room as string);
+      done();
+    });
+  });
+
+  // 배달원은 최종 결제 금액을 전송한다.
+  describe('결제 테스트', () => {
+    it('최종 결제 금액 전송', async done => {
+      const Payment = await request(app)
+        .post('/api/v1/order/price?orderId=' + orderId)
+        .set('x-access-token', riderToken)
+        .send({
+          cost: 1000
+        });
+      expect(Payment.status).toBe(200);
+      done();
+    });
+
+    it('최종 결제 금액 확인', async done => {
+      const Payment = await request(app)
+        .get('/api/v1/order/price?orderId=' + orderId)
+        .set('x-access-token', userToken);
+      expect(Payment.status).toBe(200);
+      done();
+    });
+
+  });
 });
-// 사용자는 신청 배달원 목록을 반환한다.
-// 사용자는 배달원에 대한 리뷰를 확인한다.
-// 사용자는 배달원을 선택한다.
-// 사용자는 배달원과 채팅 주소를 받는다.
-// 사용자는 최종 결제 금액을 반환한다.
-// 배달원은 최종 결제 금액을 전송한다.
 // 사용자는 결제한다.
 // 배달원은 배달 완료로 변경한다.
 // 사용자는 배달원에 대한 리뷰를 작성한다.
