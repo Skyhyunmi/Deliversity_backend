@@ -338,6 +338,10 @@ describe('주문 관련 테스트', () => {
       done();
     });
 
+    // it('포인트 충전하기(소비자)', async done => {
+    //   done();
+    // });
+
     // it('결제하기(소비자)', async done => {
     //   const Payment = await request(app)
     //     .post('/api/v1/order/pay?orderId=' + orderId)
@@ -358,5 +362,4 @@ describe('주문 관련 테스트', () => {
 // 배달원은 소비자에 대한 리뷰를 작성한다.
 
 // 소비자 주문 내역 받아오기
-// 배달원 배달 내역 받아오기
 // 배달원 배달 내역 받아오기
