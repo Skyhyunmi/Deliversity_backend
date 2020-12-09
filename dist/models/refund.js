@@ -33,6 +33,9 @@ __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
 ], Refund.prototype, "accountNum", void 0);
 __decorate([
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
+], Refund.prototype, "bankTranId", void 0);
+__decorate([
     sequelize_typescript_1.Default(0),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BOOLEAN)
 ], Refund.prototype, "status", void 0);

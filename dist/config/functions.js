@@ -31,7 +31,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendFCMMessage = exports.getDistanceFromLatLonInKm = exports.getUserFromKakaoInfo = exports.getUserFromGoogleInfo = exports.smsVerify = exports.sendSMS = exports.sendSMStoAdmin = exports.getAuthToken = exports.emailVerify = exports.pwEmail = exports.sendEmail = exports.myCache = void 0;
+exports.getBankCode = exports.sendFCMMessage = exports.getDistanceFromLatLonInKm = exports.getUserFromKakaoInfo = exports.getUserFromGoogleInfo = exports.smsVerify = exports.sendSMS = exports.sendSMStoAdmin = exports.getAuthToken = exports.emailVerify = exports.pwEmail = exports.sendEmail = exports.myCache = void 0;
 const axios_1 = __importDefault(require("axios"));
 const index_1 = require("../models/index");
 const crypto = __importStar(require("crypto"));
@@ -341,3 +341,29 @@ function sendFCMMessage(tokens, payload) {
     });
 }
 exports.sendFCMMessage = sendFCMMessage;
+function getBankCode(bankKind) {
+    const bankCode = [
+        { bank: "KDB 산업은행", code: "002" },
+        { bank: "SC 제일은행", code: "023" },
+        { bank: "전북은행", code: "037" },
+        { bank: "IBK기업은행", code: "003" },
+        { bank: "한국씨티은행", code: "027" },
+        { bank: "경남은행", code: "039" },
+        { bank: "KB 국민은행", code: "004" },
+        { bank: "대구은행", code: "031" },
+        { bank: "하나은행", code: "081" },
+        { bank: "수협은행", code: "007" },
+        { bank: "부산은행", code: "032" },
+        { bank: "신한은행", code: "088" },
+        { bank: "NH 농협은행", code: "011" },
+        { bank: "광주은행", code: "034" },
+        { bank: "케이뱅크", code: "089" },
+        { bank: "우리은행", code: "020" },
+        { bank: "제주은행", code: "035" },
+        { bank: "카카오뱅크", code: "090" },
+        { bank: "오픈은행", code: "097" }
+    ];
+    const bank = bankCode.filter(it => it.bank.includes(bankKind));
+    return bank[0].code;
+}
+exports.getBankCode = getBankCode;

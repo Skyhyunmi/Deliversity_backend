@@ -31,11 +31,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.admin = void 0;
+exports.admin = exports.myCache = void 0;
 const express_1 = require("express");
 const util = __importStar(require("../config/util"));
 const index_1 = require("../models/index");
 const functions = __importStar(require("../config/functions"));
+const axios_1 = __importDefault(require("axios"));
+const node_cache_1 = __importDefault(require("node-cache"));
+exports.myCache = new node_cache_1.default();
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 exports.admin = express_1.Router();
@@ -255,14 +258,37 @@ exports.admin.get('/refund', util.isLoggedin, util.isAdmin, function (req, res) 
         const reqQuery = req.query;
         const refundId = parseInt(reqQuery.refundId);
         try {
+            if (!refundId)
+                return res.status(403).json(util.successFalse(null, "환급 아이디를 넣어주세요.", null));
             const refund = yield index_1.refundRep.findOne({ where: { id: refundId } });
-            if (!refund) {
+            if (!refund)
                 return res.status(403).json(util.successFalse(null, "해당하는 입금 신청 내역이 없습니다.", null));
-            }
             return res.json(util.successTrue("", refund));
         }
         catch (err) {
             return res.status(403).json(util.successFalse(err, "", null));
+        }
+    });
+});
+exports.admin.get('/openToken', util.isLoggedin, util.isAdmin, function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const data = yield axios_1.default({
+                url: 'https://testapi.openbanking.or.kr/oauth/2.0/token',
+                params: {
+                    "client_id": process.env.OPEN_API,
+                    "client_secret": process.env.OPEN_SECRET,
+                    "scope": "oob",
+                    "grant_type": "client_credentials"
+                },
+                method: 'post'
+            });
+            exports.myCache.set('OpenBankingToken', data.data.access_token);
+            console.log(data.data.access_token);
+            return res.json(util.successTrue("", null));
+        }
+        catch (e) {
+            return res.status(403).json(util.successFalse(null, "토큰 발급 실패", null));
         }
     });
 });
@@ -277,14 +303,55 @@ exports.admin.put('/refund', util.isLoggedin, util.isAdmin, function (req, res) 
         today.setFullYear(today.getFullYear(), today.getMonth(), today.getDay());
         try {
             const refund = yield index_1.refundRep.findOne({ where: { id: refundId } });
-            if (!refund) {
+            if (!refund)
                 return res.status(403).json(util.successFalse(null, "해당하는 입금 신청 내역이 없습니다.", null));
-            }
-            if (refund.status) {
+            if (refund.status)
                 return res.status(403).json(util.successFalse(null, "이미 입금이 완료된 신청입니다.", null));
-            }
+            if (complete !== 1)
+                return res.status(403).json(util.successFalse(null, "환급 실패 입니다.", null));
+            const user = yield index_1.userRep.findOne({ where: { id: refund.userId } });
+            if (!user)
+                return res.status(403).json(util.successFalse(null, "해당하는 유저가 없습니다.", null));
+            // if(user.name != refund.accountName) return res.status(403).json(util.successFalse(null, "사용자명과 환급 계좌 명의가 다릅니다.", null));
+            const padNum = String(Math.floor(Math.random() * 1000000000) + 1).padStart(9, '0');
+            console.log(padNum);
+            const trans = yield axios_1.default({
+                url: 'https://testapi.openbanking.or.kr/v2.0/transfer/deposit/acnt_num',
+                headers: {
+                    Authorization: "Bearer " + exports.myCache.get('OpenBankingToken') //Access_Token 추가 (oob, sa 뭐냐)
+                },
+                data: {
+                    "cntr_account_type": "N",
+                    "cntr_account_num": process.env.OPEN_ACCOUNT,
+                    "wd_pass_phrase": "NONE",
+                    "wd_print_content": "환급",
+                    "name_check_option": "on",
+                    "tran_dtime": "20201001150133",
+                    "req_cnt": "1",
+                    "req_list": [
+                        {
+                            "tran_no": "1",
+                            "bank_tran_id": "T991672410U" + padNum,
+                            "bank_code_std": functions.getBankCode(refund.bankKind),
+                            "account_num": refund.accountNum,
+                            "account_holder_name": refund.accountName,
+                            "print_content": "환급",
+                            "tran_amt": refund.amount,
+                            "req_client_name": refund.accountName,
+                            "req_client_bank_code": functions.getBankCode(refund.bankKind),
+                            "req_client_account_num": refund.accountNum,
+                            "req_client_num": user.id,
+                            "transfer_purpose": "TR" //이체
+                        }
+                    ]
+                },
+                method: 'post'
+            });
+            console.log(trans.data);
+            if (trans.data.rsp_code != "A0000")
+                return res.status(403).json(util.successFalse(null, "환급 실패", null));
             if (complete === 1)
-                yield refund.update({ status: true, refundAt: today });
+                yield refund.update({ status: true, refundAt: today, bankTranId: "T991672410U" + padNum });
             return res.json(util.successTrue("", refund));
         }
         catch (err) {
