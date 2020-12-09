@@ -34,6 +34,9 @@ export default class Refund extends Model<Refund> {
   @Column(DataType.STRING)
   accountNum!: string;
 
+  @Column(DataType.STRING)
+  bankTranId!: string;
+
   @Default(0)
   @Column(DataType.BOOLEAN)
   status!: boolean;
