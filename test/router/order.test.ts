@@ -338,28 +338,89 @@ describe('주문 관련 테스트', () => {
       done();
     });
 
-    // it('포인트 충전하기(소비자)', async done => {
-    //   done();
-    // });
+    it('포인트 충전하기(소비자)', async done => {
+      const user_charge = "INSERT INTO Points(userId,pointKind,orderId,point,status,createdAt,updatedAt) VALUES(3, 0, null, 20000, 0, '2020-11-12 20:01:42', '2020-11-12 20:01:42')"
+      const rider_charge = "INSERT INTO Points(userId,pointKind,orderId,point,status,createdAt,updatedAt) VALUES(4, 0, null, 10000, 0, '2020-11-12 20:01:42', '2020-11-12 20:01:42')"
+      await db.query(user_charge as string);
+      await db.query(rider_charge as string);
+      done();
+    });
 
-    // it('결제하기(소비자)', async done => {
-    //   const Payment = await request(app)
-    //     .post('/api/v1/order/pay?orderId=' + orderId)
-    //     .set('x-access-token', userToken)
-    //     .send({
-    //       price: price,
-    //       riderId: riderParsedData.id
-    //     });
-    //   expect(Payment.status).toBe(200);
-    //   console.log(Payment);
-    //   done();
-    // });
+    it('결제하기(소비자)', async done => {
+      const Payment = await request(app)
+        .post('/api/v1/order/pay?orderId=' + orderId)
+        .set('x-access-token', userToken)
+        .send({
+          price: price,
+          riderId: riderParsedData.id
+        });
+      expect(Payment.status).toBe(200);
+      done();
+    });
+  });
+
+
+  // 배달원은 배달 완료로 변경한다.
+  // 사용자는 배달원에 대한 리뷰를 작성한다.
+  // 배달원은 소비자에 대한 리뷰를 작성한다.
+  describe('배달 후 리뷰 테스트', () => {
+    it('배달 완료 전환', async done => {
+      const Complete = await request(app)
+        .get('/api/v1/order/complete?orderId=' + orderId)
+        .set('x-access-token', riderToken);
+      expect(Complete.status).toBe(200);
+      expect(Complete.body.data.orderStatus).toBe(3);
+      done();
+    });
+
+    it('리뷰 남기기(소비자가)', async done => {
+      const Review = await request(app)
+        .post('/api/v1/order/review/rider')
+        .set('x-access-token', userToken)
+        .send({
+          orderId: orderId,
+          rating: "5",
+          content: "너무 좋네요"
+        });
+      expect(Review.status).toBe(200);
+      expect(Review.body.data.rating).toBe("5");
+      done();
+    });
+
+    it('리뷰 남기기(배달원이)', async done => {
+      const Review = await request(app)
+        .post('/api/v1/order/review/user')
+        .set('x-access-token', riderToken)
+        .send({
+          orderId: orderId,
+          rating: "3",
+          content: "무난해요"
+        });
+      expect(Review.status).toBe(200);
+      expect(Review.body.data.rating).toBe("3");
+      done();
+    });
+  });
+
+  // 소비자 주문 내역 받아오기
+  // 배달원 배달 내역 받아오기
+  describe('내역 받아오기 테스트', () => {
+    it('배달건 내역 받아오기(배달원)', async done => {
+      const riderList = await request(app)
+        .get('/api/v1/order/deliverList')
+        .set('x-access-token', riderToken);
+      expect(riderList.status).toBe(200);
+      expect(riderList.body.data.length).toEqual(1);
+      done();
+    });
+
+    it('주문 내역 받아오기(소비자)', async done => {
+      const orderList = await request(app)
+        .get('/api/v1/order/orderList')
+        .set('x-access-token', userToken);
+      expect(orderList.status).toBe(200);
+      expect(orderList.body.data.length).toEqual(3);
+      done();
+    });
   });
 });
-// 사용자는 결제한다.
-// 배달원은 배달 완료로 변경한다.
-// 사용자는 배달원에 대한 리뷰를 작성한다.
-// 배달원은 소비자에 대한 리뷰를 작성한다.
-
-// 소비자 주문 내역 받아오기
-// 배달원 배달 내역 받아오기
