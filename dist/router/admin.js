@@ -242,28 +242,10 @@ exports.admin.get('/refunds', util.isLoggedin, util.isAdmin, function (req, res)
     return __awaiter(this, void 0, void 0, function* () {
         //환급 리스트 반환
         try {
-            const refunds = yield index_1.refundRep.findAll({ where: { status: 0 }, attributes: ['id', 'status'] });
+            const refunds = yield index_1.refundRep.findAll({ where: { status: 0 } });
             if (!refunds)
                 return res.status(403).json(util.successFalse(null, "현재 입금을 기다리는 환급이 없습니다.", null));
             return res.json(util.successTrue("", refunds));
-        }
-        catch (err) {
-            return res.status(403).json(util.successFalse(err, "", null));
-        }
-    });
-});
-exports.admin.get('/refund', util.isLoggedin, util.isAdmin, function (req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        //환급 상세내용보기
-        const reqQuery = req.query;
-        const refundId = parseInt(reqQuery.refundId);
-        try {
-            if (!refundId)
-                return res.status(403).json(util.successFalse(null, "환급 아이디를 넣어주세요.", null));
-            const refund = yield index_1.refundRep.findOne({ where: { id: refundId } });
-            if (!refund)
-                return res.status(403).json(util.successFalse(null, "해당하는 입금 신청 내역이 없습니다.", null));
-            return res.json(util.successTrue("", refund));
         }
         catch (err) {
             return res.status(403).json(util.successFalse(err, "", null));
