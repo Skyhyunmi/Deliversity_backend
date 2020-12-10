@@ -87,45 +87,6 @@ beforeAll(async (done) => {
   done();
 });
 
-// ㄱ) 주문을 하지 않은 경우
-// 예외)사용자는 신청 배달원 목록을 반환한다.
-// 예외)사용자는 배달원을 선택한다.
-// 주문을 등록한다.
-// 예외) 동성 배달 이용 불가 확인
-// 사용자는 주문을 확인한다.
-// 예외) 주문을 하지 않은 경우
-// a) 예약인 경우 : 시간 분 등록 했는지
-// 예외) 시간 분 등록이 안된 경우
-// b) 예약이 아닌 경우
-// 사용자는 주문을 확인한다.
-// ㄴ) 주문을 한 경우
-// 사용자는 신청 배달원 목록을 반환한다.
-// ㄴ) 주문을 한 경우
-// 예외) 희망하는 배달원이 없는 경우
-// 배달원은 배달원이 찾을 배달거리를 확인한다.
-// 배달원은 소비자에 대한 리뷰를 확인한다.
-// 배달원은 해당 주문에 배달을 신청한다.
-// 예외) 주문 건이 없는 경우
-// 예외) 배달원 모집이 끝난 경우
-// 예외) 본인의 주문인 경우
-// 예외)
-// b) 희망하는 배달원이 있는 경우
-// 사용자는 배달원에 대한 리뷰를 확인한다.
-// 사용자는 배달원을 선택한다.
-// 예외) 해당하는 배달원이 존재하지 않는 경우
-// 사용자는 배달원과 채팅 주소를 받는다.
-// 사용자는 최종 결제 금액을 반환한다.
-// 예외) 배달 과정이 아닌경우
-// 예외) 물건 값 입력을 안한 경우
-// 배달원은 최종 결제 금액을 전송한다.
-// 예외) 이미 결제 금액을 등록한 경우
-// 사용자는 결제한다.
-// 예외) 잔액이 부족한 경우
-// 배달원은 배달 완료로 변경한다.
-// 사용자는 배달원에 대한 리뷰를 작성한다.
-// 배달원은 소비자에 대한 리뷰를 작성한다.
-// 예외) 이미 리뷰를 단 경우 (한 번 더 시도)
-
 describe('주문 관련 테스트', () => {
   // 사용자는 주문을 등록한다.
   describe('주문 접수 테스트', () => {
@@ -309,6 +270,14 @@ describe('주문 관련 테스트', () => {
 
   // 배달원은 최종 결제 금액을 전송한다.
   describe('결제 테스트', () => {
+    it('최종 결제 금액 확인 실패(소비자)', async done => {
+      const Payment = await request(app)
+        .get('/api/v1/order/price?orderId=' + orderId)
+        .set('x-access-token', userToken);
+      expect(Payment.status).toBe(403);
+      done();
+    });
+
     it('최종 결제 금액 전송(배달원)', async done => {
       const Payment = await request(app)
         .post('/api/v1/order/price?orderId=' + orderId)
@@ -317,6 +286,17 @@ describe('주문 관련 테스트', () => {
           cost: 1000
         });
       expect(Payment.status).toBe(200);
+      done();
+    });
+
+    it('최종 결제 금액 중복 전송(배달원)', async done => {
+      const Payment = await request(app)
+        .post('/api/v1/order/price?orderId=' + orderId)
+        .set('x-access-token', riderToken)
+        .send({
+          cost: 1000
+        });
+      expect(Payment.status).toBe(403);
       done();
     });
 
@@ -335,6 +315,18 @@ describe('주문 관련 테스트', () => {
         .set('x-access-token', userToken);
       expect(Point.status).toBe(200);
       expect(Point.body.data.point).toBe("0");
+      done();
+    });
+
+    it('충전 전 결제 시도(소비자)', async done => {
+      const Payment = await request(app)
+        .post('/api/v1/order/pay?orderId=' + orderId)
+        .set('x-access-token', userToken)
+        .send({
+          price: price,
+          riderId: riderParsedData.id
+        });
+      expect(Payment.status).toBe(403);
       done();
     });
 
@@ -364,6 +356,32 @@ describe('주문 관련 테스트', () => {
   // 사용자는 배달원에 대한 리뷰를 작성한다.
   // 배달원은 소비자에 대한 리뷰를 작성한다.
   describe('배달 후 리뷰 테스트', () => {
+    it('배달 완료 전 리뷰 남기기 실패(소비자가)', async done => {
+      const Review = await request(app)
+        .post('/api/v1/order/review/rider')
+        .set('x-access-token', userToken)
+        .send({
+          orderId: orderId,
+          rating: "5",
+          content: "너무 좋네요"
+        });
+      expect(Review.status).toBe(403);
+      done();
+    });
+
+    it('배달 완료 전 리뷰 남기기 실패(배달원이)', async done => {
+      const Review = await request(app)
+        .post('/api/v1/order/review/user')
+        .set('x-access-token', riderToken)
+        .send({
+          orderId: orderId,
+          rating: "3",
+          content: "무난해요"
+        });
+      expect(Review.status).toBe(403);
+      done();
+    });
+
     it('배달 완료 전환', async done => {
       const Complete = await request(app)
         .get('/api/v1/order/complete?orderId=' + orderId)
