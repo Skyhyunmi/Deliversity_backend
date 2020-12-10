@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Veri = exports.Rider = exports.payLoad = exports.userData = void 0;
+exports.MyInfo = exports.Veri = exports.Rider = exports.payLoad = exports.userData = void 0;
+class ChatUserData {
+}
 class userData {
     constructor(data, userNickName) {
         this.userId = data.user._id;
@@ -30,3 +32,18 @@ exports.Rider = Rider;
 class Veri {
 }
 exports.Veri = Veri;
+class MyInfo {
+    constructor(user) {
+        this.id = user.id;
+        this.userId = user.userId;
+        this.name = user.name;
+        this.nickName = user.nickName;
+        this.gender = user.gender;
+        this.age = user.age;
+        this.email = user.email;
+        this.phone = user.phone;
+        this.addressId = user.addressId;
+        this.grade = user.grade;
+    }
+}
+exports.MyInfo = MyInfo;

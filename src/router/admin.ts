@@ -211,48 +211,18 @@ admin.put('/refund', util.isLoggedin, util.isAdmin, async function (req: Request
     const refund = await refundRep.findOne({ where: { id: refundId } });
     if (!refund) return res.status(403).json(util.successFalse(null, "해당하는 입금 신청 내역이 없습니다.", null));
     if (refund.status) return res.status(403).json(util.successFalse(null, "이미 입금이 완료된 신청입니다.", null));
-    if (complete !== 1) return res.status(403).json(util.successFalse(null, "환급 실패 입니다.", null));
+    if (complete !== 1) return res.status(403).json(util.successFalse(null, "환급 실패", null));
 
     const user = await userRep.findOne({ where: { id: refund.userId } });
     if (!user) return res.status(403).json(util.successFalse(null, "해당하는 유저가 없습니다.", null));
     // if(user.name != refund.accountName) return res.status(403).json(util.successFalse(null, "사용자명과 환급 계좌 명의가 다릅니다.", null));
-    const padNum = String(Math.floor(Math.random() * 1000000000) + 1).padStart(9, '0');
-    console.log(padNum);
-    const trans = await axios({
-      url: 'https://testapi.openbanking.or.kr/v2.0/transfer/deposit/acnt_num',
-      headers: {
-        Authorization: "Bearer " + myCache.get('OpenBankingToken') as string //Access_Token 추가 (oob, sa 뭐냐)
-      },
-      data: {
-        "cntr_account_type": "N", //N=> 계좌, C=>계정, 약정 계좌 구분
-        "cntr_account_num": process.env.OPEN_ACCOUNT, //약정 계좌 또는 계정
-        "wd_pass_phrase": "NONE", //테스트용도로는 NONE을 사용
-        "wd_print_content": "환급", //출금되는 통장에 찍히는 내역
-        "name_check_option": "on",
-        "tran_dtime": "20201001150133", //거래 일시
-        "req_cnt": "1", //1 고정이라고 합니다. 2 이상 못씀.
-        "req_list": [
-          {
-            "tran_no": "1", //거래 순번
-            "bank_tran_id": "T991672410U" + padNum, //거래고유번호
-            "bank_code_std": functions.getBankCode(refund.bankKind), //입금 계좌 은행 코드
-            "account_num": refund.accountNum, //입금 계좌 번호
-            "account_holder_name": refund.accountName, //입금계좌예금주명
-            "print_content": "환급",//인자내역, 입금되는 통장에 찍히는거
-            "tran_amt": refund.amount,//거래금액
-            "req_client_name": refund.accountName, //환급을 요청한 사람 이름 (고객이겠징)
-            "req_client_bank_code": functions.getBankCode(refund.bankKind), // 환급을 요청한 사람의 계좌 은행 코드
-            "req_client_account_num": refund.accountNum, // 환급을 요청한 사람의 계좌
-            "req_client_num": user.id, // 유저의 고유번호를 우리가 넣으면 될듯
-            "transfer_purpose": "TR" //이체
-          }
-        ]
-      },
-      method: 'post'
-    });
-    console.log(trans.data);
-    if (trans.data.rsp_code != "A0000") return res.status(403).json(util.successFalse(null, "환급 실패", null));
-    if (complete === 1) await refund.update({ status: true, refundAt: today, bankTranId: "T991672410U" + padNum });
+    const padNum = "T991672410U"+String(Math.floor(Math.random() * 1000000000) + 1).padStart(9,'0');
+    const token = myCache.get('OpenBankingToken') as string;
+    if(!token) return res.status(403).json(util.successFalse(null, "토큰을 발급해주세요.", null));
+    const trans = await functions.sendMoney(token,refund,user,padNum);
+    if(trans == false) return res.status(403).json(util.successFalse(null, "은행명을 다시 입력해주세요.", null));
+    if(trans.data.rsp_code != "A0000") return res.status(403).json(util.successFalse(null, "환급 실패", null));
+    await refund.update({ status: true, refundAt: today,bankTranId:padNum });
     return res.json(util.successTrue("", refund));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));

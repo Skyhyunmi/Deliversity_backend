@@ -4,11 +4,13 @@ import * as crypto from "crypto";
 import * as admin from "firebase-admin";
 import Cache from "node-cache";
 import User from "../models/user";
+import Refund from "../models/refund";
 import jwt from "jsonwebtoken";
 import { transporter } from "./mail";
 import * as classes from "./classes";
 
 import dotenv from "dotenv";
+
 dotenv.config();
 
 export const myCache = new Cache();
@@ -286,29 +288,67 @@ export function sendFCMMessage(tokens:string | string[], payload: admin.messagin
     });
 }
 
-export function getBankCode(bankKind: string){
+export async function sendMoney(token:string, refund: Refund, user: User,padNum: string){
   
+  const bankCode = getBankCode(refund.bankKind);
+  if(!bankCode) return false;
+  return await axios({
+    url:'https://testapi.openbanking.or.kr/v2.0/transfer/deposit/acnt_num',
+    headers:{
+      Authorization: "Bearer " + token //Access_Token 추가 (oob, sa 뭐냐)
+    },
+    data:{
+      "cntr_account_type": "N", //N=> 계좌, C=>계정, 약정 계좌 구분
+      "cntr_account_num": process.env.OPEN_ACCOUNT, //약정 계좌 또는 계정
+      "wd_pass_phrase": "NONE", //테스트용도로는 NONE을 사용
+      "wd_print_content": "환급", //출금되는 통장에 찍히는 내역
+      "name_check_option":"on",
+      "tran_dtime": "20201001150133", //거래 일시
+      "req_cnt": "1", //1 고정이라고 합니다. 2 이상 못씀.
+      "req_list": [
+        {
+          "tran_no": "1", //거래 순번
+          "bank_tran_id": padNum, //거래고유번호
+          "bank_code_std": bankCode, //입금 계좌 은행 코드
+          "account_num": refund.accountNum, //입금 계좌 번호
+          "account_holder_name": refund.accountName, //입금계좌예금주명
+          "print_content": "환급",//인자내역, 입금되는 통장에 찍히는거
+          "tran_amt": refund.amount,//거래금액
+          "req_client_name": refund.accountName, //환급을 요청한 사람 이름 (고객이겠징)
+          "req_client_bank_code":bankCode, // 환급을 요청한 사람의 계좌 은행 코드
+          "req_client_account_num":refund.accountNum, // 환급을 요청한 사람의 계좌
+          "req_client_num": user.id, // 유저의 고유번호를 우리가 넣으면 될듯
+          "transfer_purpose": "TR" //이체
+        }
+      ]
+    },
+    method:'post'
+  });
+}
+
+export function getBankCode(bankKind: string){
   const bankCode = [
     {bank: "KDB 산업은행",  code:"002"},
     {bank: "SC 제일은행",   code:"023"},
-    {bank: "전북은행",      code:"037" },
-    {bank: "IBK기업은행",   code:"003"},
-    {bank: "한국씨티은행",   code:"027" },
-    {bank: "경남은행",      code:"039" },
+    {bank: "전북은행",      code:"037"},
+    {bank: "IBK 기업은행",  code:"003"},
+    {bank: "한국씨티은행",   code:"027"},
+    {bank: "경남은행",      code:"039"},
     {bank: "KB 국민은행",   code:"004"},
-    {bank: "대구은행",      code:"031" },
-    {bank: "하나은행",      code:"081" },
+    {bank: "대구은행",      code:"031"},
+    {bank: "하나은행",      code:"081"},
     {bank: "수협은행",      code:"007"},
     {bank: "부산은행",      code:"032"},
     {bank: "신한은행",      code:"088"},
-    {bank: "NH 농협은행",   code:"011" },
+    {bank: "NH 농협은행",   code:"011"},
     {bank: "광주은행",      code:"034"},
     {bank: "케이뱅크",      code:"089"},
     {bank: "우리은행",      code:"020"},
     {bank: "제주은행",      code:"035"},
-    {bank: "카카오뱅크",     code:"090" },
-    {bank: "오픈은행",      code:"097" }
+    {bank: "카카오뱅크",     code:"090"},
+    {bank: "오픈은행",      code:"097"}
   ];
-  const bank = bankCode.filter(it=>it.bank.includes(bankKind));
+  const bank = bankCode.filter(it=>it.bank===bankKind);
+  if(bank[0] === undefined || bank.length>1) return false;
   return bank[0].code;
 }

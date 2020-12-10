@@ -294,50 +294,21 @@ exports.admin.put('/refund', util.isLoggedin, util.isAdmin, function (req, res) 
             if (refund.status)
                 return res.status(403).json(util.successFalse(null, "이미 입금이 완료된 신청입니다.", null));
             if (complete !== 1)
-                return res.status(403).json(util.successFalse(null, "환급 실패 입니다.", null));
+                return res.status(403).json(util.successFalse(null, "환급 실패", null));
             const user = yield index_1.userRep.findOne({ where: { id: refund.userId } });
             if (!user)
                 return res.status(403).json(util.successFalse(null, "해당하는 유저가 없습니다.", null));
             // if(user.name != refund.accountName) return res.status(403).json(util.successFalse(null, "사용자명과 환급 계좌 명의가 다릅니다.", null));
-            const padNum = String(Math.floor(Math.random() * 1000000000) + 1).padStart(9, '0');
-            console.log(padNum);
-            const trans = yield axios_1.default({
-                url: 'https://testapi.openbanking.or.kr/v2.0/transfer/deposit/acnt_num',
-                headers: {
-                    Authorization: "Bearer " + exports.myCache.get('OpenBankingToken') //Access_Token 추가 (oob, sa 뭐냐)
-                },
-                data: {
-                    "cntr_account_type": "N",
-                    "cntr_account_num": process.env.OPEN_ACCOUNT,
-                    "wd_pass_phrase": "NONE",
-                    "wd_print_content": "환급",
-                    "name_check_option": "on",
-                    "tran_dtime": "20201001150133",
-                    "req_cnt": "1",
-                    "req_list": [
-                        {
-                            "tran_no": "1",
-                            "bank_tran_id": "T991672410U" + padNum,
-                            "bank_code_std": functions.getBankCode(refund.bankKind),
-                            "account_num": refund.accountNum,
-                            "account_holder_name": refund.accountName,
-                            "print_content": "환급",
-                            "tran_amt": refund.amount,
-                            "req_client_name": refund.accountName,
-                            "req_client_bank_code": functions.getBankCode(refund.bankKind),
-                            "req_client_account_num": refund.accountNum,
-                            "req_client_num": user.id,
-                            "transfer_purpose": "TR" //이체
-                        }
-                    ]
-                },
-                method: 'post'
-            });
-            console.log(trans.data);
+            const padNum = "T991672410U" + String(Math.floor(Math.random() * 1000000000) + 1).padStart(9, '0');
+            const token = exports.myCache.get('OpenBankingToken');
+            if (!token)
+                return res.status(403).json(util.successFalse(null, "토큰을 발급해주세요.", null));
+            const trans = yield functions.sendMoney(token, refund, user, padNum);
+            if (trans == false)
+                return res.status(403).json(util.successFalse(null, "은행명을 다시 입력해주세요.", null));
             if (trans.data.rsp_code != "A0000")
                 return res.status(403).json(util.successFalse(null, "환급 실패", null));
-            if (complete === 1)
-                yield refund.update({ status: true, refundAt: today, bankTranId: "T991672410U" + padNum });
+            yield refund.update({ status: true, refundAt: today, bankTranId: padNum });
             return res.json(util.successTrue("", refund));
         }
         catch (err) {
