@@ -236,7 +236,7 @@ exports.order.post('/rider', util.isLoggedin, function (req, res) {
                     "body": "배달원으로 선발되었습니다.",
                 },
                 data: {
-                    orderId: order.id.toString(),
+                    orderId: room.orderId.toString(),
                     roomId: room.roomId,
                     userId: room.ownerId.toString(),
                     riderId: room.riderId.toString(),
@@ -494,36 +494,6 @@ exports.order.get('/orders', util.isLoggedin, util.isUser, function (req, res) {
         }
         catch (err) {
             return res.status(403).json(util.successFalse(err, "사용자가 없거나 권한이 없습니다.", null));
-        }
-    });
-});
-////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////
-////                              개발용 API입니다. 나중에는 지워야 합니다.                              ////
-////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////
-exports.order.get('/setDelivered', util.isLoggedin, util.isUser, function (req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        //배달원이 찾을 배달거리 리스트 반환
-        // const tokenData = req.decoded;
-        const reqQuery = req.query;
-        try {
-            //작성
-            const order = yield models_1.orderRep.findOne({
-                where: {
-                    id: reqQuery.orderId,
-                    orderStatus: 0
-                }
-            });
-            if (!order)
-                return res.status(403).json(util.successFalse(null, "주문이 없습니다.", null));
-            yield order.update({
-                orderStatus: 3
-            });
-            return res.json(util.successTrue("", order));
-        }
-        catch (err) {
-            return res.status(403).json(util.successFalse(err, "주문이 없습니다.", null));
         }
     });
 });

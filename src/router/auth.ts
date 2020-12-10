@@ -21,20 +21,7 @@ auth.post("/signup", function (req: Request, res: Response, next: NextFunction) 
       return res.status(403).json(util.successFalse(null, info, null));
     }
     if (_user) {
-      const user = {
-        id: _user.id,
-        userId: _user.userId,
-        name: _user.name,
-        gender: _user.gender,
-        nickName: _user.nickName,
-        age: _user.age,
-        email: _user.email,
-        phone: _user.phone,
-        addressId: _user.addressId,
-        grade: _user.grade,
-        createdAt: _user.createdAt,
-        updatedAt: _user.updatedAt
-      };
+      const user = new classes.MyInfo(_user);
       return res.json(util.successTrue("", user));
     }
   })(req, res, next);

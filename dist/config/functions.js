@@ -31,7 +31,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getBankCode = exports.sendFCMMessage = exports.getDistanceFromLatLonInKm = exports.getUserFromKakaoInfo = exports.getUserFromGoogleInfo = exports.smsVerify = exports.sendSMS = exports.sendSMStoAdmin = exports.getAuthToken = exports.emailVerify = exports.pwEmail = exports.sendEmail = exports.myCache = void 0;
+exports.getBankCode = exports.sendMoney = exports.sendFCMMessage = exports.getDistanceFromLatLonInKm = exports.getUserFromKakaoInfo = exports.getUserFromGoogleInfo = exports.smsVerify = exports.sendSMS = exports.sendSMStoAdmin = exports.getAuthToken = exports.emailVerify = exports.pwEmail = exports.sendEmail = exports.myCache = void 0;
 const axios_1 = __importDefault(require("axios"));
 const index_1 = require("../models/index");
 const crypto = __importStar(require("crypto"));
@@ -341,12 +341,52 @@ function sendFCMMessage(tokens, payload) {
     });
 }
 exports.sendFCMMessage = sendFCMMessage;
+function sendMoney(token, refund, user, padNum) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const bankCode = getBankCode(refund.bankKind);
+        if (!bankCode)
+            return false;
+        return yield axios_1.default({
+            url: 'https://testapi.openbanking.or.kr/v2.0/transfer/deposit/acnt_num',
+            headers: {
+                Authorization: "Bearer " + token //Access_Token 추가 (oob, sa 뭐냐)
+            },
+            data: {
+                "cntr_account_type": "N",
+                "cntr_account_num": process.env.OPEN_ACCOUNT,
+                "wd_pass_phrase": "NONE",
+                "wd_print_content": "환급",
+                "name_check_option": "on",
+                "tran_dtime": "20201001150133",
+                "req_cnt": "1",
+                "req_list": [
+                    {
+                        "tran_no": "1",
+                        "bank_tran_id": padNum,
+                        "bank_code_std": bankCode,
+                        "account_num": refund.accountNum,
+                        "account_holder_name": refund.accountName,
+                        "print_content": "환급",
+                        "tran_amt": refund.amount,
+                        "req_client_name": refund.accountName,
+                        "req_client_bank_code": bankCode,
+                        "req_client_account_num": refund.accountNum,
+                        "req_client_num": user.id,
+                        "transfer_purpose": "TR" //이체
+                    }
+                ]
+            },
+            method: 'post'
+        });
+    });
+}
+exports.sendMoney = sendMoney;
 function getBankCode(bankKind) {
     const bankCode = [
         { bank: "KDB 산업은행", code: "002" },
         { bank: "SC 제일은행", code: "023" },
         { bank: "전북은행", code: "037" },
-        { bank: "IBK기업은행", code: "003" },
+        { bank: "IBK 기업은행", code: "003" },
         { bank: "한국씨티은행", code: "027" },
         { bank: "경남은행", code: "039" },
         { bank: "KB 국민은행", code: "004" },
@@ -363,7 +403,9 @@ function getBankCode(bankKind) {
         { bank: "카카오뱅크", code: "090" },
         { bank: "오픈은행", code: "097" }
     ];
-    const bank = bankCode.filter(it => it.bank.includes(bankKind));
+    const bank = bankCode.filter(it => it.bank === bankKind);
+    if (bank[0] === undefined || bank.length > 1)
+        return false;
     return bank[0].code;
 }
 exports.getBankCode = getBankCode;
