@@ -5,6 +5,7 @@ import * as crypto from "crypto";
 import dotenv from "dotenv";
 import axios from "axios";
 import * as db from "sequelize";
+import { MyInfo } from "../config/classes";
 dotenv.config();
 
 export const myinfo = Router();
@@ -12,26 +13,9 @@ myinfo.get('/', util.isLoggedin, async function (req: Request, res: Response) {
   //본인 정보 반환
   const tokenData = req.decoded;
   try {
-    const _user = await userRep.findOne({
-      where: {
-        id: tokenData.id
-      }
-    });
+    const _user = await userRep.findOne({where: {id: tokenData.id}});
     if (!_user) return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
-    const user = {
-      id: _user.id,
-      userId: _user.userId,
-      name: _user.name,
-      nickName: _user.nickName,
-      gender: _user.gender,
-      age: _user.age,
-      email: _user.email,
-      phone: _user.phone,
-      addressId: _user.addressId,
-      grade: _user.grade,
-      createdAt: _user.createdAt,
-      updatedAt: _user.updatedAt
-    };
+    const user = new MyInfo(_user);
     return res.json(util.successTrue("", user));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
@@ -44,11 +28,7 @@ myinfo.put('/', util.isLoggedin, async function (req: Request, res: Response) {
   const reqBody = req.body;
   let salt = null, hashedPw = null;
   try {
-    const _user = await userRep.findOne({
-      where: {
-        id: tokenData.id
-      }
-    });
+    let _user = await userRep.findOne({where: {id: tokenData.id}});
     if (!_user) return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
     if (reqBody.pw) {
       const buffer = crypto.randomBytes(64);
@@ -57,32 +37,15 @@ myinfo.put('/', util.isLoggedin, async function (req: Request, res: Response) {
       hashedPw = key.toString('base64');
     }
     if (reqBody.nickName) {
-      const nickExist = await userRep.findOne({
-        where: {
-          nickName: reqBody.nickName
-        }
-      });
+      const nickExist = await userRep.findOne({where: {nickName: reqBody.nickName}});
       if (nickExist) return res.status(403).json(util.successFalse(null, "닉네임이 중복되었습니다.", null));
     }
-    await _user.update({
+    _user = await _user.update({
       password: hashedPw ? hashedPw : _user.password,
       salt: salt ? salt : _user.salt,
       nickName: reqBody.nickName ? reqBody.nickName : _user.nickName
     });
-    const user = {
-      id: _user.id,
-      userId: _user.userId,
-      name: _user.name,
-      nickName: _user.nickName,
-      gender: _user.gender,
-      age: _user.age,
-      email: _user.email,
-      phone: _user.phone,
-      addressId: _user.addressId,
-      grade: _user.grade,
-      createdAt: _user.createdAt,
-      updatedAt: _user.updatedAt
-    };
+    const user = new MyInfo(_user);
     return res.json(util.successTrue("", user));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
@@ -93,11 +56,7 @@ myinfo.get('/address/list', util.isLoggedin, async function (req: Request, res: 
   //자기 주소 리스트 반환
   const tokenData = req.decoded;
   try {
-    const addressList = await addressRep.findAll({
-      where: {
-        userId: tokenData.id
-      }
-    });
+    const addressList = await addressRep.findAll({where: {userId: tokenData.id}});
     return res.json(util.successTrue("", addressList));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, "", null));
@@ -109,11 +68,7 @@ myinfo.put('/address/set', util.isLoggedin, async function (req: Request, res: R
   const tokenData = req.decoded;
   const reqBody = req.body;
   try {
-    const user = await userRep.findOne({
-      where: {
-        id: tokenData.id
-      }
-    });
+    const user = await userRep.findOne({where: {id: tokenData.id}});
     if (!user) return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
     const address = await addressRep.findOne({
       where: {
@@ -136,11 +91,7 @@ myinfo.get('/address', util.isLoggedin, async function (req: Request, res: Respo
   //기본 주소 반환
   const tokenData = req.decoded;
   try {
-    const user = await userRep.findOne({
-      where: {
-        id: tokenData.id
-      }
-    });
+    const user = await userRep.findOne({where: {id: tokenData.id}});
     if (!user) return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
     const address = await addressRep.findOne({
       where: {
@@ -233,9 +184,7 @@ myinfo.post('/report', util.isLoggedin, async function (req: Request, res: Respo
   const tokenData = req.decoded;
   const reqBody = req.body;
   try {
-    const order = await orderRep.findOne({
-      where: { id: reqBody.orderId }
-    });
+    const order = await orderRep.findOne({where: { id: reqBody.orderId }});
     if (!order) return res.status(403).json(util.successFalse(null, "해당하는 주문이 없습니다.", null));
     const userId = order.userId;
     const riderId = order.riderId;
@@ -343,25 +292,3 @@ myinfo.get('/paids', util.isLoggedin, async function (req: Request, res: Respons
     return res.status(403).json(util.successFalse(err, "결제 내역이 없습니다.", null));
   }
 });
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////
-////                              개발용 API입니다. 나중에는 지워야 합니다.                              ////
-////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////
-myinfo.get('/grade', util.isLoggedin, async function (req: Request, res: Response) {
-  const tokenData = req.decoded;
-  const reqQuery = req.query;
-  try {
-    const user = await userRep.findOne({ where: { userId: tokenData.userId } });
-    if (!user) return res.status(403).json(util.successFalse(null, "해당 하는 유저가 없습니다.", null));
-    if (reqQuery.grade == null || reqQuery.grade == "") return res.status(403).json(util.successFalse(null, "파라미터가 부족합니다.", null));
-    if (parseInt(reqQuery.grade as string) >= 3) return res.json(util.successTrue(`4이상으로 올라 갈 수 없습니다.`, null));
-    await user.update({ grade: reqQuery.grade });
-    return res.json(util.successTrue("", { grade: user.grade }));
-  } catch (err) {
-    return res.status(403).json(util.successFalse(err, "", null));
-  }
-});
-////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////
