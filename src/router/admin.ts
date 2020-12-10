@@ -82,8 +82,9 @@ admin.put('/upload', util.isLoggedin, util.isAdmin, async function (req: Request
 
 admin.get('/reports', util.isLoggedin, util.isAdmin, async function (req: Request, res: Response) {
   //신고 리스트 반환
+  const reqQuery = req.query;
   try {
-    const lists = await reportRep.findAll({ where: { status: 0 }, attributes: ['id', 'orderId', 'reportKind', 'fromId'] });
+    const lists = await reportRep.findAll({ where: { status: 0, reportKind: reqQuery.reportKind as string } });
     if (!lists) return res.status(403).json(util.successFalse(null, "현재 처리를 기다리는 신고가 없습니다.", null));
     return res.json(util.successTrue("", lists));
   } catch (err) {
@@ -124,8 +125,11 @@ admin.put('/report', util.isLoggedin, util.isAdmin, async function (req: Request
 
 admin.get('/qnas', util.isLoggedin, util.isAdmin, async function (req: Request, res: Response) {
   //문의 리스트 반환
+  const reqQuery = req.query;
   try {
-    const lists = await qnaRep.findAll({ where: { status: 0 }, attributes: ['id', 'qnaKind'] });
+    const lists = await qnaRep.findAll({ where: { status: 0, qnaKind: reqQuery.qnaKind as string } });
+    console.log(reqQuery.qnaKind);
+    console.log(lists);
     if (!lists) return res.status(403).json(util.successFalse(null, "현재 처리를 기다리는 문의가 없습니다.", null));
     return res.json(util.successTrue("", lists));
   } catch (err) {
@@ -175,22 +179,22 @@ admin.get('/refunds', util.isLoggedin, util.isAdmin, async function (req: Reques
 });
 
 admin.get('/openToken', util.isLoggedin, util.isAdmin, async function (req: Request, res: Response) {
-  try{
+  try {
     const data = await axios({
-      url:'https://testapi.openbanking.or.kr/oauth/2.0/token',
-      params:{
+      url: 'https://testapi.openbanking.or.kr/oauth/2.0/token',
+      params: {
         "client_id": process.env.OPEN_API,
         "client_secret": process.env.OPEN_SECRET,
         "scope": "oob",
         "grant_type": "client_credentials"
       },
-      method:'post'
+      method: 'post'
     });
-    myCache.set('OpenBankingToken',data.data.access_token);
+    myCache.set('OpenBankingToken', data.data.access_token);
     console.log(data.data.access_token);
     return res.json(util.successTrue("", null));
   }
-  catch(e){
+  catch (e) {
     return res.status(403).json(util.successFalse(null, "토큰 발급 실패", null));
   }
 });

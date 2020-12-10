@@ -133,8 +133,9 @@ exports.admin.put('/upload', util.isLoggedin, util.isAdmin, function (req, res) 
 exports.admin.get('/reports', util.isLoggedin, util.isAdmin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //신고 리스트 반환
+        const reqQuery = req.query;
         try {
-            const lists = yield index_1.reportRep.findAll({ where: { status: 0 }, attributes: ['id', 'orderId', 'reportKind', 'fromId'] });
+            const lists = yield index_1.reportRep.findAll({ where: { status: 0, reportKind: reqQuery.reportKind } });
             if (!lists)
                 return res.status(403).json(util.successFalse(null, "현재 처리를 기다리는 신고가 없습니다.", null));
             return res.json(util.successTrue("", lists));
@@ -187,8 +188,11 @@ exports.admin.put('/report', util.isLoggedin, util.isAdmin, function (req, res) 
 exports.admin.get('/qnas', util.isLoggedin, util.isAdmin, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         //문의 리스트 반환
+        const reqQuery = req.query;
         try {
-            const lists = yield index_1.qnaRep.findAll({ where: { status: 0 }, attributes: ['id', 'qnaKind'] });
+            const lists = yield index_1.qnaRep.findAll({ where: { status: 0, qnaKind: reqQuery.qnaKind } });
+            console.log(reqQuery.qnaKind);
+            console.log(lists);
             if (!lists)
                 return res.status(403).json(util.successFalse(null, "현재 처리를 기다리는 문의가 없습니다.", null));
             return res.json(util.successTrue("", lists));
