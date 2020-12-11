@@ -281,6 +281,9 @@ exports.auth.post("/findpw", function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const reqBody = req.body;
         // 인증 절차 거치고 success로 return
+        const success = parseInt(reqBody.success);
+        if (!success)
+            return res.status(403).json(util.successFalse(null, "인증에 실패하였습니다.", null));
         const userId = reqBody.userId;
         let randomString = "";
         const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz";
@@ -302,5 +305,15 @@ exports.auth.post("/findpw", function (req, res) {
         if (result == null)
             return res.json(util.successTrue('임시 비밀번호가 전송되었습니다. 이메일을 확인해주세요.', null));
         return res.status(403).json(util.successFalse(null, "비밀번호 변경에 실패하였습니다.", null));
+    });
+});
+exports.auth.get("/dupid", function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const reqQuery = req.query;
+        const userId = reqQuery.userId;
+        const user = yield index_1.userRep.findOne({ where: { userId: userId } });
+        if (!user)
+            return res.status(403).json(util.successFalse(null, "해당 아이디의 유저가 존재하지 않습니다.", null));
+        return res.json(util.successTrue("아이디가 존재합니다.", user));
     });
 });
