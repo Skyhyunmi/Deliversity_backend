@@ -209,10 +209,10 @@ auth.post('/findpw', async (req: Request, res: Response) => {
   const reqBody = req.body;
   // 인증 절차 거치고 success로 return
   const success = parseInt(reqBody.success, 10);
-  if (!success) return res.status(403).json(util.successFalse(null, "인증에 실패하였습니다.", null));
-  const userId = reqBody.userId;
-  let randomString = "";
-  const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz";
+  if (!success) return res.status(403).json(util.successFalse(null, '인증에 실패하였습니다.', null));
+  const { userId } = reqBody;
+  let randomString = '';
+  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz';
   const string_length = 8;
   for (let i = 0; i < string_length; i += 1) {
     const rnum = Math.floor(Math.random() * chars.length);

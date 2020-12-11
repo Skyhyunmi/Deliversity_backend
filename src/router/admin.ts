@@ -86,7 +86,9 @@ admin.get('/reports', util.isLoggedin, util.isAdmin, async (req: Request, res: R
   // 신고 리스트 반환
   const reqQuery = req.query;
   try {
-    const lists = await reportRep.findAll({ where: { status: 0, reportKind: reqQuery.reportKind as string } });
+    const lists = await reportRep.findAll({
+      where: { status: 0, reportKind: reqQuery.reportKind as string },
+    });
     if (!lists) return res.status(403).json(util.successFalse(null, '현재 처리를 기다리는 신고가 없습니다.', null));
     return res.json(util.successTrue('', lists));
   } catch (err) {
@@ -128,7 +130,9 @@ admin.get('/qnas', util.isLoggedin, util.isAdmin, async (req: Request, res: Resp
   // 문의 리스트 반환
   const reqQuery = req.query;
   try {
-    const lists = await qnaRep.findAll({ where: { status: 0, qnaKind: reqQuery.qnaKind as string } });
+    const lists = await qnaRep.findAll({
+      where: { status: 0, qnaKind: reqQuery.qnaKind as string },
+    });
     if (!lists) return res.status(403).json(util.successFalse(null, '현재 처리를 기다리는 문의가 없습니다.', null));
     return res.json(util.successTrue('', lists));
   } catch (err) {
