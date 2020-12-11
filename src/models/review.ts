@@ -9,7 +9,7 @@ import {
   CreatedAt,
   UpdatedAt,
   DeletedAt,
-} from "sequelize-typescript";
+} from 'sequelize-typescript';
 
 @Table({ timestamps: true })
 export default class Review extends Model<Review> {

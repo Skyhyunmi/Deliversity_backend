@@ -15,23 +15,23 @@ __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BIGINT)
 ], Verify.prototype, "id", void 0);
 __decorate([
-    sequelize_typescript_1.Comment("User Phone"),
+    sequelize_typescript_1.Comment('User Phone'),
     sequelize_typescript_1.Unique,
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
 ], Verify.prototype, "phone", void 0);
 __decorate([
-    sequelize_typescript_1.Comment("User SMS Send ID"),
+    sequelize_typescript_1.Comment('User SMS Send ID'),
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
 ], Verify.prototype, "sendId", void 0);
 __decorate([
-    sequelize_typescript_1.Comment("User SMS Verify Number"),
+    sequelize_typescript_1.Comment('User SMS Verify Number'),
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
 ], Verify.prototype, "number", void 0);
 __decorate([
-    sequelize_typescript_1.Comment("User SMS Verify Number"),
+    sequelize_typescript_1.Comment('User SMS Verify Number'),
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(false),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BOOLEAN)

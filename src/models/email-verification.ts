@@ -8,8 +8,8 @@ import {
   AutoIncrement,
   DataType,
   Comment,
-  Default
-} from "sequelize-typescript";
+  Default,
+} from 'sequelize-typescript';
 
 @Table({ timestamps: true })
 export default class Email_Verify extends Model<Email_Verify> {
@@ -18,22 +18,21 @@ export default class Email_Verify extends Model<Email_Verify> {
   @Column(DataType.BIGINT)
   id!: number;
 
-  @Comment("User Email")
+  @Comment('User Email')
   @Unique
   @AllowNull(false)
   @Column(DataType.STRING)
   email!: string;
 
-  @Comment("Email Verified Code")
+  @Comment('Email Verified Code')
   @AllowNull(false)
   @Column(DataType.STRING)
   // 이메일 인증 번호(발급)
   email_number!: string;
 
-  @Comment("Email Verified Check")
+  @Comment('Email Verified Check')
   @AllowNull(false)
   @Default(false)
   @Column(DataType.BOOLEAN)
   email_verified!: boolean;
-
 }

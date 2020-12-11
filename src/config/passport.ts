@@ -1,38 +1,37 @@
-import passport from "passport";
-import passportLocal from "passport-local";
-import passportJwt from "passport-jwt";
-import { userRep } from "../models/index";
-import * as crypto from "crypto";
-import { myCache } from "../config/functions";
-import axios from "axios";
-import dotenv from "dotenv";
-import * as admin from "firebase-admin";
-import * as functions from "./functions";
-import * as classes from "./classes";
+import passport from 'passport';
+import passportLocal from 'passport-local';
+import passportJwt from 'passport-jwt';
+import * as crypto from 'crypto';
+import axios from 'axios';
+import dotenv from 'dotenv';
+import * as admin from 'firebase-admin';
+import { myCache } from '../config/functions';
+import { userRep } from '../models/index';
+import * as functions from './functions';
+import * as classes from './classes';
+
 dotenv.config();
 
 const LocalStrategy = passportLocal.Strategy;
 const JwtStrategy = passportJwt.Strategy;
-const ExtractJwt = passportJwt.ExtractJwt;
+const { ExtractJwt } = passportJwt;
 
 
 async function phoneVerify(phone: string) {
   try {
     const veri = myCache.take(phone) as classes.Veri;
     if (!veri || veri.verify !== 1) return 0;
-    const now = Number.parseInt(Date.now().toString());
+    const now = Number.parseInt(Date.now().toString(), 10);
     const updatedAt = veri.updatedAt as number;
     const remainingTime = (now - updatedAt) / 60000;
-    if (remainingTime > 15) { //15분
+    if (remainingTime > 15) { // 15분
       myCache.del(phone);
       return 0;
     }
-    else {
-      myCache.del(phone);
-      return 1;
-    }
-  }
-  catch (e) {
+    
+    myCache.del(phone);
+    return 1;
+  } catch (e) {
     return 0;
   }
 };
@@ -41,19 +40,17 @@ async function emailVerify(email: string) {
   try {
     const veri = myCache.take(email) as classes.Veri;
     if (!veri || veri.verify !== 1) return 0;
-    const now = Number.parseInt(Date.now().toString());
+    const now = Number.parseInt(Date.now().toString(), 10);
     const updatedAt = veri.updatedAt as number;
     const remainingTime = (now - updatedAt) / 60000;
-    if (remainingTime > 15) { //15분
+    if (remainingTime > 15) { // 15분
       myCache.del(email);
       return 0;
     }
-    else {
-      myCache.del(email);
-      return 1;
-    }
-  }
-  catch (e) {
+    
+    myCache.del(email);
+    return 1;
+  } catch (e) {
     return 0;
   }
 };
@@ -65,33 +62,33 @@ export function passportConfig() {
       usernameField: 'id',
       passwordField: 'pw',
       session: false,
-      passReqToCallback: true
+      passReqToCallback: true,
     },
-    async function (req, userId, password, done) {
+    (async (req, userId, password, done) => {
       try {
         const reqBody = req.body;
         const userExist = await userRep.findOne({
           where: {
-            userId: userId
-          }
+            userId,
+          },
         });
         if (userExist) return done(null, false, { message: 'User already exist.' });
         const emailExist = await userRep.findOne({
           where: {
-            email: reqBody.email
-          }
+            email: reqBody.email,
+          },
         });
         if (emailExist) return done(null, false, { message: 'E-mail duplicated.' });
         const phoneExist = await userRep.findOne({
           where: {
-            phone: reqBody.phone
-          }
+            phone: reqBody.phone,
+          },
         });
         if (phoneExist) return done(null, false, { message: 'phone number duplicated.' });
         const nickExist = await userRep.findOne({
           where: {
-            nickName: reqBody.nickName
-          }
+            nickName: reqBody.nickName,
+          },
         });
         if (nickExist) return done(null, false, { message: 'nickName duplicated.' });
         const buffer = crypto.randomBytes(64);
@@ -99,16 +96,16 @@ export function passportConfig() {
         const key = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512');
         const hashedPw = key.toString('base64');
         const phoneVeri = await phoneVerify(reqBody.phone);
-        if (phoneVeri == 0) return done(null, false, { message: 'SMS Verification is required.' });
+        if (phoneVeri === 0) return done(null, false, { message: 'SMS Verification is required.' });
         const emailVeri = await emailVerify(reqBody.email);
-        if (emailVeri == 0) return done(null, false, { message: 'E-mail Verification is required.' });
-        const idToken = req.body.idToken;
+        if (emailVeri === 0) return done(null, false, { message: 'E-mail Verification is required.' });
+        const { idToken } = req.body;
         let googleToken: string | null = null;
         if (idToken) {
           const ret = await functions.getUserFromGoogleInfo(idToken);
           if (ret) googleToken = ret.id;
         }
-        const accessToken = req.body.accessToken;
+        const { accessToken } = req.body;
         let kakaoToken: string | null = null;
         if (accessToken) {
           const ret = await functions.getUserFromKakaoInfo(accessToken);
@@ -121,35 +118,35 @@ export function passportConfig() {
           fbUser = await admin.auth().createUser({
             email: reqBody.email,
             emailVerified: true,
-            phoneNumber: "+82" + reqBody.phone.slice(1),
-            password: hashedPw
+            phoneNumber: `+82${reqBody.phone.slice(1)}`,
+            password: hashedPw,
           });
         }
         if (fbUser) {
           const user = await userRep.create({
-            userId: userId,
+            userId,
             password: hashedPw,
-            salt: salt,
+            salt,
             name: reqBody.name,
             gender: reqBody.gender,
             nickName: reqBody.nickName,
-            age: Number.parseInt(reqBody.age),
+            age: Number.parseInt(reqBody.age, 10),
             email: reqBody.email,
             phone: reqBody.phone,
             createdAt: new Date(),
             updatedAt: null,
             googleOAuth: googleToken || null,
             kakaoOAuth: kakaoToken || null,
-            firebaseUid: fbUser.uid
+            firebaseUid: fbUser.uid,
           });
           return done(null, user);
         }
-        return done(null, "firebase 에러");
+        return done(null, 'firebase 에러');
       } catch (err) {
         return done(err);
       };
-    }
-    ));
+    })),
+  );
 
   passport.use(
     'login',
@@ -157,45 +154,38 @@ export function passportConfig() {
       usernameField: 'id',
       passwordField: 'pw',
       session: false,
-      passReqToCallback: true
+      passReqToCallback: true,
     },
-    async function (req, id, password, done) {
+    (async (req, id, password, done) => {
       try {
         const user = await userRep.findOne({
           where: {
-            userId: id
-          }
+            userId: id,
+          },
         });
         if (!user) return done(null, false, { message: 'ID do not match' });
         await user.update({ firebaseFCM: req.body.fcmToken });
         if (user.googleOAuth == null && req.body.idToken) {
-          const idToken = req.body.idToken;
-          //토큰 검증
+          const { idToken } = req.body;
+          // 토큰 검증
           const ret = await axios({
             url: 'https://www.googleapis.com/oauth2/v3/tokeninfo',
-            method: "GET",
+            method: 'GET',
             params: {
-              id_token: idToken
-            }
+              id_token: idToken,
+            },
           });
           await user.update({
-            googleOAuth: ret.data.sub
+            googleOAuth: ret.data.sub,
           });
         }
-        crypto.pbkdf2(password, user.salt, 100000, 64, 'sha512', function (err: Error | null, key: Buffer) {
-          if (err) {
-            return done(null, false, { message: 'error' });
-          }
-          if (user.password === key.toString('base64')) {
-            return done(null, user);
-          } else {
-            return done(null, false, { message: 'Password do not match.' });
-          }
-        });
+        const key = crypto.pbkdf2Sync(password, user.salt, 100000, 64, 'sha512');
+        if (user.password === key.toString('base64')) return done(null, user);
+        return done(null, false, { message: 'Password do not match.' });
       } catch (err) {
         return done(err);
       }
-    })
+    })),
   );
 
   passport.use(
@@ -204,9 +194,9 @@ export function passportConfig() {
       session: false,
       usernameField: 'id',
       passwordField: 'id',
-      passReqToCallback: true
+      passReqToCallback: true,
     },
-    async function (req, id, pw, done) {
+    (async (req, id, pw, done) => {
       try {
         const user = await userRep.findOne({ where: { id: req.decoded.id } });
         if (!user) return done(null, false, { message: "Can't login" });
@@ -214,18 +204,18 @@ export function passportConfig() {
       } catch (err) {
         return done(err);
       }
-    })
+    })),
   );
 
   passport.use(new JwtStrategy(
     {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: process.env.JWT_SECRET
+      secretOrKey: process.env.JWT_SECRET,
     },
-    async function (jwtToken, done) {
+    (async (jwtToken, done) => {
       const user = await userRep.findOne({ where: { userId: jwtToken.userId } });
       if (!user) return done(undefined, false);
-      else return done(undefined, user, jwtToken);
-    })
-  );
+      return done(undefined, user, jwtToken);
+    }),
+  ));
 };

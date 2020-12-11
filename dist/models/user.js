@@ -15,13 +15,13 @@ __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BIGINT)
 ], User.prototype, "id", void 0);
 __decorate([
-    sequelize_typescript_1.Comment("User ID"),
+    sequelize_typescript_1.Comment('User ID'),
     sequelize_typescript_1.Unique,
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
 ], User.prototype, "userId", void 0);
 __decorate([
-    sequelize_typescript_1.Comment("User password"),
+    sequelize_typescript_1.Comment('User password'),
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
 ], User.prototype, "password", void 0);

@@ -33,9 +33,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isAdmin = exports.isUser = exports.isLoggedin = exports.isFirebase = exports.successFalse = exports.successTrue = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const models_1 = require("../models");
 const admin = __importStar(require("firebase-admin"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const models_1 = require("../models");
 dotenv_1.default.config();
 function successTrue(message, data) {
     return {
@@ -48,12 +48,12 @@ function successTrue(message, data) {
 exports.successTrue = successTrue;
 function successFalse(err, message, data) {
     if (!err && !message)
-        message = "data not found";
+        message = 'data not found';
     return {
         success: false,
-        message: message,
+        message,
         errors: err || null,
-        data: data,
+        data,
     };
 }
 exports.successFalse = successFalse;
@@ -63,57 +63,59 @@ function isFirebase(req, res, next) {
         try {
             admin.auth().verifyIdToken(req.headers['x-firebase-token'])
                 .then((token) => __awaiter(this, void 0, void 0, function* () {
-                const uid = token.uid;
+                const { uid } = token;
                 const user = yield models_1.userRep.findOne({
                     where: {
                         firebaseUid: uid,
-                        id: req.decoded.id
-                    }
+                        id: req.decoded.id,
+                    },
                 });
                 if (!user)
-                    return res.status(403).json(successFalse(null, "", null));
-                next();
+                    return res.status(403).json(successFalse(null, '', null));
+                return next();
             }))
-                .catch((err) => {
-                return res.status(403).json(successFalse(err, "", null));
-            });
+                .catch((err) => res.status(403).json(successFalse(err, '', null)));
+            return res.status(403).json(successFalse(null, '', null));
         }
         catch (err) {
-            return res.status(403).json(successFalse(err, "", null));
+            return res.status(403).json(successFalse(err, '', null));
         }
     });
 }
 exports.isFirebase = isFirebase;
 // middlewares
 function isLoggedin(req, res, next) {
-    const token = req.headers["x-access-token"];
-    if (!token)
-        return res.status(401).json(successFalse(null, "token is required!", null));
-    else {
-        jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET, function (err, decoded) {
+    try {
+        const token = req.headers['x-access-token'];
+        if (!token)
+            return res.status(401).json(successFalse(null, 'token is required!', null));
+        jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET, (err, decoded) => {
             if (err)
-                return res.status(401).json(successFalse(err, "", null));
-            else {
-                req["decoded"] = decoded;
-                next();
-            }
+                return res.status(401).json(successFalse(err, '', null));
+            req.decoded = decoded;
+            return next();
         });
     }
+    catch (err) {
+        return res.status(403).json(successFalse(err, '', null));
+    }
+    // return res.status(401).json(successFalse(null, '', null));
 }
 exports.isLoggedin = isLoggedin;
 function isUser(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const user = yield models_1.userRep.findOne({ where: { userId: req.decoded.userId, grade: 2 } }); //2이상 = 정회원
+            const user = yield models_1.userRep.findOne({
+                where: { userId: req.decoded.userId, grade: 2 },
+            }); // 2이상 = 정회원
             if (!user)
-                return res.status(403).json(successFalse(null, "정회원이 아닙니다.", null));
-            else if (!req.decoded || user.userId !== req.decoded.userId)
-                return res.status(403).json(successFalse(null, "정회원이 아닙니다.", null));
-            else
-                return next();
+                return res.status(403).json(successFalse(null, '정회원이 아닙니다.', null));
+            if (!req.decoded || user.userId !== req.decoded.userId)
+                return res.status(403).json(successFalse(null, '정회원이 아닙니다.', null));
+            return next();
         }
         catch (err) {
-            return res.status(403).json(successFalse(err, "", null));
+            return res.status(403).json(successFalse(err, '', null));
         }
     });
 }
@@ -121,16 +123,17 @@ exports.isUser = isUser;
 function isAdmin(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const user = yield models_1.userRep.findOne({ where: { userId: req.decoded.userId, grade: 777 } }); //3 = 배달원
+            const user = yield models_1.userRep.findOne({
+                where: { userId: req.decoded.userId, grade: 777 },
+            }); // 3 = 배달원
             if (!user)
-                return res.status(403).json(successFalse(null, "권한이 없습니다.", null));
-            else if (!req.decoded || user.userId !== req.decoded.userId)
-                return res.status(403).json(successFalse(null, "권한이 없습니다.", null));
-            else
-                return next();
+                return res.status(403).json(successFalse(null, '권한이 없습니다.', null));
+            if (!req.decoded || user.userId !== req.decoded.userId)
+                return res.status(403).json(successFalse(null, '권한이 없습니다.', null));
+            return next();
         }
         catch (err) {
-            return res.status(403).json(successFalse(err, "", null));
+            return res.status(403).json(successFalse(err, '', null));
         }
     });
 }

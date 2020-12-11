@@ -1,6 +1,7 @@
-import * as nodemailer from "nodemailer";
+import * as nodemailer from 'nodemailer';
 
-import dotenv from "dotenv";
+import dotenv from 'dotenv';
+
 dotenv.config();
 
 export const transporter = nodemailer.createTransport(
@@ -10,7 +11,7 @@ export const transporter = nodemailer.createTransport(
     secure: true,
     auth: {
       user: process.env.MAIL_ID,
-      pass: process.env.MAIL_PW
-    }
-  }
+      pass: process.env.MAIL_PW,
+    },
+  },
 );

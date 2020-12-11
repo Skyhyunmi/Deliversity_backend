@@ -9,8 +9,8 @@ import {
   CreatedAt,
   UpdatedAt,
   DeletedAt,
-  Default//, ForeignKey
-} from "sequelize-typescript";
+  Default, // , ForeignKey
+} from 'sequelize-typescript';
 
 @Table({ timestamps: true })
 export default class QnA extends Model<QnA> {
