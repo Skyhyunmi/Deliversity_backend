@@ -284,7 +284,7 @@ exports.admin.put('/refund', util.isLoggedin, util.isAdmin, (req, res) => __awai
         if (!token)
             return res.status(403).json(util.successFalse(null, '토큰을 발급해주세요.', null));
         const trans = yield functions.sendMoney(token, refund, user, padNum);
-        if (trans === false)
+        if (!trans)
             return res.status(403).json(util.successFalse(null, '은행명을 다시 입력해주세요.', null));
         if (trans.data.rsp_code !== 'A0000')
             return res.status(403).json(util.successFalse(null, '환급 실패', null));

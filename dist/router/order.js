@@ -130,7 +130,7 @@ exports.order.post('/', util.isLoggedin, (req, res) => __awaiter(void 0, void 0,
         }
         riders.forEach((rider) => {
             if (rider.firebaseFCM) {
-                if (rider.lat !== null) {
+                if (rider.lat) {
                     const distance = functions.getDistanceFromLatLonInKm(rider.lat, rider.lng, reqBody.userLat, reqBody.userLng);
                     // 1.5km 미만의 위치에 존재하는 배달원에게 푸시 메시지 전송. 현재는 테스트용으로 100km
                     if (distance < 100)
@@ -184,7 +184,7 @@ exports.order.get('/riders', util.isLoggedin, (req, res) => __awaiter(void 0, vo
         if (parseInt(_order.orderStatus, 10) !== 0)
             return res.status(403).json(util.successFalse(null, '배달원 모집이 완료된 주문입니다.', null));
         const riderlist = myCache.get(reqQuery.orderId);
-        if (riderlist === undefined) {
+        if (!riderlist) {
             return res.json(util.successTrue('배달을 희망하는 배달원이 없습니다.', null));
         }
         return res.json(util.successTrue('', riderlist));
@@ -204,7 +204,7 @@ exports.order.post('/rider', util.isLoggedin, (req, res) => __awaiter(void 0, vo
         if (!_order)
             return res.status(403).json(util.successFalse(null, '해당하는 주문이 없습니다.', null));
         const riderlist = myCache.get(reqQuery.orderId);
-        if (riderlist === undefined)
+        if (!riderlist)
             return res.status(403).json(util.successFalse(null, '배달을 희망하는 배달원이 없습니다.', null));
         const _rider = riderlist.filter((rider) => rider.riderId === riderId)[0];
         if (!_rider)
@@ -213,7 +213,7 @@ exports.order.post('/rider', util.isLoggedin, (req, res) => __awaiter(void 0, vo
         if (!rider_fire)
             return res.status(403).json(util.successFalse(null, '해당하는 배달원이 존재하지 않습니다.', null));
         const registrationToken = rider_fire.firebaseFCM;
-        if (registrationToken === undefined)
+        if (!registrationToken)
             return res.status(403).json(util.successFalse(null, '해당하는 배달원이 존재하지 않습니다.', null));
         const room = yield models_1.roomRep.create({
             orderId: _order.id,
@@ -310,7 +310,7 @@ exports.order.post('/review/user', util.isLoggedin, util.isUser, (req, res) => _
                 reviewedByRider: false,
             },
         });
-        if (_order === null)
+        if (!_order)
             return res.status(403).json(util.successFalse(null, '주문건이 없거나, 이미 리뷰를 작성했습니다.', null));
         const review = yield models_1.reviewRep.create({
             orderId: _order === null || _order === void 0 ? void 0 : _order.id,
@@ -339,7 +339,7 @@ exports.order.get('/review/user', util.isLoggedin, util.isUser, (req, res) => __
                 id: reqQuery.userId,
             },
         });
-        if (_user === null)
+        if (!_user)
             return res.status(403).json(util.successFalse(null, '사용자가 없거나 권한이 없습니다.', null));
         const _order = yield models_1.orderRep.findOne({
             where: {
@@ -347,7 +347,7 @@ exports.order.get('/review/user', util.isLoggedin, util.isUser, (req, res) => __
                 orderStatus: 0,
             },
         });
-        if (_order === null)
+        if (!_order)
             return res.status(403).json(util.successFalse(null, '사용자가 없거나 권한이 없습니다.', null));
         const reviews = yield models_1.reviewRep.findAll({
             where: {
@@ -378,7 +378,7 @@ exports.order.post('/review/rider', util.isLoggedin, (req, res) => __awaiter(voi
                 reviewedByUser: false,
             },
         });
-        if (_order === null)
+        if (!_order)
             return res.status(403).json(util.successFalse(null, '주문건이 없거나, 이미 리뷰를 작성했습니다.', null));
         const review = yield models_1.reviewRep.create({
             orderId: _order === null || _order === void 0 ? void 0 : _order.id,
@@ -407,7 +407,7 @@ exports.order.get('/review/rider', util.isLoggedin, (req, res) => __awaiter(void
                 id: reqQuery.riderId,
             },
         });
-        if (_user === null)
+        if (!_user)
             return res.status(403).json(util.successFalse(null, '사용자가 없거나 권한이 없습니다.', null));
         const _order = yield models_1.orderRep.findOne({
             where: {
@@ -415,7 +415,7 @@ exports.order.get('/review/rider', util.isLoggedin, (req, res) => __awaiter(void
                 orderStatus: 0,
             },
         });
-        if (_order === null)
+        if (!_order)
             return res.status(403).json(util.successFalse(null, '사용자가 없거나 권한이 없습니다.', null));
         const reviews = yield models_1.reviewRep.findAll({
             where: {
@@ -464,7 +464,7 @@ exports.order.get('/orders', util.isLoggedin, util.isUser, (req, res) => __await
                 id: tokenData.id,
             },
         });
-        if (rider === null)
+        if (!rider)
             return res.status(403).json(util.successFalse(null, '사용자가 없거나 권한이 없습니다.', null));
         const orders = yield models_1.orderRep.findAll({
             where: {
@@ -504,7 +504,7 @@ exports.order.post('/apply', util.isLoggedin, util.isUser, (req, res) => __await
     if (!reqBody.extraFee)
         extraFee = 0;
     let riderlist = myCache.get(reqQuery.orderId);
-    if (riderlist === undefined) {
+    if (!riderlist) {
         myCache.set(reqQuery.orderId, [{ riderId, extraFee }]);
     }
     else {

@@ -66,7 +66,7 @@ export class Rider {
 export class Veri {
   email?:string;
 
-  number?:string;
+  number?:number;
 
   createdAt!:number;
 

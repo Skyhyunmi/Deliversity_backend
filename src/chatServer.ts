@@ -38,7 +38,7 @@ export default function chatServer(server: any) {
 
     socket.on('chat', async (data: any[]) => { // 클라이언트에서 백으로 chat으로 emit
       let room = myCache.get(data[0].user.roomId) as any;
-      if (room === undefined) {
+      if (!room) {
         const userRoom = await roomRep.findOne({
           where: { roomId: data[0].user.roomId },
         });
@@ -66,7 +66,7 @@ export default function chatServer(server: any) {
       socket.join(roomId);
       //
       let fcm;
-      if (parseInt(data[0].user._id, 10) === parseInt(room.ownerId, 10)) {
+      if (data[0].user._id === room.ownerId) {
         data[0].user.nickName = room.ownerNickName;
         fcm = room.riderFCM;
         console.log('rider fcm: ', fcm);
@@ -106,7 +106,7 @@ export default function chatServer(server: any) {
       //     console.log('Error sending message:', error);
       //   });
       let list = myCache.get('chat') as classes.userData[];
-      if (list === undefined) myCache.set('chat', [new classes.userData(data[0], data[0].user.nickName)]);
+      if (!list) myCache.set('chat', [new classes.userData(data[0], data[0].user.nickName)]);
       else {
         list = myCache.take('chat') as classes.userData[];
         list.push(new classes.userData(data[0], data[0].user.nickName));

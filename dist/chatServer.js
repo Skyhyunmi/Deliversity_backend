@@ -64,7 +64,7 @@ function chatServer(server) {
         }));
         socket.on('chat', (data) => __awaiter(this, void 0, void 0, function* () {
             let room = myCache.get(data[0].user.roomId);
-            if (room === undefined) {
+            if (!room) {
                 const userRoom = yield models_1.roomRep.findOne({
                     where: { roomId: data[0].user.roomId },
                 });
@@ -95,7 +95,7 @@ function chatServer(server) {
             socket.join(roomId);
             //
             let fcm;
-            if (parseInt(data[0].user._id, 10) === parseInt(room.ownerId, 10)) {
+            if (data[0].user._id === room.ownerId) {
                 data[0].user.nickName = room.ownerNickName;
                 fcm = room.riderFCM;
                 console.log('rider fcm: ', fcm);
@@ -135,7 +135,7 @@ function chatServer(server) {
             //     console.log('Error sending message:', error);
             //   });
             let list = myCache.get('chat');
-            if (list === undefined)
+            if (!list)
                 myCache.set('chat', [new classes.userData(data[0], data[0].user.nickName)]);
             else {
                 list = myCache.take('chat');

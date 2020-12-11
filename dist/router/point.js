@@ -74,9 +74,9 @@ exports.point.post('/', util.isLoggedin, (req, res) => __awaiter(void 0, void 0,
         headers: { Authorization: access_token },
     });
     const paymentData = getPaymentData.data.response; // 조회한 결제 정보
-    const amountToBePaid = parseInt(reqBody.point, 10);
+    // const amountToBePaid = parseInt(reqBody.point, 10);
     const { amount, status } = paymentData;
-    if (amountToBePaid === parseInt(amount, 10)) {
+    if (reqBody.point === amount) {
         const receipt = yield index_1.paymentRep.findOne({ where: { userId: tokenData.id, impUid: imp_uid } });
         if (receipt) {
             return res.status(403).json(util.successFalse(null, '이미 충전되었습니다.', null));
