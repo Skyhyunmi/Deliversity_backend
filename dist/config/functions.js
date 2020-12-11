@@ -242,7 +242,8 @@ function smsVerify(phone, verify) {
                 exports.myCache.del(phone);
                 return 'Retry.';
             }
-            if (veri.number !== verify) {
+            console.log(typeof (veri.number), typeof (verify));
+            if (veri.number && veri.number !== parseInt(verify, 10)) {
                 exports.myCache.del(phone);
                 return 'Not Matched.';
             }
@@ -368,7 +369,7 @@ function getBankCode(bankKind) {
         { bank: '오픈은행', code: '097' },
     ];
     const bank = bankCode.filter((it) => it.bank === bankKind);
-    if (bank[0] === undefined || bank.length > 1)
+    if (!bank[0] || bank.length > 1)
         return false;
     return bank[0].code;
 }

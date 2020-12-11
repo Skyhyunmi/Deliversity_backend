@@ -194,7 +194,8 @@ export async function smsVerify(phone: string, verify: string) {
       myCache.del(phone);
       return 'Retry.';
     }
-    if (veri.number !== verify) {
+    console.log(typeof (veri.number), typeof (verify));
+    if (veri.number && veri.number !== parseInt(verify, 10)) {
       myCache.del(phone);
       return 'Not Matched.';
     }
@@ -315,7 +316,7 @@ export function getBankCode(bankKind: string) {
     { bank: '오픈은행', code: '097' },
   ];
   const bank = bankCode.filter((it) => it.bank === bankKind);
-  if(bank[0] === undefined || bank.length > 1) return false;
+  if(!bank[0] || bank.length > 1) return false;
   return bank[0].code;
 }
 
