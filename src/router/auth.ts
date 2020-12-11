@@ -218,8 +218,8 @@ auth.post('/findpw', async (req: Request, res: Response) => {
     const rnum = Math.floor(Math.random() * chars.length);
     randomString += chars.substring(rnum, rnum + 1);
   }
-  let salt = null; let
-    hashedPw = null;
+  let salt = null;
+  let hashedPw = null;
   const buffer = crypto.randomBytes(64);
   salt = buffer.toString('base64');
   const key = crypto.pbkdf2Sync(randomString, salt, 100000, 64, 'sha512');
