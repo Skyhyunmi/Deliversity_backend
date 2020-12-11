@@ -31,7 +31,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendMoney = exports.getBankCode = exports.sendFCMMessage = exports.getDistanceFromLatLonInKm = exports.getUserFromKakaoInfo = exports.getUserFromGoogleInfo = exports.smsVerify = exports.sendSMS = exports.sendSMStoAdmin = exports.getAuthToken = exports.emailVerify = exports.pwEmail = exports.sendEmail = exports.myCache = void 0;
+exports.findemailVerify = exports.findEmail = exports.sendMoney = exports.getBankCode = exports.sendFCMMessage = exports.getDistanceFromLatLonInKm = exports.getUserFromKakaoInfo = exports.getUserFromGoogleInfo = exports.smsVerify = exports.sendSMS = exports.sendSMStoAdmin = exports.getAuthToken = exports.emailVerify = exports.pwEmail = exports.sendEmail = exports.myCache = void 0;
 const axios_1 = __importDefault(require("axios"));
 const crypto = __importStar(require("crypto"));
 const admin = __importStar(require("firebase-admin"));
@@ -415,3 +415,58 @@ function sendMoney(token, refund, user, padNum) {
     });
 }
 exports.sendMoney = sendMoney;
+function findEmail(email) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            exports.myCache.del(email);
+            const regex = /^[0-9a-zA-Z]([-_\\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[a]{1}[c]{1}.[k]{1}[r]{1}$/i;
+            const actest = regex.test(email);
+            const regExp = /^[0-9a-zA-Z]([-_\\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[e]{1}[d]{1}[u]{1}$/i;
+            const edutest = regExp.test(email);
+            if (!(edutest || actest))
+                return 'Try with Student Email';
+            const url = Math.floor(Math.random() * (999999 - 100000)) + 100000;
+            yield mail_1.transporter.sendMail({
+                from: '"발신전용" <noreply@deliversity.co.kr>',
+                to: email,
+                subject: 'Deliversity 인증 메일입니다.',
+                html: `<h3>인증번호는</h3>${url}<h3>입니다.</h3>`,
+            });
+            exports.myCache.set(email, { number: url, createdAt: Date.now() });
+            return null;
+        }
+        catch (e) {
+            exports.myCache.del(email);
+            return 'Sent Auth Email Failed';
+        }
+    });
+}
+exports.findEmail = findEmail;
+function findemailVerify(email, verify) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const veri = exports.myCache.take(email);
+            if (!veri) {
+                exports.myCache.del(verify);
+                return 'Retry.';
+            }
+            if (veri.number && veri.number !== parseInt(verify, 10)) {
+                exports.myCache.del(email);
+                return 'Not Matched.';
+            }
+            const now = Number.parseInt(Date.now().toString(), 10);
+            const created = veri.createdAt;
+            const remainingTime = (now - created) / 60000;
+            if (remainingTime > 15) { // 15분
+                exports.myCache.del(email);
+                return 'Time Expired.';
+            }
+            exports.myCache.set(email, { verify: 1, updatedAt: Date.now() });
+            return null;
+        }
+        catch (e) {
+            return 'Retry.';
+        }
+    });
+}
+exports.findemailVerify = findemailVerify;

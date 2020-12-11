@@ -100,7 +100,7 @@ export async function getAuthToken(user: User) {
   const uid = user.firebaseUid;
   const firebaseToken = await admin.auth().createCustomToken(uid);
   const authToken = jwt.sign({
-    ...new classes.payLoad(user), 
+    ...new classes.payLoad(user),
   }, process.env.JWT_SECRET as jwt.Secret, {
     expiresIn: '7d',
   });
@@ -230,7 +230,7 @@ export async function getUserFromGoogleInfo(idToken: string) {
   if (!user) {
     return {
       id: ret.data.sub,
-    }; 
+    };
   }
   return {
     id: ret.data.sub,
@@ -255,7 +255,7 @@ export async function getUserFromKakaoInfo(accessToken: string) {
   if (!user) {
     return {
       id: ret.data.id,
-    }; 
+    };
   }
   return {
     id: ret.data.id,
@@ -279,7 +279,7 @@ export function getDistanceFromLatLonInKm(lat1: string, lng1: string, lat2: stri
   return d;
 }
 
-export function sendFCMMessage(tokens:string | string[],
+export function sendFCMMessage(tokens: string | string[],
   payload: admin.messaging.MessagingPayload) {
   admin.messaging().sendToDevice(tokens, payload, { priority: 'high' })
     .then((response) => {
@@ -316,13 +316,13 @@ export function getBankCode(bankKind: string) {
     { bank: '오픈은행', code: '097' },
   ];
   const bank = bankCode.filter((it) => it.bank === bankKind);
-  if(!bank[0] || bank.length > 1) return false;
+  if (!bank[0] || bank.length > 1) return false;
   return bank[0].code;
 }
 
-export async function sendMoney(token:string, refund: Refund, user: User, padNum: string) {
+export async function sendMoney(token: string, refund: Refund, user: User, padNum: string) {
   const bankCode = getBankCode(refund.bankKind);
-  if(!bankCode) return false;
+  if (!bankCode) return false;
   const data = await axios({
     url: 'https://testapi.openbanking.or.kr/v2.0/transfer/deposit/acnt_num',
     headers: {
@@ -356,4 +356,53 @@ export async function sendMoney(token:string, refund: Refund, user: User, padNum
     method: 'post',
   });
   return data;
+}
+
+export async function findEmail(email: string) {
+  try {
+    myCache.del(email);
+    const regex = /^[0-9a-zA-Z]([-_\\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[a]{1}[c]{1}.[k]{1}[r]{1}$/i;
+    const actest = regex.test(email);
+    const regExp = /^[0-9a-zA-Z]([-_\\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[e]{1}[d]{1}[u]{1}$/i;
+    const edutest = regExp.test(email);
+    if (!(edutest || actest)) return 'Try with Student Email';
+    const url = Math.floor(Math.random() * (999999 - 100000)) + 100000;
+    await transporter.sendMail({
+      from: '"발신전용" <noreply@deliversity.co.kr>',
+      to: email,
+      subject: 'Deliversity 인증 메일입니다.',
+      html: `<h3>인증번호는</h3>${url}<h3>입니다.</h3>`,
+    });
+    myCache.set(email, { number: url, createdAt: Date.now() });
+    return null;
+  }
+  catch (e) {
+    myCache.del(email);
+    return 'Sent Auth Email Failed';
+  }
+}
+
+export async function findemailVerify(email: string, verify: string) {
+  try {
+    const veri = myCache.take(email) as classes.Veri;
+    if (!veri) {
+      myCache.del(verify);
+      return 'Retry.';
+    }
+    if (veri.number && veri.number !== parseInt(verify, 10)) {
+      myCache.del(email);
+      return 'Not Matched.';
+    }
+    const now = Number.parseInt(Date.now().toString(), 10);
+    const created = veri.createdAt;
+    const remainingTime = (now - created) / 60000;
+    if (remainingTime > 15) { // 15분
+      myCache.del(email);
+      return 'Time Expired.';
+    }
+    myCache.set(email, { verify: 1, updatedAt: Date.now() });
+    return null;
+  } catch (e) {
+    return 'Retry.';
+  }
 }

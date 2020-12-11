@@ -279,3 +279,35 @@ exports.auth.get('/dupid', (req, res) => __awaiter(void 0, void 0, void 0, funct
         return res.status(403).json(util.successFalse(null, '해당 아이디의 유저가 존재하지 않습니다.', null));
     return res.json(util.successTrue('아이디가 존재합니다.', user));
 }));
+exports.auth.post('/find/emailVeri', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const reqBody = req.body;
+    const { email, verify } = reqBody;
+    const result = yield functions.findemailVerify(email, verify);
+    if (result == null)
+        return res.json(util.successTrue('이메일 인증 성공', null));
+    return res.status(403).json(util.successFalse(null, result, null));
+}));
+exports.auth.post('/find/email', /* util.isLoggedin, */ (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const reqBody = req.body;
+    const { email } = reqBody;
+    const result = yield functions.findEmail(email);
+    if (result == null)
+        return res.json(util.successTrue('이메일 전송 성공', null));
+    return res.status(403).json(util.successFalse('', result, ''));
+}));
+exports.auth.post('/find/emailVeri', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const reqBody = req.body;
+    const { email, verify } = reqBody;
+    const result = yield functions.findemailVerify(email, verify);
+    if (result == null)
+        return res.json(util.successTrue('이메일 인증 성공', null));
+    return res.status(403).json(util.successFalse(null, result, null));
+}));
+exports.auth.post('/find/email', /* util.isLoggedin, */ (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const reqBody = req.body;
+    const { email } = reqBody;
+    const result = yield functions.findEmail(email);
+    if (result == null)
+        return res.json(util.successTrue('이메일 전송 성공', null));
+    return res.status(403).json(util.successFalse('', result, ''));
+}));
