@@ -31,22 +31,22 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getBankCode = exports.sendMoney = exports.sendFCMMessage = exports.getDistanceFromLatLonInKm = exports.getUserFromKakaoInfo = exports.getUserFromGoogleInfo = exports.smsVerify = exports.sendSMS = exports.sendSMStoAdmin = exports.getAuthToken = exports.emailVerify = exports.pwEmail = exports.sendEmail = exports.myCache = void 0;
+exports.sendMoney = exports.getBankCode = exports.sendFCMMessage = exports.getDistanceFromLatLonInKm = exports.getUserFromKakaoInfo = exports.getUserFromGoogleInfo = exports.smsVerify = exports.sendSMS = exports.sendSMStoAdmin = exports.getAuthToken = exports.emailVerify = exports.pwEmail = exports.sendEmail = exports.myCache = void 0;
 const axios_1 = __importDefault(require("axios"));
-const index_1 = require("../models/index");
 const crypto = __importStar(require("crypto"));
 const admin = __importStar(require("firebase-admin"));
 const node_cache_1 = __importDefault(require("node-cache"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const dotenv_1 = __importDefault(require("dotenv"));
+const index_1 = require("../models/index");
 const mail_1 = require("./mail");
 const classes = __importStar(require("./classes"));
-const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 exports.myCache = new node_cache_1.default();
 function makeSignature(urlsub, timestamp) {
-    const space = " ";
-    const newLine = "\n";
-    const method = "POST";
+    const space = ' ';
+    const newLine = '\n';
+    const method = 'POST';
     const hmac = crypto.createHmac('sha256', process.env.NAVER_SECRET);
     const mes = [];
     mes.push(method);
@@ -63,8 +63,8 @@ function sendEmail(email, suburl, type) {
     return __awaiter(this, void 0, void 0, function* () {
         const email_number = crypto.randomBytes(256).toString('hex').substr(100, 20);
         try {
-            if (type != 1) {
-                const user = yield index_1.userRep.findOne({ where: { email: email } });
+            if (type !== 1) {
+                const user = yield index_1.userRep.findOne({ where: { email } });
                 if (user)
                     return 'Already Existed Email';
             }
@@ -75,14 +75,14 @@ function sendEmail(email, suburl, type) {
             const edutest = regExp.test(email);
             if (!(edutest || actest))
                 return 'Try with Student Email';
-            const url = 'http://' + suburl + '/api/v1/auth/email/verification' + '?email_number=' + email_number;
+            const url = `http://${suburl}/api/v1/auth/email/verification?email_number=${email_number}`;
             yield mail_1.transporter.sendMail({
                 from: '"발신전용" <noreply@deliversity.co.kr>',
                 to: email,
-                subject: "Deliversity 인증 메일입니다.",
-                html: "<h3>이메일 인증을 위해 URL을 클릭해주세요.</h3><br>" + url
+                subject: 'Deliversity 인증 메일입니다.',
+                html: `<h3>이메일 인증을 위해 URL을 클릭해주세요.</h3><br>${url}`,
             });
-            exports.myCache.set(email_number, { email: email, createdAt: Date.now() });
+            exports.myCache.set(email_number, { email, createdAt: Date.now() });
             return null;
         }
         catch (e) {
@@ -99,8 +99,8 @@ function pwEmail(email, hashPW) {
             yield mail_1.transporter.sendMail({
                 from: '"발신전용" <noreply@deliversity.co.kr>',
                 to: email,
-                subject: "Deliversity 변경된 임시 비밀번호입니다.",
-                html: "<h3>로그인 후 변경해주세요.</h3><br>" + hashPW
+                subject: 'Deliversity 변경된 임시 비밀번호입니다.',
+                html: `<h3>로그인 후 변경해주세요.</h3><br>${hashPW}`,
             });
             return null;
         }
@@ -116,20 +116,20 @@ function emailVerify(verify) {
             const veri = exports.myCache.take(verify);
             if (!veri) {
                 exports.myCache.del(verify);
-                return "Not Matched.";
+                return 'Not Matched.';
             }
-            const now = Number.parseInt(Date.now().toString());
+            const now = Number.parseInt(Date.now().toString(), 10);
             const created = veri.createdAt;
             const remainingTime = (now - created) / 60000;
             if (remainingTime > 15) {
                 exports.myCache.del(verify);
-                return "Time Expired";
+                return 'Time Expired';
             }
             exports.myCache.set(veri.email, { verify: 1, updatedAt: Date.now() });
             return null;
         }
         catch (e) {
-            return "Retry.";
+            return 'Retry.';
         }
     });
 }
@@ -142,8 +142,8 @@ function getAuthToken(user) {
             expiresIn: '7d',
         });
         const payload = {
-            firebaseToken: firebaseToken,
-            authToken: authToken
+            firebaseToken,
+            authToken,
         };
         return payload;
     });
@@ -157,32 +157,32 @@ function sendSMStoAdmin() {
         const urlsub = `/sms/v2/services/${serviceID}/messages`;
         const signature = makeSignature(urlsub, timestamp);
         const data = {
-            "type": "SMS",
-            "contentType": "COMM",
-            "countryCode": "82",
-            "from": sendFrom,
-            "content": `Deliverssity Server Started.`,
-            "messages": [{ "to": sendFrom }]
+            type: 'SMS',
+            contentType: 'COMM',
+            countryCode: '82',
+            from: sendFrom,
+            content: 'Deliverssity Server Started.',
+            messages: [{ to: sendFrom }],
         };
         try {
             const Token = yield axios_1.default({
                 url: `https://sens.apigw.ntruss.com/sms/v2/services/${serviceID}/messages`,
-                method: "post",
+                method: 'post',
                 headers: {
-                    "Content-Type": "application/json; charset=utf-8",
-                    "x-ncp-apigw-timestamp": timestamp,
-                    "x-ncp-iam-access-key": process.env.NAVER_KEY,
-                    "x-ncp-apigw-signature-v2": signature
+                    'Content-Type': 'application/json; charset=utf-8',
+                    'x-ncp-apigw-timestamp': timestamp,
+                    'x-ncp-iam-access-key': process.env.NAVER_KEY,
+                    'x-ncp-apigw-signature-v2': signature,
                 },
-                data: data
+                data,
             });
             const tokenData = Token.data;
-            if (tokenData.statusCode == "202")
+            if (tokenData.statusCode === '202')
                 return null;
-            return "문자 전송 실패";
+            return '문자 전송 실패';
         }
         catch (e) {
-            return "문자 전송 실패";
+            return '문자 전송 실패';
         }
     });
 }
@@ -196,40 +196,40 @@ function sendSMS(phone, type) {
         const signature = makeSignature(urlsub, timestamp);
         const randomNumber = Math.floor(Math.random() * (999999 - 100000)) + 100000;
         const data = {
-            "type": "SMS",
-            "contentType": "COMM",
-            "countryCode": "82",
-            "from": sendFrom,
-            "content": `Deliversity 인증번호 ${randomNumber} 입니다.`,
-            "messages": [{ "to": phone }]
+            type: 'SMS',
+            contentType: 'COMM',
+            countryCode: '82',
+            from: sendFrom,
+            content: `Deliversity 인증번호 ${randomNumber} 입니다.`,
+            messages: [{ to: phone }],
         };
         try {
-            if (type != 1) {
-                const user = yield index_1.userRep.findOne({ where: { phone: phone } });
+            if (type !== 1) {
+                const user = yield index_1.userRep.findOne({ where: { phone } });
                 if (user)
-                    return "phone number duplicated.";
+                    return 'phone number duplicated.';
             }
             exports.myCache.del(phone);
             const Token = yield axios_1.default({
                 url: `https://sens.apigw.ntruss.com/sms/v2/services/${serviceID}/messages`,
-                method: "post",
+                method: 'post',
                 headers: {
-                    "Content-Type": "application/json; charset=utf-8",
-                    "x-ncp-apigw-timestamp": timestamp,
-                    "x-ncp-iam-access-key": process.env.NAVER_KEY,
-                    "x-ncp-apigw-signature-v2": signature
+                    'Content-Type': 'application/json; charset=utf-8',
+                    'x-ncp-apigw-timestamp': timestamp,
+                    'x-ncp-iam-access-key': process.env.NAVER_KEY,
+                    'x-ncp-apigw-signature-v2': signature,
                 },
-                data: data
+                data,
             });
             const tokenData = Token.data;
             exports.myCache.set(phone, { number: randomNumber, createdAt: Date.now() });
-            if (tokenData.statusCode == "202")
+            if (tokenData.statusCode === '202')
                 return null;
-            return "문자 전송 실패";
+            return '문자 전송 실패';
         }
         catch (e) {
             exports.myCache.del(phone);
-            return "문자 전송 실패";
+            return '문자 전송 실패';
         }
     });
 }
@@ -240,24 +240,24 @@ function smsVerify(phone, verify) {
             const veri = exports.myCache.take(phone);
             if (!veri) {
                 exports.myCache.del(phone);
-                return "Retry.";
+                return 'Retry.';
             }
-            if (veri.number != verify) {
+            if (veri.number !== verify) {
                 exports.myCache.del(phone);
-                return "Not Matched.";
+                return 'Not Matched.';
             }
-            const now = Number.parseInt(Date.now().toString());
+            const now = Number.parseInt(Date.now().toString(), 10);
             const created = veri.createdAt;
             const remainingTime = (now - created) / 60000;
-            if (remainingTime > 15) { //15분
+            if (remainingTime > 15) { // 15분
                 exports.myCache.del(phone);
-                return "Time Expired.";
+                return 'Time Expired.';
             }
             exports.myCache.set(phone, { verify: 1, updatedAt: Date.now() });
             return null;
         }
         catch (e) {
-            return "Retry.";
+            return 'Retry.';
         }
     });
 }
@@ -266,25 +266,26 @@ function getUserFromGoogleInfo(idToken) {
     return __awaiter(this, void 0, void 0, function* () {
         const ret = yield axios_1.default({
             url: 'https://www.googleapis.com/oauth2/v3/tokeninfo',
-            method: "GET",
+            method: 'GET',
             params: {
-                id_token: idToken
-            }
+                id_token: idToken,
+            },
         });
         if (!ret)
             return null;
         const user = yield index_1.userRep.findOne({
             where: {
-                googleOAuth: ret.data.sub
-            }
+                googleOAuth: ret.data.sub,
+            },
         });
-        if (!user)
+        if (!user) {
             return {
-                id: ret.data.sub
+                id: ret.data.sub,
             };
+        }
         return {
             id: ret.data.sub,
-            user: user
+            user,
         };
     });
 }
@@ -293,25 +294,26 @@ function getUserFromKakaoInfo(accessToken) {
     return __awaiter(this, void 0, void 0, function* () {
         const ret = yield axios_1.default({
             url: 'https://kapi.kakao.com/v1/user/access_token_info',
-            method: "GET",
+            method: 'GET',
             headers: {
-                Authorization: `Bearer ${accessToken}`
-            }
+                Authorization: `Bearer ${accessToken}`,
+            },
         });
         if (!ret)
             return null;
         const user = yield index_1.userRep.findOne({
             where: {
-                kakaoOAuth: ret.data.id
-            }
+                kakaoOAuth: ret.data.id,
+            },
         });
-        if (!user)
+        if (!user) {
             return {
-                id: ret.data.id
+                id: ret.data.id,
             };
+        }
         return {
             id: ret.data.id,
-            user: user
+            user,
         };
     });
 }
@@ -323,14 +325,16 @@ function getDistanceFromLatLonInKm(lat1, lng1, lat2, lng2) {
     const R = 6371; // Radius of the earth in km
     const dLat = deg2rad(parseFloat(lat2) - parseFloat(lat1)); // deg2rad below
     const dLon = deg2rad(parseFloat(lng2) - parseFloat(lng1));
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(deg2rad(parseFloat(lat1))) * Math.cos(deg2rad(parseFloat(lat2))) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+        + Math.cos(deg2rad(parseFloat(lat1))) * Math.cos(deg2rad(parseFloat(lat2)))
+            * Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const d = R * c; // Distance in km
     return d;
 }
 exports.getDistanceFromLatLonInKm = getDistanceFromLatLonInKm;
 function sendFCMMessage(tokens, payload) {
-    admin.messaging().sendToDevice(tokens, payload, { priority: "high" })
+    admin.messaging().sendToDevice(tokens, payload, { priority: 'high' })
         .then((response) => {
         console.log(response.results[0]);
         return true;
@@ -341,71 +345,72 @@ function sendFCMMessage(tokens, payload) {
     });
 }
 exports.sendFCMMessage = sendFCMMessage;
-function sendMoney(token, refund, user, padNum) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const bankCode = getBankCode(refund.bankKind);
-        if (!bankCode)
-            return false;
-        return yield axios_1.default({
-            url: 'https://testapi.openbanking.or.kr/v2.0/transfer/deposit/acnt_num',
-            headers: {
-                Authorization: "Bearer " + token //Access_Token 추가 (oob, sa 뭐냐)
-            },
-            data: {
-                "cntr_account_type": "N",
-                "cntr_account_num": process.env.OPEN_ACCOUNT,
-                "wd_pass_phrase": "NONE",
-                "wd_print_content": "환급",
-                "name_check_option": "on",
-                "tran_dtime": "20201001150133",
-                "req_cnt": "1",
-                "req_list": [
-                    {
-                        "tran_no": "1",
-                        "bank_tran_id": padNum,
-                        "bank_code_std": bankCode,
-                        "account_num": refund.accountNum,
-                        "account_holder_name": refund.accountName,
-                        "print_content": "환급",
-                        "tran_amt": refund.amount,
-                        "req_client_name": refund.accountName,
-                        "req_client_bank_code": bankCode,
-                        "req_client_account_num": refund.accountNum,
-                        "req_client_num": user.id,
-                        "transfer_purpose": "TR" //이체
-                    }
-                ]
-            },
-            method: 'post'
-        });
-    });
-}
-exports.sendMoney = sendMoney;
 function getBankCode(bankKind) {
     const bankCode = [
-        { bank: "KDB 산업은행", code: "002" },
-        { bank: "SC 제일은행", code: "023" },
-        { bank: "전북은행", code: "037" },
-        { bank: "IBK 기업은행", code: "003" },
-        { bank: "한국씨티은행", code: "027" },
-        { bank: "경남은행", code: "039" },
-        { bank: "KB 국민은행", code: "004" },
-        { bank: "대구은행", code: "031" },
-        { bank: "하나은행", code: "081" },
-        { bank: "수협은행", code: "007" },
-        { bank: "부산은행", code: "032" },
-        { bank: "신한은행", code: "088" },
-        { bank: "NH 농협은행", code: "011" },
-        { bank: "광주은행", code: "034" },
-        { bank: "케이뱅크", code: "089" },
-        { bank: "우리은행", code: "020" },
-        { bank: "제주은행", code: "035" },
-        { bank: "카카오뱅크", code: "090" },
-        { bank: "오픈은행", code: "097" }
+        { bank: 'KDB 산업은행', code: '002' },
+        { bank: 'SC 제일은행', code: '023' },
+        { bank: '전북은행', code: '037' },
+        { bank: 'IBK 기업은행', code: '003' },
+        { bank: '한국씨티은행', code: '027' },
+        { bank: '경남은행', code: '039' },
+        { bank: 'KB 국민은행', code: '004' },
+        { bank: '대구은행', code: '031' },
+        { bank: '하나은행', code: '081' },
+        { bank: '수협은행', code: '007' },
+        { bank: '부산은행', code: '032' },
+        { bank: '신한은행', code: '088' },
+        { bank: 'NH 농협은행', code: '011' },
+        { bank: '광주은행', code: '034' },
+        { bank: '케이뱅크', code: '089' },
+        { bank: '우리은행', code: '020' },
+        { bank: '제주은행', code: '035' },
+        { bank: '카카오뱅크', code: '090' },
+        { bank: '오픈은행', code: '097' },
     ];
-    const bank = bankCode.filter(it => it.bank === bankKind);
+    const bank = bankCode.filter((it) => it.bank === bankKind);
     if (bank[0] === undefined || bank.length > 1)
         return false;
     return bank[0].code;
 }
 exports.getBankCode = getBankCode;
+function sendMoney(token, refund, user, padNum) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const bankCode = getBankCode(refund.bankKind);
+        if (!bankCode)
+            return false;
+        const data = yield axios_1.default({
+            url: 'https://testapi.openbanking.or.kr/v2.0/transfer/deposit/acnt_num',
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            data: {
+                cntr_account_type: 'N',
+                cntr_account_num: process.env.OPEN_ACCOUNT,
+                wd_pass_phrase: 'NONE',
+                wd_print_content: '환급',
+                name_check_option: 'on',
+                tran_dtime: '20201001150133',
+                req_cnt: '1',
+                req_list: [
+                    {
+                        tran_no: '1',
+                        bank_tran_id: padNum,
+                        bank_code_std: bankCode,
+                        account_num: refund.accountNum,
+                        account_holder_name: refund.accountName,
+                        print_content: '환급',
+                        tran_amt: refund.amount,
+                        req_client_name: refund.accountName,
+                        req_client_bank_code: bankCode,
+                        req_client_account_num: refund.accountNum,
+                        req_client_num: user.id,
+                        transfer_purpose: 'TR',
+                    },
+                ],
+            },
+            method: 'post',
+        });
+        return data;
+    });
+}
+exports.sendMoney = sendMoney;

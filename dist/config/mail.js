@@ -32,6 +32,6 @@ exports.transporter = nodemailer.createTransport({
     secure: true,
     auth: {
         user: process.env.MAIL_ID,
-        pass: process.env.MAIL_PW
-    }
+        pass: process.env.MAIL_PW,
+    },
 });

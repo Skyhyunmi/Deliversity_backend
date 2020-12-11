@@ -8,7 +8,7 @@ import {
   CreatedAt,
   UpdatedAt,
   DeletedAt,
-} from "sequelize-typescript";
+} from 'sequelize-typescript';
 
   @Table({ timestamps: true })
 export default class Room extends Model<Room> {

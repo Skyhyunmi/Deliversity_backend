@@ -15,18 +15,18 @@ __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BIGINT)
 ], Email_Verify.prototype, "id", void 0);
 __decorate([
-    sequelize_typescript_1.Comment("User Email"),
+    sequelize_typescript_1.Comment('User Email'),
     sequelize_typescript_1.Unique,
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
 ], Email_Verify.prototype, "email", void 0);
 __decorate([
-    sequelize_typescript_1.Comment("Email Verified Code"),
+    sequelize_typescript_1.Comment('Email Verified Code'),
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING)
 ], Email_Verify.prototype, "email_number", void 0);
 __decorate([
-    sequelize_typescript_1.Comment("Email Verified Check"),
+    sequelize_typescript_1.Comment('Email Verified Check'),
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(false),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BOOLEAN)

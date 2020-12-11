@@ -32,10 +32,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const socket_io_1 = __importDefault(require("socket.io"));
+const node_cache_1 = __importDefault(require("node-cache"));
 const classes = __importStar(require("./config/classes"));
 const models_1 = require("./models");
 const functions = __importStar(require("./config/functions"));
-const node_cache_1 = __importDefault(require("node-cache"));
 const myCache = new node_cache_1.default();
 setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
     const Data = yield myCache.take('chat');
@@ -46,36 +46,37 @@ setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
 function chatServer(server) {
     const io = socket_io_1.default.listen(server, {
         transports: ['websocket', 'polling'],
-        'pingTimeout': 10000 * 60 * 10, 'pingInterval': 10000 * 60 * 7
+        pingTimeout: 10000 * 60 * 10,
+        pingInterval: 10000 * 60 * 7,
     });
     io.on('connect', (socket) => __awaiter(this, void 0, void 0, function* () {
         socket.on('dscnt', (roomId) => __awaiter(this, void 0, void 0, function* () {
-            console.log("> user disconnect from: ");
+            console.log('> user disconnect from: ');
             console.log(roomId);
             socket.leave(roomId);
             myCache.del(roomId);
         }));
         socket.on('cnt', (roomId) => __awaiter(this, void 0, void 0, function* () {
-            console.log("> user connect to: ");
+            console.log('> user connect to: ');
             console.log(roomId);
             myCache.del(roomId);
             socket.join(roomId);
         }));
         socket.on('chat', (data) => __awaiter(this, void 0, void 0, function* () {
             let room = myCache.get(data[0].user.roomId);
-            if (room == undefined) {
+            if (room === undefined) {
                 const userRoom = yield models_1.roomRep.findOne({
-                    where: { roomId: data[0].user.roomId }
+                    where: { roomId: data[0].user.roomId },
                 });
                 if (!userRoom)
                     return;
                 const user = yield models_1.userRep.findOne({
-                    where: { id: userRoom.ownerId }
+                    where: { id: userRoom.ownerId },
                 });
                 if (!user)
                     return;
                 const rider = yield models_1.userRep.findOne({
-                    where: { id: userRoom.riderId }
+                    where: { id: userRoom.riderId },
                 });
                 if (!rider)
                     return;
@@ -90,39 +91,39 @@ function chatServer(server) {
                 room = _room;
             }
             // 나중에 완성되면 지울 것
-            const roomId = data[0].user.roomId;
+            const { roomId } = data[0].user;
             socket.join(roomId);
             //
             let fcm;
-            if (parseInt(data[0].user._id) == parseInt(room.ownerId)) {
+            if (parseInt(data[0].user._id, 10) === parseInt(room.ownerId, 10)) {
                 data[0].user.nickName = room.ownerNickName;
                 fcm = room.riderFCM;
-                console.log("rider fcm: ", fcm);
+                console.log('rider fcm: ', fcm);
             }
             else {
                 data[0].user.nickName = room.riderNickName;
                 fcm = room.ownerFCM;
-                console.log("owner fcm: ", fcm);
+                console.log('owner fcm: ', fcm);
             }
-            console.log("---------------------");
-            console.log("from: ", data[0].user._id === room.ownerId ? room.ownerNickName : room.riderNickName);
-            console.log("to: ", data[0].user._id === room.ownerId ? room.riderNickName : room.ownerNickName);
-            console.log("text: ", data[0].text);
-            console.log("---------------------");
+            console.log('---------------------');
+            console.log('from: ', data[0].user._id === room.ownerId ? room.ownerNickName : room.riderNickName);
+            console.log('to: ', data[0].user._id === room.ownerId ? room.riderNickName : room.ownerNickName);
+            console.log('text: ', data[0].text);
+            console.log('---------------------');
             socket.to(roomId).broadcast.emit('rChat', data); // 백에서 클라이언트로 rChat으로 emit
             const message = {
                 notification: {
-                    "title": data[0].user.nickName,
-                    "tag": data[0].user.nickName,
-                    "body": data[0].text ? data[0].text : "",
+                    title: data[0].user.nickName,
+                    tag: data[0].user.nickName,
+                    body: data[0].text ? data[0].text : '',
                 },
                 data: {
                     type: 'Chat',
-                    roomId: roomId,
+                    roomId,
                     senderId: data[0].user._id.toString(),
-                    image: data[0].image ? data[0].image : "",
-                    messageType: data[0].messageType ? data[0].messageType : "" //image or null
-                }
+                    image: data[0].image ? data[0].image : '',
+                    messageType: data[0].messageType ? data[0].messageType : '',
+                },
             };
             if (fcm)
                 functions.sendFCMMessage(fcm, message);
@@ -134,7 +135,7 @@ function chatServer(server) {
             //     console.log('Error sending message:', error);
             //   });
             let list = myCache.get('chat');
-            if (list == undefined)
+            if (list === undefined)
                 myCache.set('chat', [new classes.userData(data[0], data[0].user.nickName)]);
             else {
                 list = myCache.take('chat');

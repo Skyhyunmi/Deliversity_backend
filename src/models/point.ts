@@ -9,12 +9,12 @@ import {
   CreatedAt,
   UpdatedAt,
   DeletedAt,
-  ForeignKey
-} from "sequelize-typescript";
+  ForeignKey,
+} from 'sequelize-typescript';
 
-import Order from "../models/order";
-import PointCategory from "./pointCategory";
-import User from "./user";
+import Order from '../models/order';
+import PointCategory from './pointCategory';
+import User from './user';
 
 @Table({ timestamps: true })
 export default class Point extends Model<Point> {

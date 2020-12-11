@@ -9,9 +9,9 @@ import {
   Default,
   CreatedAt,
   UpdatedAt,
-  ForeignKey
-} from "sequelize-typescript";
-import User from "../models/user";
+  ForeignKey,
+} from 'sequelize-typescript';
+import User from '../models/user';
 
 @Table({ timestamps: true })
 export default class Refund extends Model<Refund> {

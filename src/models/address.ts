@@ -9,9 +9,9 @@ import {
   CreatedAt,
   UpdatedAt,
   DeletedAt,
-  ForeignKey
-} from "sequelize-typescript";
-import User from "./user";
+  ForeignKey,
+} from 'sequelize-typescript';
+import User from './user';
   
   @Table({ timestamps: true })
 export default class Address extends Model<Address> {
@@ -20,7 +20,7 @@ export default class Address extends Model<Address> {
     @Column(DataType.BIGINT)
     id!: number;
   
-    @ForeignKey(()=> User)
+    @ForeignKey(() => User)
     @AllowNull(false)
     @Column(DataType.BIGINT)
     userId!: number;

@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.roomRep = exports.chatRep = exports.reviewRep = exports.reportRep = exports.qnaRep = exports.pointcategoryRep = exports.pointRep = exports.refundRep = exports.paymentRep = exports.orderRep = exports.addressRep = exports.userRep = exports.db = void 0;
 const sequelize_typescript_1 = require("sequelize-typescript");
+const dotenv_1 = __importDefault(require("dotenv"));
 const user_1 = __importDefault(require("./user"));
 const address_1 = __importDefault(require("./address"));
 const order_1 = __importDefault(require("./order"));
@@ -17,13 +18,13 @@ const report_1 = __importDefault(require("./report"));
 const review_1 = __importDefault(require("./review"));
 const chat_1 = __importDefault(require("./chat"));
 const room_1 = __importDefault(require("./room"));
-const dotenv_1 = __importDefault(require("dotenv"));
-dotenv_1.default.config();
 const sequelize_config_1 = require("../config/sequelize.config");
-if (process.env.NODE_ENV == 'test')
-    exports.db = new sequelize_typescript_1.Sequelize(sequelize_config_1.config.test);
-else
-    exports.db = new sequelize_typescript_1.Sequelize(sequelize_config_1.config.development);
+dotenv_1.default.config();
+// console.log(process.env.TRAVIS)
+exports.db = process.env.NODE_ENV === 'test'
+    ? new sequelize_typescript_1.Sequelize(sequelize_config_1.config.test) : new sequelize_typescript_1.Sequelize(sequelize_config_1.config.development);
+// if(process.env.NODE_ENV == 'test') db = new Sequelize(config.test);
+// else db = new Sequelize(config.development);
 exports.db.addModels([user_1.default]);
 exports.db.addModels([address_1.default]);
 exports.db.addModels([order_1.default]);
@@ -36,7 +37,7 @@ exports.db.addModels([report_1.default]);
 exports.db.addModels([review_1.default]);
 exports.db.addModels([chat_1.default]);
 exports.db.addModels([room_1.default]);
-//https://stackoverflow.com/questions/60014874/how-to-use-typescript-with-sequelize
+// https://stackoverflow.com/questions/60014874/how-to-use-typescript-with-sequelize
 exports.userRep = exports.db.getRepository(user_1.default);
 exports.addressRep = exports.db.getRepository(address_1.default);
 exports.orderRep = exports.db.getRepository(order_1.default);

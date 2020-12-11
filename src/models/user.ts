@@ -11,8 +11,8 @@ import {
   CreatedAt,
   UpdatedAt,
   DeletedAt,
-  Default//, ForeignKey
-} from "sequelize-typescript";
+  Default, // , ForeignKey
+} from 'sequelize-typescript';
 
 @Table({ timestamps: true })
 export default class User extends Model<User> {
@@ -21,13 +21,13 @@ export default class User extends Model<User> {
   @Column(DataType.BIGINT)
   id!: number;
 
-  @Comment("User ID")
+  @Comment('User ID')
   @Unique
   @AllowNull(false)
   @Column(DataType.STRING)
   userId!: string;
 
-  @Comment("User password")
+  @Comment('User password')
   @AllowNull(false)
   @Column(DataType.STRING)
   password!: string;
