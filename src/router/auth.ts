@@ -166,14 +166,6 @@ auth.delete('/release', util.isLoggedin, async (req: Request, res: Response) => 
   return res.json(util.successTrue('사용자 삭제 완료', null));
 });
 
-auth.post('/find/email', /* util.isLoggedin, */async (req: Request, res: Response) => {
-  const reqBody = req.body;
-  const { email } = reqBody;
-  const result = await functions.sendEmail(email, req.get('host') as string, 1);
-  if (result == null) return res.json(util.successTrue('이메일 전송 성공', null));
-  return res.status(403).json(util.successFalse('', result, ''));
-});
-
 auth.post('/find/sms', /* util.isLoggedin, */async (req: Request, res: Response) => {
   const reqBody = req.body;
   const { phone } = reqBody;
@@ -238,22 +230,6 @@ auth.get('/dupid', async (req: Request, res: Response) => {
   const user = await userRep.findOne({ where: { userId } });
   if (!user) return res.status(403).json(util.successFalse(null, '해당 아이디의 유저가 존재하지 않습니다.', null));
   return res.json(util.successTrue('아이디가 존재합니다.', user));
-});
-
-auth.post('/find/emailVeri', async (req: Request, res) => {
-  const reqBody = req.body;
-  const { email, verify } = reqBody;
-  const result = await functions.findemailVerify(email, verify);
-  if (result == null) return res.json(util.successTrue('이메일 인증 성공', null));
-  return res.status(403).json(util.successFalse(null, result, null));
-});
-
-auth.post('/find/email', /* util.isLoggedin, */async (req: Request, res: Response) => {
-  const reqBody = req.body;
-  const { email } = reqBody;
-  const result = await functions.findEmail(email);
-  if (result == null) return res.json(util.successTrue('이메일 전송 성공', null));
-  return res.status(403).json(util.successFalse('', result, ''));
 });
 
 auth.post('/find/emailVeri', async (req: Request, res) => {
