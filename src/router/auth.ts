@@ -1,6 +1,6 @@
 /* eslint consistent-return: 0 */
 import {
-  NextFunction, Request, Response, Router, 
+  NextFunction, Request, Response, Router,
 } from 'express';
 import * as admin from 'firebase-admin';
 import jwt from 'jsonwebtoken';
@@ -117,7 +117,7 @@ auth.get('/refresh', util.isLoggedin, async (req: Request, res: Response) => {
     return res.status(403).json(util.successFalse(null, "Can't refresh the token", { user }));
   }
   const authToken = jwt.sign({
-    ...new classes.payLoad(user), 
+    ...new classes.payLoad(user),
   }, process.env.JWT_SECRET as jwt.Secret, {
     expiresIn: '7d',
   });
@@ -218,8 +218,8 @@ auth.post('/findpw', async (req: Request, res: Response) => {
     const rnum = Math.floor(Math.random() * chars.length);
     randomString += chars.substring(rnum, rnum + 1);
   }
-  let salt = null; let 
-    hashedPw = null;
+  let salt = null;
+  let hashedPw = null;
   const buffer = crypto.randomBytes(64);
   salt = buffer.toString('base64');
   const key = crypto.pbkdf2Sync(randomString, salt, 100000, 64, 'sha512');
@@ -238,4 +238,36 @@ auth.get('/dupid', async (req: Request, res: Response) => {
   const user = await userRep.findOne({ where: { userId } });
   if (!user) return res.status(403).json(util.successFalse(null, '해당 아이디의 유저가 존재하지 않습니다.', null));
   return res.json(util.successTrue('아이디가 존재합니다.', user));
-}); 
+});
+
+auth.post('/find/emailVeri', async (req: Request, res) => {
+  const reqBody = req.body;
+  const { email, verify } = reqBody;
+  const result = await functions.findemailVerify(email, verify);
+  if (result == null) return res.json(util.successTrue('이메일 인증 성공', null));
+  return res.status(403).json(util.successFalse(null, result, null));
+});
+
+auth.post('/find/email', /* util.isLoggedin, */async (req: Request, res: Response) => {
+  const reqBody = req.body;
+  const { email } = reqBody;
+  const result = await functions.findEmail(email);
+  if (result == null) return res.json(util.successTrue('이메일 전송 성공', null));
+  return res.status(403).json(util.successFalse('', result, ''));
+});
+
+auth.post('/find/emailVeri', async (req: Request, res) => {
+  const reqBody = req.body;
+  const { email, verify } = reqBody;
+  const result = await functions.findemailVerify(email, verify);
+  if (result == null) return res.json(util.successTrue('이메일 인증 성공', null));
+  return res.status(403).json(util.successFalse(null, result, null));
+});
+
+auth.post('/find/email', /* util.isLoggedin, */async (req: Request, res: Response) => {
+  const reqBody = req.body;
+  const { email } = reqBody;
+  const result = await functions.findEmail(email);
+  if (result == null) return res.json(util.successTrue('이메일 전송 성공', null));
+  return res.status(403).json(util.successFalse('', result, ''));
+});
