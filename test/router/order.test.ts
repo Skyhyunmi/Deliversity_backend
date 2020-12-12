@@ -99,15 +99,15 @@ describe('주문 관련 테스트', () => {
           storeName: "A네 디저트가게",
           storeAddress: "경기 가평군 가평읍 가화로 142-21",
           storeDetailAddress: "A동 A호",
-          gender: "0",
-          hotDeal: "0",
-          reservation: "0",
+          gender: 0,
+          hotDeal: 0,
+          reservation: 0,
           categoryName: "카페",
           content: "마카롱 11개 주세요."
         });
       expect(Order.body.data.storeName).toBe("A네 디저트가게");
-      expect(Order.body.data.gender).toBe("0");
-      expect(Order.body.data.reservation).toBe("0");
+      expect(Order.body.data.gender).toBe(0);
+      expect(Order.body.data.reservation).toBe(false);
       done();
     });
     // 2. 동성 배달 O, 예약 X
@@ -119,14 +119,14 @@ describe('주문 관련 테스트', () => {
           storeName: "B네 디저트가게",
           storeAddress: "경기 수원시 영통구 월드컵로 164",
           storeDetailAddress: "B동 B호",
-          gender: "1",
-          hotDeal: "0",
-          reservation: "0",
+          gender: 1,
+          hotDeal: 0,
+          reservation: 0,
           categoryName: "카페",
           content: "마카롱 22개 주세요."
         });
       expect(Order.body.data.storeName).toBe("B네 디저트가게");
-      expect(Order.body.data.reservation).toBe("0");
+      expect(Order.body.data.reservation).toBe(false);
       done();
     });
     // 3. 동성 배달 O, 예약 O
@@ -138,16 +138,16 @@ describe('주문 관련 테스트', () => {
           storeName: "C네 편의점",
           storeAddress: "경기 용인시 처인구 금학로341번길 8",
           storeDetailAddress: "C동 C호",
-          gender: "1",
-          hotDeal: "0",
-          reservation: "1",
+          gender: 1,
+          hotDeal: 0,
+          reservation: 1,
           expHour: "1",
           expMinute: "30",
           categoryName: "편의점",
           content: "콜라 3개 사주세요."
         });
       expect(Order.body.data.storeName).toBe("C네 편의점");
-      expect(Order.body.data.reservation).toBe("1");
+      expect(Order.body.data.reservation).toBe(true);
       done();
     });
   });
@@ -160,17 +160,17 @@ describe('주문 관련 테스트', () => {
         storeName: "D네 편의점",
         storeAddress: "경기 용인시 처인구 포곡읍 두계로 10-6",
         storeDetailAddress: "D동 D호",
-        gender: "0",
-        hotDeal: "0",
-        reservation: "1",
+        gender: 0,
+        hotDeal: 0,
+        reservation: 1,
         expHour: "1",
         expMinute: "10",
         categoryName: "편의점",
         content: "콜라 4개 사주세요."
       });
     expect(Order.body.data.storeName).toBe("D네 편의점");
-    expect(Order.body.data.gender).toBe("0");
-    expect(Order.body.data.reservation).toBe("1");
+    expect(Order.body.data.gender).toBe(0);
+    expect(Order.body.data.reservation).toBe(true);
     done();
   });
 
