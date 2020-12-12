@@ -198,7 +198,7 @@ exports.myinfo.put('/address', util.isLoggedin, (req, res) => __awaiter(void 0, 
         return res.json(util.successTrue('', old));
     }
     catch (err) {
-        console.log(err);
+        // console.log(err);
         return res.status(403).json(util.successFalse(err, '?', null));
     }
 }));
@@ -312,7 +312,7 @@ exports.myinfo.get('/review/written', util.isLoggedin, (req, res) => __awaiter(v
                 [db.Op.or]: [{ riderId: tokenData.id }, { userId: tokenData.id }],
             },
         });
-        console.log(reviews);
+        // console.log(reviews);
         return res.json(util.successTrue('', reviews));
     }
     catch (err) {

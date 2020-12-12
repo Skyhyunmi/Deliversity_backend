@@ -242,7 +242,7 @@ function smsVerify(phone, verify) {
                 exports.myCache.del(phone);
                 return 'Retry.';
             }
-            console.log(typeof (veri.number), typeof (verify));
+            // console.log(typeof (veri.number), typeof (verify));
             if (veri.number && veri.number !== parseInt(verify, 10)) {
                 exports.myCache.del(phone);
                 return 'Not Matched.';

@@ -25,7 +25,7 @@ test.post('/juso', async (req: Request, res: Response) => {
     });
     return res.json(util.successTrue('', coord.data.documents[0]));
   } catch (err) {
-    console.error(err);
+    // console.error(err);
     return res.json(util.successFalse(null, 'error', null));
   }
 });
@@ -36,7 +36,7 @@ test.post('/noti', util.isLoggedin, async (req: Request, res: Response) => {
   const user = await userRep.findOne({ where: { id: tokenData.id } });
   if (!user) return res.status(403).json(util.successFalse(null, 'Retry.', null));
   const registrationToken = user.firebaseFCM;
-  console.log(registrationToken);
+  // console.log(registrationToken);
   try {
     const { payload } = reqBody;
     functions.sendFCMMessage(registrationToken, payload);

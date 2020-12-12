@@ -194,7 +194,7 @@ admin.get('/openToken', util.isLoggedin, util.isAdmin, async (req: Request, res:
       method: 'post',
     });
     myCache.set('OpenBankingToken', data.data.access_token);
-    console.log(data.data.access_token);
+    // console.log(data.data.access_token);
     return res.json(util.successTrue('', null));
   } catch(e) {
     return res.status(403).json(util.successFalse(null, '토큰 발급 실패', null));

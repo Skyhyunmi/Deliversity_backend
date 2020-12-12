@@ -72,7 +72,7 @@ app.get('/favicon.ico', (req:any, res:Response) => {
 });
 
 app.get('/chat', (req, res) => {
-  console.log(__dirname);
+  // console.log(__dirname);
   res.status(200).sendFile(path.join(__dirname, '../index.html'));
 });
 
