@@ -106,7 +106,7 @@ describe('주문 관련 테스트', () => {
           content: "마카롱 11개 주세요."
         });
       expect(Order.body.data.storeName).toBe("A네 디저트가게");
-      expect(Order.body.data.gender).toBe(0);
+      expect(Order.body.data.gender).toBe("0");
       expect(Order.body.data.reservation).toBe("0");
       done();
     });
@@ -169,7 +169,7 @@ describe('주문 관련 테스트', () => {
         content: "콜라 4개 사주세요."
       });
     expect(Order.body.data.storeName).toBe("D네 편의점");
-    expect(Order.body.data.gender).toBe(0);
+    expect(Order.body.data.gender).toBe("0");
     expect(Order.body.data.reservation).toBe("1");
     done();
   });
