@@ -251,7 +251,7 @@ exports.admin.get('/openToken', util.isLoggedin, util.isAdmin, (req, res) => __a
             method: 'post',
         });
         exports.myCache.set('OpenBankingToken', data.data.access_token);
-        console.log(data.data.access_token);
+        // console.log(data.data.access_token);
         return res.json(util.successTrue('', null));
     }
     catch (e) {

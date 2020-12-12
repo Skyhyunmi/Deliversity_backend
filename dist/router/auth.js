@@ -92,7 +92,7 @@ exports.auth.get('/login', util.isLoggedin, (req, res, next) => __awaiter(void 0
         })(req, res, next);
     }
     catch (e) {
-        console.log(e);
+        // console.log(e);
         return res.status(403).json(util.successFalse(null, '에러.', null));
     }
 }));
@@ -107,7 +107,7 @@ exports.auth.post('/login/fcm', util.isLoggedin, (req, res) => __awaiter(void 0,
         return res.json(util.successTrue('', null));
     }
     catch (e) {
-        console.log(e);
+        // console.log(e);
         return res.status(403).json(util.successFalse(null, '에러.', null));
     }
 }));
@@ -125,7 +125,7 @@ exports.auth.post('/login/google', (req, res) => __awaiter(void 0, void 0, void 
         return res.json(util.successTrue('', { firebaseToken: result.firebaseToken, token: result.authToken, grade: user.user.grade }));
     }
     catch (e) {
-        console.log(e);
+        // console.log(e);
         return res.status(403).json(util.successFalse(null, 'Retry.', null));
     }
 }));
@@ -143,7 +143,7 @@ exports.auth.post('/login/kakao', (req, res) => __awaiter(void 0, void 0, void 0
         return res.json(util.successTrue('', { firebaseToken: result.firebaseToken, token: result.authToken, grade: user.user.grade }));
     }
     catch (e) {
-        console.log('Error at login/kakao');
+        // console.log('Error at login/kakao');
         return res.status(403).json(util.successFalse(null, 'Retry.', null));
     }
 }));

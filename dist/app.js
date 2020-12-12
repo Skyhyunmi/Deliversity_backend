@@ -88,7 +88,7 @@ exports.app.get('/favicon.ico', (req, res) => {
     res.status(200).end(favicon);
 });
 exports.app.get('/chat', (req, res) => {
-    console.log(__dirname);
+    // console.log(__dirname);
     res.status(200).sendFile(path_1.default.join(__dirname, '../index.html'));
 });
 exports.app.get('/socket.io/socket.io.js', (req, res) => {

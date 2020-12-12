@@ -21,14 +21,17 @@ order.post('/', util.isLoggedin, async (req: Request, res: Response) => {
   const tokenData = req.decoded;
   const reqBody = req.body;
   let { expHour } = reqBody;
+  if(expHour === '') expHour = '0';
   let { expMinute } = reqBody;
-  let gender = parseInt(reqBody.gender, 10);
+  if(expMinute === '') expMinute = '0';
+  let { gender } = reqBody;
   const today = new Date();
   const registrationToken: string[] = [];
 
-  if (reqBody.reservation === '1') {
+  if (reqBody.reservation === 1) {
     if (!expHour || !expMinute) { return res.status(403).json(util.successFalse(null, '예약 시간 또는 분을 입력하시지 않으셨습니다.', null)); };
-    expHour = parseInt(reqBody.expHour, 10); expMinute = parseInt(reqBody.expMinute, 10);
+    expHour = parseInt(expHour, 10);
+    expMinute = parseInt(expMinute, 10);
     today.setHours(today.getHours() + expHour);
     today.setMinutes(today.getMinutes() + expMinute);
   } else { today.setHours(today.getHours() + 1); }
@@ -47,7 +50,7 @@ order.post('/', util.isLoggedin, async (req: Request, res: Response) => {
     });
     if (!address) return res.status(403).json(util.successFalse(null, '해당하는 주소가 없습니다.', null));
     let deliveryFee = 3000;
-    if (reqBody.hotDeal === '1') deliveryFee = 4000;
+    if (reqBody.hotDeal === 1) deliveryFee = 4000;
 
     const fee = functions.getDistanceFromLatLonInKm(reqBody.userLat, reqBody.userLng,
       reqBody.storeLat, reqBody.storeLng) - 1;
@@ -552,10 +555,7 @@ order.post('/pay', util.isLoggedin, async (req: Request, res: Response) => {
       order: [['expireAt', 'ASC']],
     },
   );
-  const sum = points.reduce((_sum, cur) => {
-    console.log(`${cur.point} ${cur.expireAt}`);
-    return _sum + cur.point;
-  }, 0);
+  const sum = points.reduce((_sum, cur) => _sum + cur.point, 0);
   // 결제액 부족. 결제창으로 이동
   if (sum - price < 0) return res.status(403).json(util.successFalse(null, '잔액이 부족합니다.', null));
 

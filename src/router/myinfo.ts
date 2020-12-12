@@ -4,7 +4,6 @@ import * as crypto from 'crypto';
 import dotenv from 'dotenv';
 import axios from 'axios';
 import * as db from 'sequelize';
-import e from 'cors';
 import {
   userRep, addressRep, qnaRep, reportRep, orderRep, reviewRep, refundRep, paymentRep, 
 } from '../models/index';
@@ -161,7 +160,7 @@ myinfo.put('/address', util.isLoggedin, async (req: Request, res: Response) => {
     });
     return res.json(util.successTrue('', old));
   } catch (err) {
-    console.log(err);
+    // console.log(err);
     return res.status(403).json(util.successFalse(err, '?', null));
   }
 });
@@ -269,7 +268,7 @@ myinfo.get('/review/written', util.isLoggedin, async (req: Request, res: Respons
         [db.Op.or]: [{ riderId: tokenData.id }, { userId: tokenData.id }],
       },
     });
-    console.log(reviews);
+    // console.log(reviews);
     return res.json(util.successTrue('', reviews));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, '나에게 작성된 리뷰가 없습니다.', null));

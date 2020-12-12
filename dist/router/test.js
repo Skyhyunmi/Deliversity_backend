@@ -55,7 +55,7 @@ exports.test.post('/juso', (req, res) => __awaiter(void 0, void 0, void 0, funct
         return res.json(util.successTrue('', coord.data.documents[0]));
     }
     catch (err) {
-        console.error(err);
+        // console.error(err);
         return res.json(util.successFalse(null, 'error', null));
     }
 }));
@@ -66,7 +66,7 @@ exports.test.post('/noti', util.isLoggedin, (req, res) => __awaiter(void 0, void
     if (!user)
         return res.status(403).json(util.successFalse(null, 'Retry.', null));
     const registrationToken = user.firebaseFCM;
-    console.log(registrationToken);
+    // console.log(registrationToken);
     try {
         const { payload } = reqBody;
         functions.sendFCMMessage(registrationToken, payload);

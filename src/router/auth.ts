@@ -60,7 +60,7 @@ auth.get('/login', util.isLoggedin, async (req: Request, res: Response, next: Ne
       });
     })(req, res, next);
   } catch (e) {
-    console.log(e);
+    // console.log(e);
     return res.status(403).json(util.successFalse(null, '에러.', null));
   }
 });
@@ -74,7 +74,7 @@ auth.post('/login/fcm', util.isLoggedin, async (req: Request, res: Response) => 
     await user.update({ firebaseFCM: reqBody.fcmToken });
     return res.json(util.successTrue('', null));
   } catch (e) {
-    console.log(e);
+    // console.log(e);
     return res.status(403).json(util.successFalse(null, '에러.', null));
   }
 });
@@ -90,7 +90,7 @@ auth.post('/login/google', async (req: Request, res: Response) => {
     const result = await functions.getAuthToken(user.user);
     return res.json(util.successTrue('', { firebaseToken: result.firebaseToken, token: result.authToken, grade: user.user.grade }));
   } catch (e) {
-    console.log(e);
+    // console.log(e);
     return res.status(403).json(util.successFalse(null, 'Retry.', null));
   }
 });
@@ -106,7 +106,7 @@ auth.post('/login/kakao', async (req: Request, res: Response) => {
     const result = await functions.getAuthToken(user.user);
     return res.json(util.successTrue('', { firebaseToken: result.firebaseToken, token: result.authToken, grade: user.user.grade }));
   } catch (e) {
-    console.log('Error at login/kakao');
+    // console.log('Error at login/kakao');
     return res.status(403).json(util.successFalse(null, 'Retry.', null));
   }
 });
