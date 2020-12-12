@@ -50,7 +50,7 @@ exports.order.post('/', util.isLoggedin, (req, res) => __awaiter(void 0, void 0,
     const reqBody = req.body;
     let { expHour } = reqBody;
     let { expMinute } = reqBody;
-    let gender = reqBody.gender === '1' ? 1 : 0;
+    let gender = parseInt(reqBody.gender, 10);
     const today = new Date();
     const registrationToken = [];
     if (reqBody.reservation === '1') {
