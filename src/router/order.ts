@@ -22,7 +22,7 @@ order.post('/', util.isLoggedin, async (req: Request, res: Response) => {
   const reqBody = req.body;
   let { expHour } = reqBody;
   let { expMinute } = reqBody;
-  let gender = reqBody.gender === '1' ? 1 : 0;
+  let gender = parseInt(reqBody.gender, 10);
   const today = new Date();
   const registrationToken: string[] = [];
 
