@@ -211,6 +211,17 @@ myinfo.post('/report', util.isLoggedin, async (req: Request, res: Response) => {
   }
 });
 
+myinfo.get('/reports', util.isLoggedin, async (req: Request, res: Response) => {
+  // 질문 접수 (id, qnakind, userId, content, answer)
+  const tokenData = req.decoded;
+  try {
+    const qna = await reportRep.findAll({ where: { userId: tokenData.id } });
+    return res.json(util.successTrue('', qna));
+  } catch (err) {
+    return res.status(403).json(util.successFalse(err, '', null));
+  }
+});
+
 myinfo.post('/qna', util.isLoggedin, async (req: Request, res: Response) => {
   // 질문 접수 (id, qnakind, userId, content, answer)
   const tokenData = req.decoded;
@@ -221,6 +232,17 @@ myinfo.post('/qna', util.isLoggedin, async (req: Request, res: Response) => {
       qnaKind: reqBody.qnaKind,
       content: reqBody.content,
     });
+    return res.json(util.successTrue('', qna));
+  } catch (err) {
+    return res.status(403).json(util.successFalse(err, '', null));
+  }
+});
+
+myinfo.get('/qnas', util.isLoggedin, async (req: Request, res: Response) => {
+  // 질문 접수 (id, qnakind, userId, content, answer)
+  const tokenData = req.decoded;
+  try {
+    const qna = await qnaRep.findAll({ where: { userId: tokenData.id } });
     return res.json(util.successTrue('', qna));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, '', null));

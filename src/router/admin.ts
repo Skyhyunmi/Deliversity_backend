@@ -86,9 +86,12 @@ admin.get('/reports', util.isLoggedin, util.isAdmin, async (req: Request, res: R
   // 신고 리스트 반환
   const reqQuery = req.query;
   try {
-    const lists = await reportRep.findAll({
-      where: { status: 0, reportKind: reqQuery.reportKind as string },
-    });
+    let data;
+    console.log(reqQuery.reportKind);
+    if(reqQuery.reportKind as string === 'ALL') data = { where: { status: 0 } };
+    else data = { where: { status: 0, reportKind: reqQuery.reportKind as string } };
+      
+    const lists = await reportRep.findAll(data);
     if (!lists) return res.status(403).json(util.successFalse(null, '현재 처리를 기다리는 신고가 없습니다.', null));
     return res.json(util.successTrue('', lists));
   } catch (err) {
@@ -130,9 +133,11 @@ admin.get('/qnas', util.isLoggedin, util.isAdmin, async (req: Request, res: Resp
   // 문의 리스트 반환
   const reqQuery = req.query;
   try {
-    const lists = await qnaRep.findAll({
-      where: { status: 0, qnaKind: reqQuery.qnaKind as string },
-    });
+    let data;
+    console.log(reqQuery.qnaKind);
+    if(reqQuery.qnaKind as string === 'ALL') data = { where: { status: 0 } };
+    else data = { where: { status: 0, qnaKind: reqQuery.qnaKind as string } };
+    const lists = await qnaRep.findAll(data);
     if (!lists) return res.status(403).json(util.successFalse(null, '현재 처리를 기다리는 문의가 없습니다.', null));
     return res.json(util.successTrue('', lists));
   } catch (err) {
@@ -164,6 +169,7 @@ admin.put('/qna', util.isLoggedin, util.isAdmin, async (req: Request, res: Respo
     if (!answered_qna) { return res.status(403).json(util.successFalse(null, '해당하는 문의가 없습니다.', null)); }
     if (answered_qna.status) { return res.status(403).json(util.successFalse(null, '이미 처리된 문의입니다.', null)); }
     await answered_qna.update({ answer, status: true });
+    // functions.sendEmail();
     return res.json(util.successTrue('', answered_qna));
   } catch (err) {
     return res.status(403).json(util.successFalse(err, '', null));
