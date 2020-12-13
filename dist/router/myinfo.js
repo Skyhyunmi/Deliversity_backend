@@ -251,6 +251,17 @@ exports.myinfo.post('/report', util.isLoggedin, (req, res) => __awaiter(void 0, 
         return res.status(403).json(util.successFalse(err, '', null));
     }
 }));
+exports.myinfo.get('/reports', util.isLoggedin, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // 질문 접수 (id, qnakind, userId, content, answer)
+    const tokenData = req.decoded;
+    try {
+        const qna = yield index_1.reportRep.findAll({ where: { userId: tokenData.id } });
+        return res.json(util.successTrue('', qna));
+    }
+    catch (err) {
+        return res.status(403).json(util.successFalse(err, '', null));
+    }
+}));
 exports.myinfo.post('/qna', util.isLoggedin, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     // 질문 접수 (id, qnakind, userId, content, answer)
     const tokenData = req.decoded;
@@ -261,6 +272,17 @@ exports.myinfo.post('/qna', util.isLoggedin, (req, res) => __awaiter(void 0, voi
             qnaKind: reqBody.qnaKind,
             content: reqBody.content,
         });
+        return res.json(util.successTrue('', qna));
+    }
+    catch (err) {
+        return res.status(403).json(util.successFalse(err, '', null));
+    }
+}));
+exports.myinfo.get('/qnas', util.isLoggedin, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // 질문 접수 (id, qnakind, userId, content, answer)
+    const tokenData = req.decoded;
+    try {
+        const qna = yield index_1.qnaRep.findAll({ where: { userId: tokenData.id } });
         return res.json(util.successTrue('', qna));
     }
     catch (err) {
